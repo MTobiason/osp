@@ -1,4 +1,4 @@
-package osap;
+
 import osap.Base;
 import osap.Sequence;
 import osap.WCStructure;

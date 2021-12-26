@@ -21,14 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
+package edu.boisestate.osp.utils.SeqEvo;
+
+import edu.boisestate.osp.design.DesignValidator;
 
 /**
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public class SeqEvoValidator implements DesignValidator {
+    SeqEvoValidator(String IPFP){
+        
+    }
+    
+    public static SeqEvoValidator newFromFile(String parameterFilePath){
+        return new SeqEvoValidator(parameterFilePath);
+    }
 }

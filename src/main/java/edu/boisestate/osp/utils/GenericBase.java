@@ -21,14 +21,46 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
+package edu.boisestate.osp.utils;
+
+import edu.boisestate.osp.Base;
 
 /**
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public class GenericBase implements Base {
+    final char baseName;
+    final char complementName;
+    final Base complement;
+    
+    GenericBase(char baseName, char complementName){
+        this.baseName = baseName;
+        this.complementName = complementName; 
+        complement = new GenericBase(complementName,baseName,this);
+    }
+    
+    GenericBase(char baseName, char complementName, GenericBase complementaryBase){
+        this.baseName = baseName;
+        this.complementName = complementName; 
+        complement = complementaryBase;
+    }
+    
+    public static GenericBase getNew(char baseName,char complementName){
+        return new GenericBase(baseName, complementName);
+    }
+    
+    public char getChar(){
+        return baseName;
+    }
+    
+    @Override
+    public boolean isComplementary(Base base){
+        return base.toString().equals(complementName);
+    }
+    
+    @Override
+    public Base getComplement(){
+        return complement;
+    }
 }

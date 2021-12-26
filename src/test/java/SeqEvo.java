@@ -189,4 +189,6 @@ public class SeqEvo
 		System.out.println("Runtime of Evolutionary Process: " + totalTime);
 		System.out.println();
 	}
+        
+        
 }

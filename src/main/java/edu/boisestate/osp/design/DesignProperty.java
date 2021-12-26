@@ -21,14 +21,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
+package edu.boisestate.osp.design;
+
+import edu.boisestate.osp.design.Design;
 
 /**
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public interface DesignProperty {
+    /**
+     * Compares the property value of design1 to design2. Returns 1 if design1's value is larger.
+     * Returns 0 if values are equal.
+     * Returns -1 if design1's value is smaller.
+     * 
+     * 
+     * @param design1
+     * @param design2
+     */
+    int compareProperty(Design design1, Design design2);
+    
+    DesignPropertyReport calculateReport(Design design);
+    String calculateValue(Design design);
 }

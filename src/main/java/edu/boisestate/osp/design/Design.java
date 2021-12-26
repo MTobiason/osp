@@ -21,14 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
+package edu.boisestate.osp.design;
+
+import edu.boisestate.osp.BaseSequence;
+import java.util.Map;
+
 
 /**
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public interface Design {
+    Map<String,BaseSequence> getCircularStrandSequences();
+    BaseSequence getCircularStrandSequence(String strandName);
+    Map<String,BaseSequence> getLinearStrandSequences();
+    BaseSequence getLinearStrandSequence(String strandName);
+    Map<String,BaseSequence> getVariableSequences();
+    UpdatedDesign getUpdatedDesign(Map<String,BaseSequence> variableSequences);
+    String getPropertyValue(DesignProperty property);
+    DesignPropertyReport getPropertyReport(DesignProperty property);
 }

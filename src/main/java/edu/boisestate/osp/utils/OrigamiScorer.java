@@ -21,14 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
+package edu.boisestate.osp.utils;
 
 /**
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public class OrigamiScorer {
+    String PFP;
+    
+    OrigamiScorer(String IPFP){
+        PFP = IPFP;
+    }
+    
+    Double getScore(){
+        return null;
+    }
+    
+    
 }

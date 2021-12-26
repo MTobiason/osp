@@ -23,12 +23,12 @@
  */
 package edu.boisestate.osp;
 
+import edu.boisestate.osp.BaseSequence;
+
 /**
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public interface BaseSequenceProperty {
+    String calculateValue(BaseSequence baseSequence);
 }

@@ -27,8 +27,10 @@ package edu.boisestate.osp;
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public interface BaseSequence {
+    BaseSequence getComplement();
+    Base[] getComplementBases();
+    Base[] getBases();
+    String getPropertyValue(BaseSequenceProperty property);
+    String getString();
 }

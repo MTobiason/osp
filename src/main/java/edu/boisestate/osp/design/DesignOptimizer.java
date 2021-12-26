@@ -21,14 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
+package edu.boisestate.osp.design;
+
+import edu.boisestate.osp.design.Design;
+import edu.boisestate.osp.design.DesignProperty;
 
 /**
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public interface DesignOptimizer {
+    DesignOptimizerReport optimize(Design initialDesign, DesignProperty target);
 }
