@@ -23,13 +23,13 @@
  */
 package edu.boisestate.osp.design;
 
-import edu.boisestate.osp.design.Design;
+import edu.boisestate.osp.sequence.LinearSequence;
+import java.util.Map;
 
 /**
  *
  * @author mtobi
  */
-public interface DesignProperty {
-    String getName();
-    String getValue(Design design);
+public interface HasVariableSequences {
+    Map<String,LinearSequence> getVariableSequences();
 }

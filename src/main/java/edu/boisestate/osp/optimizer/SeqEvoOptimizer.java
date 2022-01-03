@@ -21,46 +21,58 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.utils.SeqEvo;
+package edu.boisestate.osp.optimizer;
 
 import edu.boisestate.osp.design.Design;
 import edu.boisestate.osp.design.DesignValidator;
 import edu.boisestate.osp.design.DesignProperty;
 import edu.boisestate.osp.design.DesignOptimizer;
 import edu.boisestate.osp.design.DesignOptimizerReport;
+import edu.boisestate.osp.seqevo.ISeqEvoAnalyzer;
+import edu.boisestate.osp.seqevo.ISeqEvoDesign;
+import edu.boisestate.osp.seqevo.ISeqEvoOptimizationReport;
+import edu.boisestate.osp.seqevo.ISeqEvoOptimizer;
+import edu.boisestate.osp.seqevo.ISeqEvoValidator;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  *
  * @author mtobi
  */
-public class SeqEvoOptimizer implements DesignOptimizer {
-    
-    final int cpl; // Number-of-Cycles-Per-Lineage
-    final int gpc; // Number-of-Generations-Per-Cycle
-    final int ndpm; // Number-of-Daughters-Per-Mother
-    final int nl; //Number-of-Lineages
-    final int nmpc; // Number-of-Mothers-Per-Cycle
-    
-    final DesignValidator validator;
-    
-    SeqEvoOptimizer(int cpl, int gpc, int ndpm, int nl, int nmpc, DesignValidator validator){
-        this.cpl = cpl;
-        this.gpc = gpc;
-        this.ndpm = ndpm;
-        this.nl = nl;
-        this.nmpc = nmpc;
+public class SeqEvoOptimizer implements ISeqEvoOptimizer {
 
-        this.validator = validator;
+    final static String NL_DEFAULT = "8";
+    final static String NMPC_DEFAULT ="2";
+    final static String NDPM_DEFAULT = "1";
+    final static String CPL_DEFAULT = "1000";
+    final static String GPC_DEFAULT = "1";
+    
+    SeqEvoOptimizer(){
     }
     
     @Override
-    public DesignOptimizerReport optimize(Design initialDesign, DesignProperty target){
+    public OptimizationReport optimize(Map<String,String> parameters, ISeqEvoAnalyzer analyzer, ISeqEvoDesign initialDesign, ISeqEvoValidator validator){
+        
         double startTime = System.currentTimeMillis(); // start timer for runtime.
+        OptimizationReport report = new OptimizationReport();
+        Map<String,String> usedParameters = new TreeMap<>();
+        
+        final int cpl = Integer.valueOf(parameters.getOrDefault("Optimizer.CPL",CPL_DEFAULT));
+        usedParameters.put("Optimizer.CPL",String.valueOf(cpl));
+        final int gpc = Integer.valueOf(parameters.getOrDefault("Optimizer.GPC",GPC_DEFAULT));
+        usedParameters.put("Optimizer.GPC",String.valueOf(gpc));
+        final int ndpm = Integer.valueOf(parameters.getOrDefault("Optimizer.NDPM",NDPM_DEFAULT));
+        usedParameters.put("Optimizer.NDPM",String.valueOf(ndpm));
+        final int nmpc = Integer.valueOf(parameters.getOrDefault("Optimizer.NMPC",NMPC_DEFAULT));
+        usedParameters.put("Optimizer.NMPC",String.valueOf(nmpc));
+        final int nl = Integer.valueOf(parameters.getOrDefault("Optimizer.NL",NL_DEFAULT));
+        usedParameters.put("Optimizer.NL",String.valueOf(nl));
 		
         //initialize Design Arrays.
-        Design[] lineageMothers = new Design[nl];
-        Design[][] cycleMothers = new Design[nl][nmpc];
-        Design[][][] cycleDaughters = new Design[nl][nmpc][ndpm];
+        ISeqEvoDesign[] lineageMothers = new ISeqEvoDesign[nl];
+        ISeqEvoDesign[][] cycleMothers = new ISeqEvoDesign[nl][nmpc];
+        ISeqEvoDesign[][][] cycleDaughters = new ISeqEvoDesign[nl][nmpc][ndpm];
         
         //initialize lineage mothers.
         lineageMothers[0] = initialDesign;
@@ -142,6 +154,10 @@ public class SeqEvoOptimizer implements DesignOptimizer {
         return new SeqEvoOptimizer(cpl, gpc, ndpm, nl, nmpc, validator);
     }
     
+    public static SeqEvoOptimizer getNew(){
+        return new SeqEvoOptimizer();
+    }
+    
     class OptimizerReport implements DesignOptimizerReport{
         
         Design reportFinalDesign;
@@ -166,5 +182,9 @@ public class SeqEvoOptimizer implements DesignOptimizer {
     
     private Design getType3Mutation(Design design, DesignValidator validator){
         return design;
+    }
+    
+    class OptimizationReport implements ISeqEvoOptimizationReport{
+    
     }
 }

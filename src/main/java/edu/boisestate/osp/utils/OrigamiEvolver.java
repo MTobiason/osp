@@ -1,6 +1,6 @@
 package edu.boisestate.osp.utils;
 
-import edu.boisestate.osp.utils.SeqEvo.SeqEvoParameterManager;
+import edu.boisestate.osp.seqevo.SeqEvoParameterManager;
 import java.util.Optional;
 
 public class OrigamiEvolver {

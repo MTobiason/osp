@@ -23,31 +23,32 @@
  */
 package edu.boisestate.osp.utils;
 
-import edu.boisestate.osp.BaseSequence;
 import edu.boisestate.osp.design.Design;
 import edu.boisestate.osp.design.DesignProperty;
-import edu.boisestate.osp.design.DesignPropertyReport;
-import edu.boisestate.osp.design.UpdatedDesign;
+import edu.boisestate.osp.design.HasVariableSequences;
+import edu.boisestate.osp.seqevo.ISeqEvoDesign;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import edu.boisestate.osp.BaseSequence;
+import edu.boisestate.osp.sequence.LinearSequence;
+import edu.boisestate.osp.sequence.NamedSetOfMixed;
 
 /**
  *
  * @author mtobi
  */
 
-public class DomainDesign implements Design{
-    final Map<String,BaseSequence> fixedDomainSequences;
-    final Map<String,BaseSequence> variableDomainSequences;
+public class DomainDesign implements Design, ISeqEvoDesign{
+    final Map<String,LinearSequence> fixedDomainSequences;
+    final Map<String,LinearSequence> variableDomainSequences;
     final Map<String,String[]> linearStrandDomains;
     final Map<String,String[]> circularStrandDomains;
-    final Map<String,BaseSequence> linearStrandSequences;
-    final Map<String,BaseSequence> circularStrandSequences;
-    Map<DesignProperty,DesignPropertyReport> propertyReports;
+    final Map<String,LinearSequence> linearStrandSequences;
+    final Map<String,LinearSequence> circularStrandSequences;
     
-    DomainDesign(Map<String,BaseSequence> fixedDomainSequences, Map<String,BaseSequence> variableDomainSequences, Map<String,String[]> linearStrandDomains, Map<String,String[]> circularStrandDomains){
+    final NamedSetOfMixed strandSequences;
+    
+    DomainDesign(Map<String,LinearSequence> fixedDomainSequences, Map<String,LinearSequence> variableDomainSequences, Map<String,String[]> linearStrandDomains, Map<String,String[]> circularStrandDomains){
         //initialize data structures
         this.fixedDomainSequences = new TreeMap<>();
         this.linearStrandDomains =new TreeMap<>();
@@ -55,7 +56,6 @@ public class DomainDesign implements Design{
         this.circularStrandDomains =new TreeMap<>();
         this.circularStrandSequences = new TreeMap<>();
         this.variableDomainSequences = new TreeMap<>();
-        this.propertyReports = new ConcurrentHashMap<>();
             
         //fill data structures
         try{
@@ -74,12 +74,12 @@ public class DomainDesign implements Design{
             
             linearStrandDomains.forEach((key,value) ->{
                 this.linearStrandDomains.put(key,value.clone());
-                BaseSequence[] subSequences  = new BaseSequence[value.length];
+                LinearSequence[] subSequences  = new LinearSequence[value.length];
                 for(int i =0; i < value.length; i++){
                     String domainName = value[i];
                     boolean isComplement = false;
                     if(domainName.startsWith("c.")||domainName.startsWith("C.")) {isComplement = true; domainName = domainName.substring(2);};
-                    BaseSequence currentDomain = fixedDomainSequences.get(domainName);
+                    LinearSequence currentDomain = fixedDomainSequences.get(domainName);
                     if(currentDomain == null) currentDomain = variableDomainSequences.get(domainName);
                     if(currentDomain == null) throw new RuntimeException("Could not find domain '"+domainName+"'.");
                     if(isComplement) currentDomain = currentDomain.getComplement();
@@ -90,12 +90,12 @@ public class DomainDesign implements Design{
             
             circularStrandDomains.forEach((key,value) ->{
                 this.circularStrandDomains.put(key,value.clone());
-                BaseSequence[] subSequences  = new BaseSequence[value.length];
+                LinearSequence[] subSequences  = new LinearSequence[value.length];
                 for(int i =0; i < value.length; i++){
                     String domainName = value[i];
                     boolean isComplement = false;
                     if(domainName.startsWith("c.")||domainName.startsWith("C.")) {isComplement = true; domainName = domainName.substring(2);};
-                    BaseSequence currentDomain = fixedDomainSequences.get(domainName);
+                    LinearSequence currentDomain = fixedDomainSequences.get(domainName);
                     if(currentDomain == null) currentDomain = variableDomainSequences.get(domainName);
                     if(currentDomain == null) throw new RuntimeException("Could not find domain '"+domainName+"'.");
                     if(isComplement) currentDomain = currentDomain.getComplement();
@@ -118,30 +118,32 @@ public class DomainDesign implements Design{
         this.circularStrandDomains =new TreeMap<>(design.circularStrandDomains);
         this.circularStrandSequences = new TreeMap<>(design.circularStrandSequences);
         this.variableDomainSequences = new TreeMap<>(design.variableDomainSequences);
-        this.propertyReports = new ConcurrentHashMap<>(design.propertyReports);
     }
     
-    static public Design newFromParameters(Map<String,BaseSequence> fixedDomainSequences, Map<String,BaseSequence> variableDomainSequences, Map<String,String[]> linearStrandDomains, Map<String,String[]> circularStrandDomains){
+    static public Design newFromParameters(Map<String,LinearSequence> fixedDomainSequences, Map<String,LinearSequence> variableDomainSequences, Map<String,String[]> linearStrandDomains, Map<String,String[]> circularStrandDomains){
         return new DomainDesign(fixedDomainSequences, variableDomainSequences, linearStrandDomains, circularStrandDomains);
     }
 
-    @Override
-    public Map<String, BaseSequence> getCircularStrandSequences() {
-        return new TreeMap<String,BaseSequence>(circularStrandSequences);
+    public NamedSetOfMixed getStrandSequences(){
+        
+    }
+    
+    public Map<String, LinearSequence> getCircularStrandSequences() {
+        return new TreeMap<String,LinearSequence>(circularStrandSequences);
     }
 
     @Override
-    public Map<String, BaseSequence> getLinearStrandSequences() {
-        return new TreeMap<String,BaseSequence>(linearStrandSequences);
+    public Map<String, LinearSequence> getLinearStrandSequences() {
+        return new TreeMap<String,LinearSequence>(linearStrandSequences);
     }
 
     @Override
-    public Map<String, BaseSequence> getVariableSequences() {
-        return new TreeMap<String,BaseSequence>(variableDomainSequences);
+    public Map<String, LinearSequence> getVariableSequences() {
+        return new TreeMap<String,LinearSequence>(variableDomainSequences);
     }
 
     @Override
-    public UpdatedDesign getUpdatedDesign(Map<String, BaseSequence> variableSequences) {
+    public UpdatedDesign newFromVariableSequences(Map<String, LinearSequence> variableSequences) {
         return UpdatedDomainDesign.getNew(this,variableSequences);
     }
 

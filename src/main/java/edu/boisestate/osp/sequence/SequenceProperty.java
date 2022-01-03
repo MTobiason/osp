@@ -21,14 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
-
-import edu.boisestate.osp.BaseSequence;
+package edu.boisestate.osp.sequence;
 
 /**
  *
  * @author mtobi
  */
-public interface BaseSequenceProperty {
-    String calculateValue(BaseSequence baseSequence);
+public interface SequenceProperty {
+    String calculateValue(Sequence sequence);
 }

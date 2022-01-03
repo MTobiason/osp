@@ -23,8 +23,7 @@
  */
 package edu.boisestate.osp.utils.properties;
 
-import edu.boisestate.osp.Base;
-import edu.boisestate.osp.BaseSequence;
+import edu.boisestate.osp.sequence.Base;
 import edu.boisestate.osp.design.Design;
 import edu.boisestate.osp.design.DesignProperty;
 import edu.boisestate.osp.design.DesignPropertyReport;
@@ -35,13 +34,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import edu.boisestate.osp.sequence.LinearSequence;
 
 /**
  *
  * @author mtobi
  */
 public class NetworkFitnessScore implements DesignProperty{
-    final String propertyName;
+    final static String propertyName;
     final int base;
     final Map<Integer,BigInteger> lengthToScore;
     static final CircularCircularStrandCombinations ccp = new CircularCircularStrandCombinations();
@@ -66,11 +66,11 @@ public class NetworkFitnessScore implements DesignProperty{
 
     @Override
     public DesignPropertyReport calculateReport(Design design) {
-        return GenericDesignPropertyReport.getNew(propertyName,calculateValue(design));
+        return GenericDesignPropertyReport.getNew(propertyName,getValue(design));
     }
 
     @Override
-    public String calculateValue(Design design) {
+    public String getValue(Design design) {
         Set<GenericStrandPair> cc = GenericStrandPair.setFromString(design.getPropertyValue(ccp));
         Set<GenericStrandPair> cl = GenericStrandPair.setFromString(design.getPropertyValue(clp));
         Set<GenericStrandPair> lc = GenericStrandPair.setFromString(design.getPropertyValue(lcp));
@@ -124,15 +124,15 @@ public class NetworkFitnessScore implements DesignProperty{
 
         @Override
         public DesignPropertyReport calculateReport(Design design) {
-            return GenericDesignPropertyReport.getNew(propertyName,calculateValue(design));
+            return GenericDesignPropertyReport.getNew(propertyName,getValue(design));
         }
     }
     
     class NetworkFitnessLinearLinearStrandScore extends NetworkFitnessStrandStrandScore{
         @Override
-        public String calculateValue(Design design) {
-            BaseSequence bs1 = design.getLinearStrandSequence(strandName1);
-            BaseSequence bs2 = design.getLinearStrandSequence(strandName2);
+        public String getValue(Design design) {
+            LinearSequence bs1 = design.getLinearStrandSequence(strandName1);
+            LinearSequence bs2 = design.getLinearStrandSequence(strandName2);
             
             //calculate the length of all unique simple secondary structures using a linear search of all possible strand alignments.
             Base[] ba1 = bs1.getBases();
@@ -175,16 +175,16 @@ public class NetworkFitnessScore implements DesignProperty{
     
     class NetworkFitnessLinearCircularStrandScore extends NetworkFitnessStrandStrandScore{
         @Override
-        public String calculateValue(Design design) {
+        public String getValue(Design design) {
             
         }
     }
     
     class NetworkFitnessCircularCircularStrandScore extends NetworkFitnessStrandStrandScore{
         @Override
-        public String calculateValue(Design design) {
-            BaseSequence bs1 = design.getCircularStrandSequence(strandName1);
-            BaseSequence bs2 = design.getCircularStrandSequence(strandName2);
+        public String getValue(Design design) {
+            LinearSequence bs1 = design.getCircularStrandSequence(strandName1);
+            LinearSequence bs2 = design.getCircularStrandSequence(strandName2);
             
             //calculate the length of all unique simple secondary structures using a linear search of all possible strand alignments.
             Base[] ba1 = bs1.getBases();
@@ -252,7 +252,7 @@ public class NetworkFitnessScore implements DesignProperty{
     
     class NetworkFitnessCircularLinearStrandScore extends NetworkFitnessStrandStrandScore{
         @Override
-        public String calculateValue(Design design) {
+        public String getValue(Design design) {
             
         }
     }

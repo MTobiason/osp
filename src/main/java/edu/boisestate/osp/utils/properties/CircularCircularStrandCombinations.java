@@ -23,7 +23,6 @@
  */
 package edu.boisestate.osp.utils.properties;
 
-import edu.boisestate.osp.BaseSequence;
 import edu.boisestate.osp.design.Design;
 import edu.boisestate.osp.design.DesignProperty;
 import edu.boisestate.osp.design.DesignPropertyReport;
@@ -32,6 +31,7 @@ import edu.boisestate.osp.utils.GenericStrandPair;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import edu.boisestate.osp.sequence.LinearSequence;
 
 /**
  *
@@ -52,12 +52,12 @@ public class CircularCircularStrandCombinations implements DesignProperty {
 
     @Override
     public DesignPropertyReport calculateReport(Design design) {
-        return GenericDesignPropertyReport.getNew(propertyName,calculateValue(design));
+        return GenericDesignPropertyReport.getNew(propertyName,getValue(design));
     }
 
     @Override
-    public String calculateValue(Design design) {
-        Map<String,BaseSequence> circularStrands = design.getCircularStrandSequences();
+    public String getValue(Design design) {
+        Map<String,LinearSequence> circularStrands = design.getCircularStrandSequences();
         
         String[] circularNames = circularStrands.keySet().toArray(new String[0]);
         

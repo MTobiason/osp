@@ -23,13 +23,13 @@
  */
 package edu.boisestate.osp.utils;
 
-import edu.boisestate.osp.BaseSequence;
 import edu.boisestate.osp.design.DesignProperty;
 import edu.boisestate.osp.design.DesignPropertyReport;
 import edu.boisestate.osp.design.UpdatedDesign;
 import java.util.Map;
 import java.util.TreeMap;
-import edu.boisestate.osp.BaseSequence;
+import edu.boisestate.osp.sequence.LinearSequence;
+import edu.boisestate.osp.sequence.LinearSequence;
 
 /**
  *
@@ -37,15 +37,15 @@ import edu.boisestate.osp.BaseSequence;
  */
 public class UpdatedDomainDesign extends DomainDesign implements UpdatedDesign{
         
-    final Map<String,BaseSequence> previous_fixedDomainSequences;
-    final Map<String,BaseSequence> previous_variableDomainSequences;
+    final Map<String,LinearSequence> previous_fixedDomainSequences;
+    final Map<String,LinearSequence> previous_variableDomainSequences;
     final Map<String,String[]> previous_linearStrandDomains;
     final Map<String,String[]> previous_circularStrandDomains;
-    final Map<String,BaseSequence> previous_linearStrandSequences;
-    final Map<String,BaseSequence> previous_circularStrandSequences;
+    final Map<String,LinearSequence> previous_linearStrandSequences;
+    final Map<String,LinearSequence> previous_circularStrandSequences;
     Map<DesignProperty,DesignPropertyReport> previous_propertyReports;
     
-    UpdatedDomainDesign(DomainDesign design, Map<String,BaseSequence> updatedVariableDomains){
+    UpdatedDomainDesign(DomainDesign design, Map<String,LinearSequence> updatedVariableDomains){
         super(design);
         
         previous_fixedDomainSequences = design.fixedDomainSequences;
@@ -58,18 +58,18 @@ public class UpdatedDomainDesign extends DomainDesign implements UpdatedDesign{
     }
     
     @Override
-    public Map<String, BaseSequence> getPreviousCircularStrandSequences() {
-        return new TreeMap<String,BaseSequence>(previous_circularStrandSequences);
+    public Map<String, LinearSequence> getPreviousCircularStrandSequences() {
+        return new TreeMap<String,LinearSequence>(previous_circularStrandSequences);
     }
 
     @Override
-    public Map<String, BaseSequence> getPreviousLinearStrandSequences() {
-        return new TreeMap<String,BaseSequence>(previous_linearStrandSequences);
+    public Map<String, LinearSequence> getPreviousLinearStrandSequences() {
+        return new TreeMap<String,LinearSequence>(previous_linearStrandSequences);
     }
 
     @Override
-    public Map<String, BaseSequence> getPreviousVariableSequences() {
-        return new TreeMap<String,BaseSequence>(previous_variableDomainSequences);
+    public Map<String, LinearSequence> getPreviousVariableSequences() {
+        return new TreeMap<String,LinearSequence>(previous_variableDomainSequences);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class UpdatedDomainDesign extends DomainDesign implements UpdatedDesign{
         return report;
     }
     
-    public static UpdatedDomainDesign getNew(DomainDesign design, Map<String,BaseSequence> newVariableDomains){
+    public static UpdatedDomainDesign getNew(DomainDesign design, Map<String,LinearSequence> newVariableDomains){
         return new UpdatedDomainDesign(design,newVariableDomains);
     }
 }

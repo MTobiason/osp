@@ -21,16 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
+package edu.boisestate.osp.sequence;
 
 /**
  *
  * @author mtobi
  */
-public interface BaseSequence {
-    BaseSequence getComplement();
-    Base[] getComplementBases();
-    Base[] getBases();
-    String getPropertyValue(BaseSequenceProperty property);
-    String getString();
+
+public abstract class LinearSequence extends Sequence{
+    abstract public LinearSequence getComplement();
 }

@@ -21,12 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.design;
+package edu.boisestate.osp.sequence;
 
 /**
  *
  * @author mtobi
  */
-public interface DesignMutator {
-    Design getMutation(Design design);
+public abstract class Sequence {
+    public abstract Base[] getBases();
+    public abstract Base[] getComplementBases();
 }

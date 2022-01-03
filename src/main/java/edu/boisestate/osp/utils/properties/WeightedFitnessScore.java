@@ -35,25 +35,24 @@ import java.math.BigInteger;
 public class WeightedFitnessScore implements DesignProperty{
     final String propertyName;
     final int base;
-    final int x;
+    final BigInteger x;
     
     final NetworkFitnessScore nfs;
     final OligoFitnessScore ofs;
     
-    WeightedFitnessScore(int base, int x){
+    WeightedFitnessScore(int base, BigInteger scoreWeight){
         this.base = base;
-        this.x = x;
+        this.x = scoreWeight;
         nfs = NetworkFitnessScore.newFromParameters(base);
         ofs = OligoFitnessScore.newFromParameters(base);
         propertyName = ("Weighted Fitness Score. Base = " + base+", x = "+x);
     }
    
-    public WeightedFitnessScore newFromParameters(int base, int x){
-        return new WeightedFitnessScore(base, x);
+    public WeightedFitnessScore newFromParameters(int base, BigInteger scoreWeight){
+        return new WeightedFitnessScore(base, scoreWeight);
     }
 
-    @Override
-    public int compareProperty(Design design1, Design design2) {
+    public int compare(Design design1, Design design2) {
         String value1String = design1.getPropertyValue(this);
         String value2String = design2.getPropertyValue(this);
         BigInteger value1 = new BigInteger(value1String);
@@ -61,18 +60,17 @@ public class WeightedFitnessScore implements DesignProperty{
         return value1.compareTo(value2);
     }
 
-    @Override
-    public DesignPropertyReport calculateReport(Design design) {
-        return new Report(propertyName,calculateValue(design));
+    public DesignPropertyReport getReport(Design design) {
+        return new Report(propertyName,getValue(design));
     }
 
     @Override
-    public String calculateValue(Design design) {
+    public String getValue(Design design) {
         String value1String = design.getPropertyValue(nfs);
         String value2String = design.getPropertyValue(ofs);
         BigInteger value1 = new BigInteger(value1String);
         BigInteger value2 = new BigInteger(value2String);
-        BigInteger xBigInt = BigInteger.valueOf(x);
+        BigInteger xBigInt = x;
         return value1.add(value2.multiply(xBigInt)).toString();
     }
     

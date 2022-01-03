@@ -23,7 +23,10 @@
  */
 package edu.boisestate.osp.design;
 
-import edu.boisestate.osp.BaseSequence;
+import edu.boisestate.osp.sequence.CircularSequence;
+import edu.boisestate.osp.sequence.LinearSequence;
+import edu.boisestate.osp.sequence.NamedSetOfLinear;
+import edu.boisestate.osp.sequence.NamedSetOfCircular;
 import java.util.Map;
 
 
@@ -32,12 +35,9 @@ import java.util.Map;
  * @author mtobi
  */
 public interface Design {
-    Map<String,BaseSequence> getCircularStrandSequences();
-    BaseSequence getCircularStrandSequence(String strandName);
-    Map<String,BaseSequence> getLinearStrandSequences();
-    BaseSequence getLinearStrandSequence(String strandName);
-    Map<String,BaseSequence> getVariableSequences();
-    UpdatedDesign getUpdatedDesign(Map<String,BaseSequence> variableSequences);
+    Map<String,CircularSequence> getCircularStrandSequences();
+    Map<String,LinearSequence> getLinearStrandSequences();
+    Map<String,LinearSequence> getVariableSequences();
+    Design getUpdatedDesign(NamedSetOfLinear variableSequences);
     String getPropertyValue(DesignProperty property);
-    DesignPropertyReport getPropertyReport(DesignProperty property);
 }

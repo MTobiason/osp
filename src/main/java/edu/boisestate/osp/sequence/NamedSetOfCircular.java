@@ -21,15 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.design;
+package edu.boisestate.osp.sequence;
 
-import edu.boisestate.osp.design.Design;
+import edu.boisestate.osp.sequence.CircularSequence;
 
 /**
  *
  * @author mtobi
  */
-public interface DesignProperty {
-    String getName();
-    String getValue(Design design);
+public interface NamedSetOfCircular {
+    CircularSequence getCircular(String name);
+    CircularSequence[] getCircular(String[] names);
 }

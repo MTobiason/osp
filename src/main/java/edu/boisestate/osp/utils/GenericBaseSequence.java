@@ -23,25 +23,25 @@
  */
 package edu.boisestate.osp.utils;
 
-import edu.boisestate.osp.Base;
-import edu.boisestate.osp.BaseSequence;
+import edu.boisestate.osp.sequence.Base;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
-import edu.boisestate.osp.BaseSequenceProperty;
+import edu.boisestate.osp.sequence.LinearSequence;
+import edu.boisestate.osp.sequence.SequenceProperty;
 
 /**
  *
  * @author mtobi
  */
-public class GenericBaseSequence implements BaseSequence {
+public class GenericBaseSequence extends LinearSequence {
     final Base[] sequenceBases;
     final Base[] complementBases;
-    final BaseSequence complementBaseSequence;
+    final LinearSequence complementBaseSequence;
     final String sequenceString;
     final String complementString;
     
-    final Map<BaseSequenceProperty,String> propertyValues;
+    final Map<SequenceProperty,String> propertyValues;
  
     GenericBaseSequence(Base[] sequence){
         sequenceBases = sequence.clone();
@@ -61,7 +61,7 @@ public class GenericBaseSequence implements BaseSequence {
         propertyValues = new ConcurrentHashMap<>();
     }
     
-    GenericBaseSequence(BaseSequence[] subSequences){
+    GenericBaseSequence(LinearSequence[] subSequences){
         int numberOfSubsequences = subSequences.length;
         
         Base[][] bases = new Base[numberOfSubsequences][];
@@ -86,32 +86,31 @@ public class GenericBaseSequence implements BaseSequence {
         return new GenericBaseSequence(sequence);
     }
     
-    public static GenericBaseSequence newFromBaseSequences(BaseSequence[] sequences){
+    public static GenericBaseSequence newFromBaseSequences(LinearSequence[] sequences){
         return new GenericBaseSequence(sequences);
     }
 
-    @Override
-    public BaseSequence getComplement() {
+    
+    public LinearSequence getComplement() {
         return complementBaseSequence;
     }
     
-    @Override
+    
     public Base[] getComplementBases() {
         return complementBases.clone();
     }
 
-    @Override
+    
     public Base[] getBases() {
         return sequenceBases.clone();
     }
     
-    @Override
-    public String getString(){
+    public String getSequenceString(){
         return sequenceString;
     }
 
-    @Override
-    public String getPropertyValue(BaseSequenceProperty property) {
+    
+    public String getPropertyValue(SequenceProperty property) {
         return propertyValues.computeIfAbsent(property,x->x.calculateValue(this));
     }
     

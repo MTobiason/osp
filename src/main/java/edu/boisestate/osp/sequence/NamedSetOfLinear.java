@@ -21,19 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.design;
+package edu.boisestate.osp.sequence;
 
-import java.util.Map;
-import edu.boisestate.osp.BaseSequence;
+import edu.boisestate.osp.sequence.LinearSequence;
 
 /**
  *
  * @author mtobi
  */
-public interface UpdatedDesign extends Design{
-    Map<String,BaseSequence> getPreviousCircularStrandSequences();
-    Map<String,BaseSequence> getPreviousLinearStrandSequences();
-    Map<String,BaseSequence> getPreviousVariableSequences();
-    String getPreviousPropertyValue(DesignProperty property);
-    DesignPropertyReport getPreviousPropertyReport(DesignProperty property);
+public interface NamedSetOfLinear{
+    LinearSequence getLinear(String name);
+    LinearSequence[] getLinear(String[] names);
 }

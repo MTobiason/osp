@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.design;
+package edu.boisestate.osp.seqevo;
 
 import java.util.Map;
 
@@ -29,7 +29,6 @@ import java.util.Map;
  *
  * @author mtobi
  */
-public interface DesignPropertyReport {
-    String getName();
-    String getValue();
+public interface ISeqEvoOptimizer {
+    ISeqEvoOptimizationReport optimize(Map<String,String> parameters, ISeqEvoAnalyzer analyzer, ISeqEvoDesign initialDesign);
 }

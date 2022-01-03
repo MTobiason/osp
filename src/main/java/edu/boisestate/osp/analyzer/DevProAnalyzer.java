@@ -1,42 +1,60 @@
+/*
+ * The MIT License
+ *
+ * Copyright 2021 mtobi.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+package edu.boisestate.osp.analyzer;
 
-
-import java.util.TreeMap;
-import java.util.Map;
-import java.util.Arrays;
+import edu.boisestate.osp.seqevo.ISeqEvoAnalyzer;
+import edu.boisestate.osp.sequence.Base;
+import edu.boisestate.osp.sequence.LinearSequence;
+import edu.boisestate.osp.structure.SimpleSecondaryStructure;
+import java.math.BigInteger;
 import java.util.ArrayList;
-
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.stream.IntStream;
 import java.util.List;
-import java.math.BigInteger;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
-/**
- * Calculates properties of an Oligo-set
- *
- *
- * @author Tobiason
- * @version 1.0
- * @date 2021-01-29
-*/
+import java.util.stream.IntStream;
 
-public class Analyzer 
+public class DevProAnalyzer implements ISeqEvoAnalyzer
 {
-	public Analyzer()
+	public DevProAnalyzer()
 	{
 	}
 	
 	/**
 	* Calculate and return all intra-oligo structures in the Sequence "IS".
 	*
-	* @param IS Abbreviation of Incoming-Sequence
+	* @param sequence Abbreviation of Incoming-Sequence
 	*/
 	
-	private static WCStructureSet getUniqueIntraOligoStructures(Sequence IS)
+	private static SimpleSecondaryStructure[] getUniqueIntramolecularStructures(LinearSequence sequence)
 	{
-		Sequence S1 = IS;
-		Sequence S2 = IS;
-		Base[] S1bases = Sequence.getBases(IS);
+		LinearSequence S1 = sequence;
+		LinearSequence S2 = sequence;
+		Base[] S1bases = S1.getBases();
 		Base[] S2bases = S1bases;
 		int S1length = S1bases.length;
 		int S2length = S2bases.length;
@@ -532,7 +550,7 @@ public class Analyzer
 		Collection<WCStructure> allStructuresCollection = 
 			IntStream.range(0,b2Max+1)
 			.parallel()
-			.mapToObj( j->
+			.mapToObj(j->
 			{
 				//StructureProfile ASP = new StructureProfile();
 				

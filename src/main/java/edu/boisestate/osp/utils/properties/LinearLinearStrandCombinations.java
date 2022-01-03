@@ -23,7 +23,6 @@
  */
 package edu.boisestate.osp.utils.properties;
 
-import edu.boisestate.osp.BaseSequence;
 import edu.boisestate.osp.design.Design;
 import edu.boisestate.osp.design.DesignProperty;
 import edu.boisestate.osp.design.DesignPropertyReport;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import edu.boisestate.osp.sequence.LinearSequence;
 
 /**
  *
@@ -53,12 +53,12 @@ public class LinearLinearStrandCombinations implements DesignProperty {
 
     @Override
     public DesignPropertyReport calculateReport(Design design) {
-        return GenericDesignPropertyReport.getNew(propertyName,calculateValue(design));
+        return GenericDesignPropertyReport.getNew(propertyName,getValue(design));
     }
 
     @Override
-    public String calculateValue(Design design) {
-        Map<String,BaseSequence> linearStrands = design.getLinearStrandSequences();
+    public String getValue(Design design) {
+        Map<String,LinearSequence> linearStrands = design.getLinearStrandSequences();
         
         String[] linearStrandNames = linearStrands.keySet().toArray(new String[0]);
         

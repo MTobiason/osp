@@ -21,14 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp;
+package edu.boisestate.osp.seqevo;
+
+import edu.boisestate.osp.sequence.LinearSequence;
 
 /**
  *
  * @author mtobi
  */
-public interface Base {
-    char getChar();
-    boolean isComplementary(Base base);
-    Base getComplement();
+public interface ISeqEvoValidator {
+    boolean isValid(ISeqEvoDesign design);
+    boolean isValid(LinearSequence sequence);
 }

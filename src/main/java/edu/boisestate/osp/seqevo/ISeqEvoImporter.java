@@ -21,15 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.design;
+package edu.boisestate.osp.seqevo;
 
-import edu.boisestate.osp.design.Design;
+import edu.boisestate.osp.sequence.Base;
+import edu.boisestate.osp.sequence.LinearSequence;
+import java.util.Map;
 
 /**
  *
  * @author mtobi
  */
-public interface DesignProperty {
-    String getName();
-    String getValue(Design design);
+public interface ISeqEvoImporter {
+    Map<String,String> importParametersFromTxt(String filePath);
+    Map<String,LinearSequence> importLinearSequencesFromTxt(String filePath, Base[] allBases);
+    Map<String,String[]> importStrandDomainsFromTxt(String filePath);
 }

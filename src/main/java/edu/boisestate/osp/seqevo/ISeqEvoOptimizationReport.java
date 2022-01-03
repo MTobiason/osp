@@ -21,15 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.design;
-
-import edu.boisestate.osp.design.Design;
+package edu.boisestate.osp.seqevo;
 
 /**
  *
  * @author mtobi
  */
-public interface DesignProperty {
-    String getName();
-    String getValue(Design design);
+public interface ISeqEvoOptimizationReport {
+    
 }

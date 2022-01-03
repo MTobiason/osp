@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.utils.SeqEvo;
+package edu.boisestate.osp.seqevo;
 
 import java.io.File;
 import java.math.BigInteger;

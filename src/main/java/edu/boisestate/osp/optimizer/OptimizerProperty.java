@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.design;
+package edu.boisestate.osp.optimizer;
 
 import edu.boisestate.osp.design.Design;
 
@@ -29,7 +29,16 @@ import edu.boisestate.osp.design.Design;
  *
  * @author mtobi
  */
-public interface DesignProperty {
-    String getName();
+public interface OptimizerProperty {
+    /**
+     * Compares the property value of design1 to design2. Returns 1 if design1's value is larger.
+     * Returns 0 if values are equal.
+     * Returns -1 if design1's value is smaller.
+     * 
+     * 
+     * @param design1
+     * @param design2
+     */
+    int compareProperty(Design design1, Design design2);
     String getValue(Design design);
 }
