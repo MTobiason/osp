@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2021 mtobi.
+ * Copyright 2022 mtobi.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,13 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.sequence;
+package edu.boisestate.osp.seqevo;
+
+import java.util.Map;
 
 /**
  *
  * @author mtobi
  */
-
-public interface SequenceProperty {
-    String calculateValue(Sequence sequence);
+public interface IAnalyzerReport {
+    String getPropertyValue(String propertyName);
+    String[] getPropertyValues(String propertyName);
+    Map<String,String> getParameterValues();
 }

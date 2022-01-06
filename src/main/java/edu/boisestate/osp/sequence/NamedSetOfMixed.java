@@ -27,9 +27,12 @@ package edu.boisestate.osp.sequence;
  *
  * @author mtobi
  */
+
 public interface NamedSetOfMixed {
+    CircularSequence[] getCircular();
     CircularSequence getCircular(String name);
     CircularSequence[] getCircular(String[] names);
+    LinearSequence[] getLinear();
     LinearSequence getLinear(String name);
     LinearSequence[] getLinear(String[] names);
 }

@@ -21,13 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.sequence;
+package edu.boisestate.osp.seqevo;
+
+import java.util.Map;
 
 /**
  *
  * @author mtobi
  */
-
-public interface SequenceProperty {
-    String calculateValue(Sequence sequence);
+public interface IOptimizer {
+    IOptimizerReport optimize(IOptimizerRequest request);
 }

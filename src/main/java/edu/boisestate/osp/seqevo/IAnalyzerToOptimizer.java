@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2021 mtobi.
+ * Copyright 2022 mtobi.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,13 +21,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.sequence;
+package edu.boisestate.osp.seqevo;
+
+import edu.boisestate.osp.sequence.CircularSequence;
+import edu.boisestate.osp.sequence.LinearSequence;
 
 /**
  *
  * @author mtobi
  */
-
-public interface SequenceProperty {
-    String calculateValue(Sequence sequence);
+public interface IAnalyzerToOptimizer {
+    IAnalyzerReport getReport(IDomainDesign design, IAnalyzerRequest request);
+    IAnalyzerReport[] getReports(IDomainDesign[] design, IAnalyzerRequest request);
+    IAnalyzerReport[] getUpdatedReport(IDomainDesign previousDesign, IDomainDesign newDesigns, IAnalyzerRequest request);
+    IAnalyzerReport[] getUpdatedReports(IDomainDesign previousDesign, IDomainDesign[] newDesigns, IAnalyzerRequest request);
+    
+    boolean checkValidity(IDomainDesign design);
+    boolean checkValidity(LinearSequence sequence);
+    boolean checkValidity(LinearSequence[] sequences);
+    boolean checkValidity(CircularSequence sequence);
+    boolean checkValidity(CircularSequence[] sequences);
 }

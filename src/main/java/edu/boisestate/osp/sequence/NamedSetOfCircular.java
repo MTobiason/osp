@@ -29,6 +29,7 @@ import edu.boisestate.osp.sequence.CircularSequence;
  *
  * @author mtobi
  */
+
 public interface NamedSetOfCircular {
     CircularSequence getCircular(String name);
     CircularSequence[] getCircular(String[] names);

@@ -21,13 +21,52 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.sequence;
+package edu.boisestate.osp.util;
+
+import edu.boisestate.osp.sequence.Base;
 
 /**
  *
  * @author mtobi
  */
+public class GenericBase extends Base{
+    final char baseName;
+    final char complementName;
+    final Base complement;
 
-public interface SequenceProperty {
-    String calculateValue(Sequence sequence);
+    GenericBase(char baseName, char complementName){
+        this.baseName = baseName;
+        this.complementName = complementName; 
+        complement = new GenericBase(complementName,baseName,this);
+    }
+
+    GenericBase(char baseName, char complementName, GenericBase complementaryBase){
+        this.baseName = baseName;
+        this.complementName = complementName; 
+        complement = complementaryBase;
+    }
+    
+    public static GenericBase getNew(char baseName,char baseComplement){
+        return new GenericBase(baseName,baseComplement);
+    }
+
+    @Override
+    public char getChar(){
+    return baseName;
+    }
+
+    @Override
+    public boolean isComplementary(Base base){
+        return base.toString().equals(complementName);
+    }
+
+    @Override
+    public Base getComplement(){
+        return complement;
+    }
+    
+    @Override
+    public boolean equals(Base base){
+        return (baseName == base.getChar());
+    }
 }

@@ -27,6 +27,7 @@ package edu.boisestate.osp.sequence;
  *
  * @author mtobi
  */
+
 public abstract class CircularSequence extends Sequence{
-    abstract CircularSequence getComplement();
+    abstract public CircularSequence getComplement();
 }

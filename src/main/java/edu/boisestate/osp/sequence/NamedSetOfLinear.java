@@ -29,6 +29,7 @@ import edu.boisestate.osp.sequence.LinearSequence;
  *
  * @author mtobi
  */
+
 public interface NamedSetOfLinear{
     LinearSequence getLinear(String name);
     LinearSequence[] getLinear(String[] names);

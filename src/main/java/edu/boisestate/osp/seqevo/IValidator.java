@@ -21,13 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.sequence;
+package edu.boisestate.osp.seqevo;
+
+import edu.boisestate.osp.sequence.CircularSequence;
+import edu.boisestate.osp.sequence.LinearSequence;
 
 /**
  *
  * @author mtobi
  */
-
-public interface SequenceProperty {
-    String calculateValue(Sequence sequence);
+public interface IValidator {
+    boolean isValid(LinearSequence sequence);
+    boolean isValid(CircularSequence sequence);
 }

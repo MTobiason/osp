@@ -21,13 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.sequence;
+package edu.boisestate.osp.util;
 
 /**
  *
  * @author mtobi
  */
-
-public interface SequenceProperty {
-    String calculateValue(Sequence sequence);
+public class OrigamiScorer {
+    String PFP;
+    
+    OrigamiScorer(String IPFP){
+        PFP = IPFP;
+    }
+    
+    Double getScore(){
+        return null;
+    }
+    
+    
 }

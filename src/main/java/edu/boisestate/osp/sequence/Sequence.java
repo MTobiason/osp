@@ -27,6 +27,7 @@ package edu.boisestate.osp.sequence;
  *
  * @author mtobi
  */
+
 public abstract class Sequence {
     public abstract Base[] getBases();
     public abstract Base[] getComplementBases();

@@ -21,13 +21,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.sequence;
+package edu.boisestate.osp.util;
+
+import edu.boisestate.osp.design.DesignPropertyReport;
 
 /**
  *
  * @author mtobi
  */
+public class GenericDesignPropertyReport implements DesignPropertyReport {
+    String name;
+    String value;
 
-public interface SequenceProperty {
-    String calculateValue(Sequence sequence);
+    GenericDesignPropertyReport(String name, String value){
+        this.name = name;
+        this.value = value;
+    }
+
+    @Override
+    public String getName(){
+        return name;
+    }
+
+    @Override
+    public String getValue() {
+        return value;
+    }
+    
+    public static GenericDesignPropertyReport getNew(String name, String value){
+        return new GenericDesignPropertyReport(name,value);
+    }
 }
