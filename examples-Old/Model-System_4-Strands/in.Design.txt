@@ -1,0 +1,8 @@
+//	Input Design File for SeqEvo 2.0
+//	Format of each line:	Strand-Name	-tab-	Space-separated list of domains
+//	Strand names can be composed of characters a-z, A-Z, symbols '-' and '_', and numbers 0-9. Strand names must start with a letter and cannot contain spaces.
+// 	The list of domains may contain: any of the domain-names provided in the "Domains file", any of these domain-names proceeded by a 'c.' to denote the the binding complement of a domain, and the characters A, T, C or G.
+Strand-1	Domain-1 Domain-3
+Strand-2	c.Domain-3 c.Domain-1
+Strand-3	Domain-2 Domain-4
+Strand-4	c.Domain-4 c.Domain-2

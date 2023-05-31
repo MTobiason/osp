@@ -1,0 +1,5 @@
+//	Input "Domains File" for SeqEvo 2.0
+//	Format of each line:	Domain-Name	-tab-	v/f	-tab-	Domain-Sequence
+//	Domain names can be composed of characters a-z, A-Z, symbols '-' and '_', and numbers 0-9. Domain names must start with a letter and cannot contain spaces.
+//	The v or f character is used to declare if a domain should be variable (is manipulated by the program) or fixed (is not manipulated by the program).
+// 	A domain-sequence must be composed of 'A', 'T', 'C', and 'G' characters and contain no spaces.

@@ -1,0 +1,2 @@
+Top-Strand	A
+Bottom-Strand	c.A

@@ -1,0 +1,2 @@
+A	ATCG
+B	T
