@@ -31,49 +31,286 @@ import java.util.Map;
  * @author mtobi
  */
 public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
-    private boolean checkEdges(Map<String,int[]> encodedOligomers, String domainName){
+    final int maxAA;
+    final int maxCC;
+    final int maxGG;
+    final int maxTT;
+    
+    final int encodedA;
+    final int encodedC;
+    final int encodedG;
+    final int encodedT;
+    
+    /**
+     * Creates a validator which will return false if a given encoding contains 
+     * a stretch of consecutive bases longer than the provided thresholds.
+     * @param maxAA
+     * @param maxCC
+     * @param maxGG
+     * @param maxTT
+     */
+    public Validator(ICoder coder, int maxAA, int maxCC, int maxGG, int maxTT){
+        this.encodedA = coder.getEncodedA();
+        this.encodedC = coder.getEncodedC();
+        this.encodedG = coder.getEncodedG();
+        this.encodedT = coder.getEncodedT();
+        
+        this.maxAA = maxAA;
+        this.maxCC = maxCC;
+        this.maxGG = maxGG;
+        this.maxTT = maxTT;
+    }
+    
+    public interface ICoder{
+        int getEncodedA();
+        int getEncodedC();
+        int getEncodedG();
+        int getEncodedT();
+    }
+    
+    // returns false if any sequence contains a stretch longer than the 
+    // corresponding threshold OR a zero.
+    private boolean isValid(int[] encodedSequence){
+        int previousBase = 0;
+        int currentRun = 1;
+        for (int base : encodedSequence){
+            if (base == 0) return false;
+            if (base == previousBase){
+                currentRun++;
+                if (previousBase == encodedA){
+                    if (currentRun > maxAA) return false;
+                } else if (previousBase == encodedC){
+                    if (currentRun > maxCC) return false;
+                } else if (previousBase == encodedG){
+                    if (currentRun > maxGG) return false;
+                } else if (previousBase == encodedT){
+                    if (currentRun > maxTT) return false;
+                }
+            } else {
+                currentRun = 1;
+            }
+            previousBase = base;
+        }
+        return true;
+    }
+    
+    // returns false if any sequence contains a stretch longer than the 
+    // corresponding threshold OR a zero.
+    private boolean isValid(int[][] encodedSequences){
+        int previousBase;
+        int currentRun;
+        for(int[] encodedSequence : encodedSequences){
+            previousBase = 0;
+            currentRun = 1;
+            for (int base : encodedSequence){
+                if (base == 0) return false;
+                if (base == previousBase){
+                    currentRun++;
+                    if (previousBase == encodedA){
+                        if (currentRun > maxAA) return false;
+                    } else if (previousBase == encodedC){
+                        if (currentRun > maxCC) return false;
+                    } else if (previousBase == encodedG){
+                        if (currentRun > maxGG) return false;
+                    } else if (previousBase == encodedT){
+                        if (currentRun > maxTT) return false;
+                    }
+                } else {
+                    currentRun = 1;
+                }
+                previousBase = base;
+            }
+        }
+        return true;
+    }
+    
+    private boolean isValid(IEncodedDomainBasedNetwork network, int updatedDomainIndex){
+        int[][] encodedOligomers = network.getOligomerSequencesEncoded();
+        int[] updatedDomainSequence = network.getVariableDomainSequencesEncoded()[updatedDomainIndex];
+        
+        // check sequence of the new domain.
+        if (!isValid(updatedDomainSequence)) return false;
+        
+        // check edges of where the new domain was added.
         //check validity everywhere the domain occurs. (just on the edges, everything else is already checked.)
-        int length = dl.get(domainName);
-        for(Map.Entry<String,int[]> entry : dtom.get(domainName).entrySet()){
-            String oligomer = entry.getKey();
+        int length = updatedDomainSequence.length;
+        Map<Integer,int[]> oligomerIndices = network.getVariableDomainOligomerIndices().get(updatedDomainIndex);
+        for(Map.Entry<Integer,int[]> entry : oligomerIndices.entrySet()){
+            Integer oligomerIndex = entry.getKey();
             int[] lefts = entry.getValue();
             for (int coord : lefts){
-                if (!util.checkForStretches(encodedOligomers.get(oligomer),coord,maxAA,maxCC,maxGG,maxTT)){
+                if (!util.checkForStretches(encodedOligomers[oligomerIndex],coord,maxAA,maxCC,maxGG,maxTT)){
                     return false;
                 }
-                if (!util.checkForStretches(encodedOligomers.get(oligomer),coord+length-1,maxAA,maxCC,maxGG,maxTT)){
+                if (!util.checkForStretches(encodedOligomers[oligomerIndex],coord+length-1,maxAA,maxCC,maxGG,maxTT)){
+                    return false;
+                }
+            }
+        }
+        
+        oligomerIndices = network.getVariableDomainOligomerComplementIndices().get(updatedDomainIndex);
+        for(Map.Entry<Integer,int[]> entry : oligomerIndices.entrySet()){
+            Integer oligomerIndex = entry.getKey();
+            int[] lefts = entry.getValue();
+            for (int coord : lefts){
+                if (!util.checkForStretches(encodedOligomers[oligomerIndex],coord,maxAA,maxCC,maxGG,maxTT)){
+                    return false;
+                }
+                if (!util.checkForStretches(encodedOligomers[oligomerIndex],coord+length-1,maxAA,maxCC,maxGG,maxTT)){
                     return false;
                 }
             }
         }
 
-        //check validity everywhere the complement occurs.
-        for(Map.Entry<String,int[]> entry : ctom.get(domainName).entrySet()){
-            String oligomer = entry.getKey();
-            int[] lefts = entry.getValue();
-            for (int coord : lefts){
-                if (!util.checkForStretches(encodedOligomers.get(oligomer),coord,maxAA,maxCC,maxGG,maxTT)){
-                    return false;
+        return true;
+    }
+    
+    // returns false if any sequence contains any stretch longer than the 
+    // corresponding threshold.
+    private boolean isValidPartial(int[]encodedSequence){
+        int previousBase = 0;
+        int currentRun = 1;
+        for (int base : encodedSequence){
+            if (base == previousBase){
+                currentRun++;
+                if (previousBase == encodedA){
+                    if (currentRun > maxAA) return false;
+                } else if (previousBase == encodedC){
+                    if (currentRun > maxCC) return false;
+                } else if (previousBase == encodedG){
+                    if (currentRun > maxGG) return false;
+                } else if (previousBase == encodedT){
+                    if (currentRun > maxTT) return false;
                 }
-                if (!util.checkForStretches(encodedOligomers.get(oligomer),coord+length-1,maxAA,maxCC,maxGG,maxTT)){
-                    return false;
+            } else {
+                currentRun = 1;
+            }
+            previousBase = base;
+        }
+        return true;
+    }
+    
+    // returns false if any sequence contains any stretch longer than the 
+    // corresponding threshold.
+    private boolean isValidPartial(int[][] encodedSequences){
+        int previousBase;
+        int currentRun;
+        for(int[] encodedSequence : encodedSequences){
+            previousBase = 0;
+            currentRun = 1;
+            for (int base : encodedSequence){
+                if (base == previousBase){
+                    currentRun++;
+                    if (previousBase == encodedA){
+                        if (currentRun > maxAA) return false;
+                    } else if (previousBase == encodedC){
+                        if (currentRun > maxCC) return false;
+                    } else if (previousBase == encodedG){
+                        if (currentRun > maxGG) return false;
+                    } else if (previousBase == encodedT){
+                        if (currentRun > maxTT) return false;
+                    }
+                } else {
+                    currentRun = 1;
                 }
+                previousBase = base;
             }
         }
         return true;
     }
-
-    private boolean isValid(Map<String,int[]> encodedOligomers, Map<String,int[]> variableDomains){
-
-        for(Map.Entry<String,int[]> entry : variableDomains.entrySet()){
-            String dn = entry.getKey();
-            int[] es = entry.getValue();
-            if (!util.checkForStretches(es,maxAA,maxCC,maxGG,maxTT)) return false;
-            if (!checkEdges(encodedOligomers,dn)) return false;
+    
+    // returns false if any sequence contains any stretch longer than the 
+    // corresponding threshold.
+    private boolean isValidPartial(IEncodedDomainBasedNetwork network, int updatedDomainIndex){
+        int[][] encodedOligomers = network.getOligomerSequencesEncoded();
+        int[] updatedDomainSequence = network.getVariableDomainSequencesEncoded()[updatedDomainIndex];
+        
+        // check sequence of the new domain.
+        if (!isValidPartial(updatedDomainSequence)) return false;
+        
+        // check edges of where the new domain was added.
+        //check validity everywhere the domain occurs. (just on the edges, everything else is already checked.)
+        int length = updatedDomainSequence.length;
+        Map<Integer,int[]> oligomerIndices = network.getVariableDomainOligomerIndices().get(updatedDomainIndex);
+        for(Map.Entry<Integer,int[]> entry : oligomerIndices.entrySet()){
+            Integer oligomerIndex = entry.getKey();
+            int[] lefts = entry.getValue();
+            for (int coord : lefts){
+                if (!util.checkForStretches(encodedOligomers[oligomerIndex],coord,maxAA,maxCC,maxGG,maxTT)){
+                    return false;
+                }
+                if (!util.checkForStretches(encodedOligomers[oligomerIndex],coord+length-1,maxAA,maxCC,maxGG,maxTT)){
+                    return false;
+                }
+            }
+        }
+        
+        oligomerIndices = network.getVariableDomainOligomerComplementIndices().get(updatedDomainIndex);
+        for(Map.Entry<Integer,int[]> entry : oligomerIndices.entrySet()){
+            Integer oligomerIndex = entry.getKey();
+            int[] lefts = entry.getValue();
+            for (int coord : lefts){
+                if (!util.checkForStretches(encodedOligomers[oligomerIndex],coord,maxAA,maxCC,maxGG,maxTT)){
+                    return false;
+                }
+                if (!util.checkForStretches(encodedOligomers[oligomerIndex],coord+length-1,maxAA,maxCC,maxGG,maxTT)){
+                    return false;
+                }
+            }
         }
 
         return true;
     }
 
+    /**
+     * Returns true if the network is valid and false otherwise.
+     * @param network
+     * @return
+     */
+    public boolean isValidNetwork(IEncodedDomainBasedNetwork network){
+        int[][] encodedOligomers = network.getOligomerSequencesEncoded();
+        
+        if (!isValid(encodedOligomers)) return false;
+
+        return true;
+    }
+    
+    /**
+         * For a previously valid network, returns true if the network is still 
+         * valid after domain updatedDomain has been updated and false 
+         * otherwise.
+         * @param network
+         * @param updatedDomainIndex
+         * @return
+         */
+    public boolean isValidNetwork(IEncodedDomainBasedNetwork network, int updatedDomainIndex){
+        return this.isValid(network,updatedDomainIndex);
+    }
+
+    /**
+     * Returns true if the partial network is valid and false otherwise. A 
+     * partial network may contain 0's in encoded sequences.
+     * @param network
+     * @return
+     */
+    public boolean isValidPartialNetwork(IEncodedDomainBasedNetwork network){
+        int[][] encodedOligomers = network.getOligomerSequencesEncoded();
+        
+        if (!isValidPartial(encodedOligomers)) return false;
+
+        return true;
+    }
+    
+    /**
+     * For a previously valid partial network, returns true if the network 
+     * is still valid after domain updatedDomain has been updated and false 
+     * otherwise.A partial network may contain 0's in encoded sequences.
+     * @param network
+     * @param updatedDomain
+     * @return
+     */
+    public boolean isValidPartialNetwork(IEncodedDomainBasedNetwork network, int updatedDomainIndex){
+        return this.isValidPartial(network, updatedDomainIndex);
+    }
     
 }

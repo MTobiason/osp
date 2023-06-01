@@ -126,11 +126,76 @@ public class EncodedDomainBasedNetworkFactory {
         }
 
         this.domainSelectionBag = getDomainSelectionBag(variableDomains);
-        this.fixedDomainLengths = getDomainLengths(this.fixedDomainSequences);
-        this.variableDomainLengths = getDomainLengths(this.variableDomainInitialSequences);
+        this.fixedDomainLengths = util.getDomainLengths(this.fixedDomainSequences);
+        this.variableDomainLengths = util.getDomainLengths(this.variableDomainInitialSequences);
         this.vdtom = getVariableDomainToOligomerMap();
         this.vdctom = getVariableDomainComplementToOligomerMap();
         this.firstPartialEncodedOligomerSequences = assembleFirstPartialSolution();
+    }
+    
+    public interface IValidator{
+        
+        /**
+         * Returns true if the network is valid and false otherwise.
+         * @param network
+         * @return
+         */
+        boolean isValidNetwork(IEncodedDomainBasedNetwork network);
+        
+        /**
+         * For a previously valid network, returns true if the network is still 
+         * valid after domain updatedDomain has been updated and false 
+         * otherwise.
+         * @param network
+         * @param updatedDomainIndex
+         * @return
+         */
+        boolean isValidNetwork(IEncodedDomainBasedNetwork network, int updatedDomainIndex);
+        
+        /**
+         * Returns true the partial network is valid and false otherwise.A partial network may contain 0's in encoded sequences.
+         * @param network
+         * @return
+         */
+        boolean isValidPartialNetwork(IEncodedDomainBasedNetwork network);
+        
+        /**
+         * For a previously valid partial network, returns true if the network 
+         * is still valid after domain updatedDomain has been updated and false 
+         * otherwise.A partial network may contain 0's in encoded sequences.
+         * @param network
+         * @param updatedDomainIndex
+         * @return
+         */
+        boolean isValidPartialNetwork(IEncodedDomainBasedNetwork network, int updatedDomainIndex);
+    }
+    
+    public interface ICoder{
+        /**
+         * Generates an encoding for each of the given sequences. Encoding must 
+         * be an integer value for each base. A value of zero indicates a blank
+         * base.
+         * @param Sequences
+         * @return
+         */
+        int[][] encode(String[] Sequences);
+        
+        /**
+         * Returns an integer array containing the complement of the given 
+         * encoded sequence.
+         * @param encodedSequence
+         * @return
+         */
+        int[] getComplement(int[] encodedSequence);
+        
+        /**
+         * Decodes a given encoding back to a string of base-sequences. 
+         * base.
+         * @param encodedSequences
+         * @return
+         */
+        String[] decode(int[][] encodedSequences);
+        
     }
     
     private int[] getDomainSelectionBag(Map<String,String> initialVariableDomains){
@@ -177,11 +242,27 @@ public class EncodedDomainBasedNetworkFactory {
 
         IEncodedDomainBasedNetwork retNetwork = new InnerNetwork(evd,eos);
         
-        if (!validator.isValid(retNetwork)) {
+        if (!validator.isValidNetwork(retNetwork)) {
             System.out.println("Initial oligomers invalid. Replacing with randomly seeded oligomers.");
             retNetwork = getType1Mutation(retNetwork,validator);
         }
         return retNetwork;
+    }
+    
+    private static int[] getType1Mutation(int[] encodedSequence){
+        Random rnd = ThreadLocalRandom.current();
+        int length = encodedSequence.length;
+        int[] newSequence = Arrays.copyOf(encodedSequence,encodedSequence.length);
+        
+        for (int i = length - 1; i > 0; i--) 
+        {
+           int k = rnd.nextInt(i + 1);
+           int a = newSequence[k];
+           newSequence[k] = newSequence[i];
+           newSequence[i] = a;
+        }
+        
+        return newSequence;
     }
     
     IEncodedDomainBasedNetwork getType1Mutation(IEncodedDomainBasedNetwork existingNetwork, IValidator validator){
@@ -221,14 +302,16 @@ public class EncodedDomainBasedNetworkFactory {
                 int[] newDomain;
                 // attempt to randomize the domain
                 do {
-                    newDomain = util.getType1Mutation(oldDomain);
+                    newDomain = getType1Mutation(oldDomain);
+                    newEVD[selectedDomainIndex] = newDomain;
                     newEOS = placeDomain(newEOS,selectedDomainIndex,newDomain);
-                    valid = validator.isValidPartialNetwork(partialNetwork);
+                    partialNetwork.encodedVariableDomains = newEVD;
+                    partialNetwork.encodedOligomers = newEOS;
+                    valid = validator.isValidPartialNetwork(partialNetwork,selectedDomainIndex);
                     attempts2++;
                 } while (attempts2 < 1000 && (!valid));
 
                 if(!valid) break currentSeeding;
-                newEVD[selectedDomainIndex] = newDomain;
             }
             seedings++;
         } while (seedings < 1000 && !valid);
@@ -242,6 +325,71 @@ public class EncodedDomainBasedNetworkFactory {
         return retNet;
     }
 
+    private static int[] getType2Mutation(int[] encodedSequence){
+        Random rnd = ThreadLocalRandom.current();
+        int length = encodedSequence.length;
+        int[] ret = new int[length];
+        int[] newSequence = Arrays.copyOf(encodedSequence, length);
+        // select 2 bases as endpoints of the sub-sequence.
+        int b1 = rnd.nextInt(length);
+        int b2 = rnd.nextInt(length);
+        while(b2 == b1) b2 = rnd.nextInt(length);
+        
+        if (b1 < b2){
+            //left is b1.
+            
+            //remove this subsequence from the new sequence.
+            System.arraycopy(encodedSequence, b2+1, newSequence, b1, length - (b2+1));
+            int newLength = length - (b2-b1+1);
+            
+            //select a location to reinsert the subsequence
+            int b3 = rnd.nextInt(newLength+1);
+            
+            // copy the subsequence back into the return sequence.
+            //copy left. 
+            if (b3 >0){
+                System.arraycopy(newSequence,0,ret,0,b3);
+            }
+            
+            //copy middle
+            System.arraycopy(encodedSequence, b1, ret, b3, b2-b1+1);
+            
+            //copy right
+            if (b3 < newLength){
+                System.arraycopy(newSequence, b3, ret, b3 + b2-b1+1 , newLength-b3);
+            }
+            
+        }
+        if (b2 < b1){
+            //left is b2, but reverse the sequence before re-inserting.
+            
+            //remove this subsequence from the new sequence.
+            System.arraycopy(encodedSequence, b1+1, newSequence, b2, length - (b1+1));
+            int newLength = length - (b1-b2+1);
+            
+            //select a location to reinsert the subsequence
+            int b3 = rnd.nextInt(newLength+1);
+            
+            // copy the subsequence back into the return sequence.
+            //copy left. 
+            if (b3 >0){
+                System.arraycopy(newSequence,0,ret,0,b3);
+            }
+            
+            //reverse and copy middle
+            for (int i = 0 ; i < b1-b2+1; i++){
+                ret[b3+i] = encodedSequence[b1-i];
+            }
+            
+            //copy right
+            if (b3 < newLength){
+                System.arraycopy(newSequence, b3, ret, b3 + b1-b2+1 , newLength-b3);
+            }
+        }
+        
+        return ret;
+    }
+    
     IEncodedDomainBasedNetwork getType2Mutation(IEncodedDomainBasedNetwork existingNetwork, IValidator validator){
         int[][] oldEVD = existingNetwork.getVariableDomainSequencesEncoded();
         int[][] newEVD = Arrays.copyOf(oldEVD,oldEVD.length);
@@ -259,12 +407,12 @@ public class EncodedDomainBasedNetworkFactory {
         int[] newDomain;
         boolean valid = false;
         do {
-            newDomain = util.getType2Mutation(oldDomain);
+            newDomain = getType2Mutation(oldDomain);
+            newEVD[sdi] = newDomain;
             newEOS = placeDomain(newEOS,sdi,newDomain);
             newNetwork.encodedOligomers = newEOS;
-            newEVD[sdi]=newDomain;
             newNetwork.encodedVariableDomains = newEVD;
-            valid = validator.isValid(newNetwork);
+            valid = validator.isValidNetwork(newNetwork,sdi);
             attempts1++;
         } while (attempts1<1000 && (!valid || Arrays.equals(oldDomain,newDomain)));
 
@@ -276,6 +424,22 @@ public class EncodedDomainBasedNetworkFactory {
         return retNet;
     }
 
+    private static int[] getType3Mutation(int[] encodedSequence){
+            Random rnd = ThreadLocalRandom.current();
+            int length = encodedSequence.length;
+            int[] newSequence = new int[length];
+            
+            System.arraycopy(encodedSequence, 0, newSequence, 0, length);
+            int i1 = rnd.nextInt(newSequence.length);
+            int i2 = rnd.nextInt(newSequence.length);
+            while (i2 == i1) i2 = rnd.nextInt(newSequence.length);
+            int a = newSequence[i2];
+            newSequence[i2] = newSequence[i1];
+            newSequence[i1] = a;
+            
+            return newSequence;
+        }
+    
     IEncodedDomainBasedNetwork getType3Mutation(IEncodedDomainBasedNetwork existingNetwork, IValidator validator){
         int[][] oldEVD = existingNetwork.getVariableDomainSequencesEncoded();
         int[][] newEVD = Arrays.copyOf(oldEVD,oldEVD.length);
@@ -293,12 +457,12 @@ public class EncodedDomainBasedNetworkFactory {
         int[] newDomain;
         boolean valid = false;
         do {
-            newDomain = util.getType1Mutation(oldDomain);
+            newDomain = getType3Mutation(oldDomain);
+            newEVD[sdi] = newDomain;
             newEOS = placeDomain(newEOS,sdi,newDomain);
             newNetwork.encodedOligomers = newEOS;
-            newEVD[sdi]=newDomain;
             newNetwork.encodedVariableDomains = newEVD;
-            valid = validator.isValid(newNetwork);
+            valid = validator.isValidNetwork(newNetwork,sdi);
             attempts1++;
         } while (attempts1<1000 && (!valid || Arrays.equals(oldDomain,newDomain)));
 
@@ -388,67 +552,17 @@ public class EncodedDomainBasedNetworkFactory {
         public int[][] getVariableDomainSequencesEncoded() {
             return encodedVariableDomains;
         }
+        
+        @Override
+        public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerIndices(){
+            return vdtom;
+        }
+        
+        @Override
+        public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerComplementIndices(){
+            return vdctom;
+        }
 
-    }
-    
-    public interface IValidator{
-        
-        /**
-         * Returns true if the network is valid and false otherwise.
-         * @param network
-         * @return
-         */
-        boolean isValid(IEncodedDomainBasedNetwork network);
-        
-        /**
-         * Returns true the partial network is valid and false otherwise.A partial network may contain 0's in encoded sequences.
-         * @param network
-         * @return
-         */
-        boolean isValidPartialNetwork(IEncodedDomainBasedNetwork network);
-        
-        /**
-         * For a previously valid partial network, returns true if the network 
-         * is still valid after domain updatedDomain has been updated and false 
-         * otherwise.A partial network may contain 0's in encoded sequences.
-         * @param network
-         * @param updatedDomain
-         * @return
-         */
-        boolean isValidPartialNetwork(IEncodedDomainBasedNetwork network, String updatedDomain);
-    }
-    
-    public interface ICoder{
-        /**
-         * Generates an encoding for each of the given sequences. Encoding must 
-         * be an integer value for each base. A value of zero indicates a blank
-         * base.
-         * @param Sequences
-         * @return
-         */
-        int[][] encode(String[] Sequences);
-        
-        /**
-         * Returns an integer array containing the complement of the given 
-         * encoded sequence.
-         * @param encodedSequence
-         * @return
-         */
-        int[] getComplement(int[] encodedSequence);
-        
-        /**
-         * Decodes a given encoding back to a string of base-sequences. 
-         * base.
-         * @param encodedSequences
-         * @return
-         */
-        String[] decode(int[][] encodedSequences);
-        
-    }
-
-    private int[] getDomainLengths(String[] domains){
-        int[] ret = Arrays.stream(domains).mapToInt(i->i.trim().length()).toArray();
-        return ret;
     }
     
     // creates encoded oligomers which have all variable domains placed, but
@@ -666,7 +780,7 @@ public class EncodedDomainBasedNetworkFactory {
     }
     
     //returns encoded oligomers with the passed domain added.
-    int[][] placeDomain(int[][] encodedOligomerSequences, int domainIndex, int[] domainSequence){
+    private int[][] placeDomain(int[][] encodedOligomerSequences, int domainIndex, int[] domainSequence){
         int[][] ret = Arrays.copyOf(encodedOligomerSequences,encodedOligomerSequences.length);
                 
         //for every oligomer the domain occurs on
@@ -710,8 +824,8 @@ public class EncodedDomainBasedNetworkFactory {
         return ret;
     }
     
-    //returns encoded oligomers with the passed domain added.
-    int[][] placeDomains(int[][] encodedOligomerSequences, int[] domainIndices, int[][] domainSequences){
+    //returns encoded oligomers with the passed domains added.
+    private int[][] placeDomains(int[][] encodedOligomerSequences, int[] domainIndices, int[][] domainSequences){
 
         int[][] ret = new int[encodedOligomerSequences.length][];    
         
@@ -755,6 +869,4 @@ public class EncodedDomainBasedNetworkFactory {
         }
         return ret;
     }
-
-
 }

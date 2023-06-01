@@ -74,13 +74,6 @@ public interface IEncodedDomainBasedNetwork {
     
     // variable domain stuff
     /**
-     * Returns an n x m array of integers where the n'th array represents the 
-     * n'th variable domain domain and the m'th element specifies the m'th base 
-     * in that domain.
-     * @return
-     */
-    int[][] getVariableDomainSequencesEncoded();
-    /**
      * Returns a map specifying the location of each variable domain in the encoded
      * fixed domains array.
      * @return
@@ -88,4 +81,29 @@ public interface IEncodedDomainBasedNetwork {
     Map<String,Integer> getVariableDomainIndices();
     String[] getVariableDomainNames();
     String[] getVariableDomainSequences();
+    /**
+     * Returns an n x m array of integers where the n'th array represents the 
+     * n'th variable domain domain and the m'th element specifies the m'th base 
+     * in that domain.
+     * @return
+     */
+    int[][] getVariableDomainSequencesEncoded();
+    
+    /**
+     * Returns a map which connects a variable domain index to a second map.
+     * The second map connects an oligomer index to an integer array.
+     * Each integer in the integer array indicates a base-index where the domain
+     * starts. 
+     * @return
+     */
+    public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerLocations();
+    
+    /**
+     * Returns a map which connects a variable domain index to a second map.
+     * The second map connects an oligomer index to an integer array.
+     * Each integer in the integer array indicates a base-index where the 
+     * binding complement of the domain starts.
+     * @return
+     */
+    public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerComplementLocations();
 }

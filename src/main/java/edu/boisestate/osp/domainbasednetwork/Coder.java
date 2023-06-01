@@ -27,6 +27,21 @@ package edu.boisestate.osp.domainbasednetwork;
  *
  * @author mtobi
  */
-public class Coder {
+public class Coder implements EncodedDomainBasedNetworkFactory.ICoder, Validator.ICoder{
     
+    static int getEncodedA(){
+        return -2;
+    }
+    
+    static int getEncodedC(){
+        return -1;
+    }
+    
+    static int getEncodedG(){
+        return 1;
+    }
+    
+    static int getEncodedT(){
+        return 2;
+    }
 }
