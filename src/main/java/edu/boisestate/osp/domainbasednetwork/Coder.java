@@ -29,19 +29,23 @@ package edu.boisestate.osp.domainbasednetwork;
  */
 public class Coder implements EncodedDomainBasedNetworkFactory.ICoder, Validator.ICoder{
     
-    static int getEncodedA(){
+    @Override
+    public int getEncodedA(){
         return -2;
     }
     
-    static int getEncodedC(){
+    @Override
+    public int getEncodedC(){
         return -1;
     }
     
-    static int getEncodedG(){
+    @Override
+    public int getEncodedG(){
         return 1;
     }
     
-    static int getEncodedT(){
+    @Override
+    public int getEncodedT(){
         return 2;
     }
 }

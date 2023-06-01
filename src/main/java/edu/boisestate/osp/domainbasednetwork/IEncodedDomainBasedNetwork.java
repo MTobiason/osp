@@ -96,7 +96,7 @@ public interface IEncodedDomainBasedNetwork {
      * starts. 
      * @return
      */
-    public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerLocations();
+    public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerIndices();
     
     /**
      * Returns a map which connects a variable domain index to a second map.
@@ -105,5 +105,5 @@ public interface IEncodedDomainBasedNetwork {
      * binding complement of the domain starts.
      * @return
      */
-    public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerComplementLocations();
+    public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerComplementIndices();
 }

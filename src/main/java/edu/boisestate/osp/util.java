@@ -407,6 +407,11 @@ public class util {
         return retSequence;
     }
     
+    public static int[] getDomainLengths(String[] domains){
+        int[] ret = Arrays.stream(domains).mapToInt(i->i.trim().length()).toArray();
+        return ret;
+    }
+    
     public static Map<String,int[]> getUniquelyEncodedVariableBases(Map<String,int[]> domains){
         Map<String, int[]> uniqueDomains = new HashMap<>();
         int currentBase = 2; 
@@ -420,103 +425,6 @@ public class util {
             uniqueDomains.put(entry.getKey(), newV);
         }
         return uniqueDomains;
-    }
-    
-    public static int[] getType3Mutation(int[] encodedSequence){
-            Random rnd = ThreadLocalRandom.current();
-            int length = encodedSequence.length;
-            int[] newSequence = new int[length];
-            
-            System.arraycopy(encodedSequence, 0, newSequence, 0, length);
-            int i1 = rnd.nextInt(newSequence.length);
-            int i2 = rnd.nextInt(newSequence.length);
-            while (i2 == i1) i2 = rnd.nextInt(newSequence.length);
-            int a = newSequence[i2];
-            newSequence[i2] = newSequence[i1];
-            newSequence[i1] = a;
-            
-            return newSequence;
-        }
-    
-    public static int[] getType2Mutation(int[] encodedSequence){
-        Random rnd = ThreadLocalRandom.current();
-        int length = encodedSequence.length;
-        int[] ret = new int[length];
-        int[] newSequence = Arrays.copyOf(encodedSequence, length);
-        // select 2 bases as endpoints of the sub-sequence.
-        int b1 = rnd.nextInt(length);
-        int b2 = rnd.nextInt(length);
-        while(b2 == b1) b2 = rnd.nextInt(length);
-        
-        if (b1 < b2){
-            //left is b1.
-            
-            //remove this subsequence from the new sequence.
-            System.arraycopy(encodedSequence, b2+1, newSequence, b1, length - (b2+1));
-            int newLength = length - (b2-b1+1);
-            
-            //select a location to reinsert the subsequence
-            int b3 = rnd.nextInt(newLength+1);
-            
-            // copy the subsequence back into the return sequence.
-            //copy left. 
-            if (b3 >0){
-                System.arraycopy(newSequence,0,ret,0,b3);
-            }
-            
-            //copy middle
-            System.arraycopy(encodedSequence, b1, ret, b3, b2-b1+1);
-            
-            //copy right
-            if (b3 < newLength){
-                System.arraycopy(newSequence, b3, ret, b3 + b2-b1+1 , newLength-b3);
-            }
-            
-        }
-        if (b2 < b1){
-            //left is b2, but reverse the sequence before re-inserting.
-            
-            //remove this subsequence from the new sequence.
-            System.arraycopy(encodedSequence, b1+1, newSequence, b2, length - (b1+1));
-            int newLength = length - (b1-b2+1);
-            
-            //select a location to reinsert the subsequence
-            int b3 = rnd.nextInt(newLength+1);
-            
-            // copy the subsequence back into the return sequence.
-            //copy left. 
-            if (b3 >0){
-                System.arraycopy(newSequence,0,ret,0,b3);
-            }
-            
-            //reverse and copy middle
-            for (int i = 0 ; i < b1-b2+1; i++){
-                ret[b3+i] = encodedSequence[b1-i];
-            }
-            
-            //copy right
-            if (b3 < newLength){
-                System.arraycopy(newSequence, b3, ret, b3 + b1-b2+1 , newLength-b3);
-            }
-        }
-        
-        return ret;
-    }
-    
-    public static int[] getType1Mutation(int[] encodedSequence){
-        Random rnd = ThreadLocalRandom.current();
-        int length = encodedSequence.length;
-        int[] newSequence = Arrays.copyOf(encodedSequence,encodedSequence.length);
-        
-        for (int i = length - 1; i > 0; i--) 
-        {
-           int k = rnd.nextInt(i + 1);
-           int a = newSequence[k];
-           newSequence[k] = newSequence[i];
-           newSequence[i] = a;
-        }
-        
-        return newSequence;
     }
     
     public static Map<String,String> decode(Map<String,int[]> sequences){
