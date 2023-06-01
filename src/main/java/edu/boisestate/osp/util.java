@@ -363,11 +363,22 @@ public class util {
         return retCount;
     }
     
-    public static Map<String,int[]> getBlankEncodedSequences(Map<String,String> encodedSequences){
-        Map<String,int[]> ret = new HashMap<>();
+    public static int[][] getBlankEncodedSequences(Map<String,String> encodedSequences){
+        int[][] ret = new int[encodedSequences.size()][];
+        
         
         for (Map.Entry<String,String> entry : encodedSequences.entrySet()){
             ret.put(entry.getKey(),new int[entry.getValue().trim().length()]);
+        }
+        
+        return ret;
+    }
+    
+    public static int[][] getBlankEncodedSequences(int[] sequenceLengths){
+        int[][] ret = new int[sequenceLengths.length][];
+        
+        for (int i =0; i < sequenceLengths.length; i++){
+            ret[i] = new int[sequenceLengths[i]];
         }
         
         return ret;

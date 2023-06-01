@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import edu.boisestate.osp.domainbasednetwork.IEncodedDomainBasedNetwork;
 
 /**
  *
@@ -146,6 +147,14 @@ public class SeqEvo {
         nf = new NetworkFactory(parameters, fixedDomains, variableDomains, oligomerDomains);
         usedParameters.putAll(nf.getUsedParameters());
     }
+    
+    /**
+     * Creates a new instance of the SeqEvo optimizer for optimizing the provided network.
+     * @param parameters 
+     * @param fixedDomains
+     * @param variableDomains
+     * @param oligomerDomains
+     */
     
     public SeqEvo(Map<String,String> parameters, Map<String,String> fixedDomains, Map<String,String> variableDomains, Map<String,String[]> oligomerDomains){
         usedParameters = new HashMap<>();
@@ -377,18 +386,7 @@ public class SeqEvo {
         }
     }
     
-    private interface Network {
-        Map<String,String> getUsedParameters();
-        Map<String,String> getFixedDomains(); // fixed-domain-sequences
-        Map<String,String> getVariableDomains(); // variable-domain-sequences
-        Map<String,String[]> getOligomerDomains(); //oligomer-domains
-        Map<String,String> getOligomerSequences(); // oligomer-sequences
-        
-        Map<String,int[]> getEncodedFixedDomains();
-        Map<String,int[]> getEncodedVariableDomains();
-        Map<String,int[]> getEncodedOligomerSequences();
-        
-        String getScore();
+    private interface Network extends IEncodedDomainBasedNetwork{
     }
     
     private class NetworkFactory{
@@ -681,7 +679,7 @@ public class SeqEvo {
         }
         
         Network getType1Mutation(Network existingNetwork){
-            final Map<String,int[]> oldEVD = existingNetwork.getEncodedVariableDomains();
+            final Map<String,int[]> oldEVD = existingNetwork.getVariableDomainSequencesEncoded();
             
             Map<String,int[]> newEVD = getValidRandomizedVariableDomains(oldEVD);
             Map<String,int[]> newEOS = util.assembleEncodedOligomers(efd, newEVD, od);
@@ -694,7 +692,7 @@ public class SeqEvo {
         }
         
         Network getType2Mutation(Network existingNetwork){
-            Map<String,int[]> newEVD = new HashMap<>(existingNetwork.getEncodedVariableDomains());
+            Map<String,int[]> newEVD = new HashMap<>(existingNetwork.getVariableDomainSequencesEncoded());
             Map<String,int[]> newEOS = new HashMap<>(existingNetwork.getEncodedOligomerSequences());
             
             //Select a domain for mutation.
@@ -731,7 +729,7 @@ public class SeqEvo {
         }
         
         Network getType3Mutation(Network existingNetwork){
-            Map<String,int[]> newEVD = new HashMap<>(existingNetwork.getEncodedVariableDomains());
+            Map<String,int[]> newEVD = new HashMap<>(existingNetwork.getVariableDomainSequencesEncoded());
             Map<String,int[]> newEOS = new HashMap<>(existingNetwork.getEncodedOligomerSequences());
             
             //Select a domain for mutation.
@@ -854,12 +852,12 @@ public class SeqEvo {
             }
 
             @Override
-            public Map<String, int[]> getEncodedFixedDomains() {
+            public Map<String, int[]> getFixedDomainEncodedSequences() {
                 return efd;
             }
 
             @Override
-            public Map<String, int[]> getEncodedVariableDomains() {
+            public Map<String, int[]> getVariableDomainSequencesEncoded() {
                 return evd;
             }
 
@@ -1238,11 +1236,6 @@ public class SeqEvo {
                 
                 String[][] aoc = dtoc.get(modifiedDomain); //afffected oligomer combinations
                 
-                System.out.println("Domain: "+ modifiedDomain);
-                for(int i : IntStream.range(0,aoc[0].length).toArray()){
-                    System.out.println(aoc[0][i] + ", "+aoc[1][i]);
-                }
-
                 //int S1length;
                 //int b1Max;
                 //int S2length;
