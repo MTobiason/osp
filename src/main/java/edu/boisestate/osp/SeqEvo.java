@@ -38,7 +38,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import edu.boisestate.osp.domainbasednetwork.IEncodedDomainBasedNetwork;
+import edu.boisestate.osp.domainbasednetwork.IDomainBasedEncodedScoredNetwork;
 
 /**
  *
@@ -386,7 +386,7 @@ public class SeqEvo {
         }
     }
     
-    private interface Network extends IEncodedDomainBasedNetwork{
+    private interface Network extends IDomainBasedEncodedScoredNetwork{
     }
     
     private class NetworkFactory{
@@ -1501,6 +1501,8 @@ public class SeqEvo {
         String OFP = parameters.getOrDefault(OFP_LABEL,OFP_DEFAULT);
         usedParameters.put(OFP_LABEL, OFP);
         Map<String,String[]> od = util.importListFromTxt(OFP);
+        
+        
         
         SeqEvo s = new SeqEvo(parameters, fd, ivd, od);
                 

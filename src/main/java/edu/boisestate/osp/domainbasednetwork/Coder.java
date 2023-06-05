@@ -23,11 +23,20 @@
  */
 package edu.boisestate.osp.domainbasednetwork;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.IntStream;
+
 /**
  *
  * @author mtobi
  */
-public class Coder implements EncodedDomainBasedNetworkFactory.ICoder, Validator.ICoder{
+public class Coder implements FactoryDomainBasedEncodedNetwork.ICoder, Validator.ICoder{
+    
+    Coder(){
+        
+    }
     
     @Override
     public int getEncodedA(){
@@ -47,5 +56,88 @@ public class Coder implements EncodedDomainBasedNetworkFactory.ICoder, Validator
     @Override
     public int getEncodedT(){
         return 2;
+    }
+    
+    @Override
+    public String[] decode(int[][] encodedSequences){
+        String[] decoded = new String[encodedSequences.length];
+        for(int i : IntStream.range(0,encodedSequences.length).toArray()){
+            decoded[i] = decode(encodedSequences[i]);
+        }
+        return decoded;
+    }
+    
+    public static char decode(int e){
+        switch (e){
+            case -2:
+                return 'A';
+            case -1:
+                return 'C';
+            case 1:
+                return 'G';
+            case 2:
+                return 'T';
+            default: 
+                System.out.println("Error: encoded base \"" + e + "\" not recognized." );
+                System.exit(0);
+                return 0;
+        }
+    }
+    
+    public String decode(int[] encodedSequence){
+        StringBuilder sb = new StringBuilder();
+        for(int i : encodedSequence){
+            sb.append(decode(i));
+        }
+        return sb.toString();
+    }
+    
+    @Override
+    public int[][] encode(String[] sequences){
+        int[][] encoded = new int[sequences.length][];
+        for(int i : IntStream.range(0,sequences.length).toArray()){
+            char[] b = sequences[i].toCharArray();
+            int[] e = new int[b.length];
+            encoded[i] = IntStream.range(0, b.length).map(j-> encode(b[j])).toArray();
+        }
+        return encoded;
+    }
+    
+    public static Map<String,int[]> encode(Map<String,String> sequences){
+        Map<String,int[]> encoded = new HashMap<>();
+        sequences.forEach((k,v)-> {
+                char[] b = v.toCharArray();
+                int[] e = new int[b.length];
+                IntStream.range(0, b.length).forEach(i->e[i]= encode(b[i]));
+                encoded.put(k, e);
+            }
+        );
+        return encoded;
+    }
+    
+    public static int encode(char c){
+        switch (c){
+            case 'a':
+            case 'A':
+                return -2;
+            case 'c':
+            case 'C':
+                return -1;
+            case 'g':
+            case 'G':
+                return 1;
+            case 't':
+            case 'T':
+                return 2;
+            default: 
+                System.out.println("Error: Base \"" + c + "\" not recognized." );
+                System.exit(0);
+                return 0;
+        }
+    }
+    
+    public int[] getComplement(int[] encodedSequence){
+        int[] retSequence = IntStream.range(0,encodedSequence.length).map(i-> -encodedSequence[encodedSequence.length-i-1]).toArray();
+        return retSequence;
     }
 }

@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author mtobi
  */
-public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
+public class Validator implements FactoryDomainBasedEncodedNetwork.IValidator{
     final int maxAA;
     final int maxCC;
     final int maxGG;
@@ -124,7 +124,7 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
         return true;
     }
     
-    private boolean isValid(IEncodedDomainBasedNetwork network, int updatedDomainIndex){
+    private boolean isValid(IDomainBasedEncodedNetwork network, int updatedDomainIndex){
         int[][] encodedOligomers = network.getOligomerSequencesEncoded();
         int[] updatedDomainSequence = network.getVariableDomainSequencesEncoded()[updatedDomainIndex];
         
@@ -134,7 +134,7 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
         // check edges of where the new domain was added.
         //check validity everywhere the domain occurs. (just on the edges, everything else is already checked.)
         int length = updatedDomainSequence.length;
-        Map<Integer,int[]> oligomerIndices = network.getVariableDomainOligomerIndices().get(updatedDomainIndex);
+        Map<Integer,int[]> oligomerIndices = network.getVariableDomainToOligomerCoordinates().get(updatedDomainIndex);
         for(Map.Entry<Integer,int[]> entry : oligomerIndices.entrySet()){
             Integer oligomerIndex = entry.getKey();
             int[] lefts = entry.getValue();
@@ -148,7 +148,7 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
             }
         }
         
-        oligomerIndices = network.getVariableDomainOligomerComplementIndices().get(updatedDomainIndex);
+        oligomerIndices = network.getVariableDomainComplementToOligomerCoordinates().get(updatedDomainIndex);
         for(Map.Entry<Integer,int[]> entry : oligomerIndices.entrySet()){
             Integer oligomerIndex = entry.getKey();
             int[] lefts = entry.getValue();
@@ -221,7 +221,7 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
     
     // returns false if any sequence contains any stretch longer than the 
     // corresponding threshold.
-    private boolean isValidPartial(IEncodedDomainBasedNetwork network, int updatedDomainIndex){
+    private boolean isValidPartial(IDomainBasedEncodedNetwork network, int updatedDomainIndex){
         int[][] encodedOligomers = network.getOligomerSequencesEncoded();
         int[] updatedDomainSequence = network.getVariableDomainSequencesEncoded()[updatedDomainIndex];
         
@@ -231,7 +231,7 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
         // check edges of where the new domain was added.
         //check validity everywhere the domain occurs. (just on the edges, everything else is already checked.)
         int length = updatedDomainSequence.length;
-        Map<Integer,int[]> oligomerIndices = network.getVariableDomainOligomerIndices().get(updatedDomainIndex);
+        Map<Integer,int[]> oligomerIndices = network.getVariableDomainToOligomerCoordinates().get(updatedDomainIndex);
         for(Map.Entry<Integer,int[]> entry : oligomerIndices.entrySet()){
             Integer oligomerIndex = entry.getKey();
             int[] lefts = entry.getValue();
@@ -245,7 +245,7 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
             }
         }
         
-        oligomerIndices = network.getVariableDomainOligomerComplementIndices().get(updatedDomainIndex);
+        oligomerIndices = network.getVariableDomainComplementToOligomerCoordinates().get(updatedDomainIndex);
         for(Map.Entry<Integer,int[]> entry : oligomerIndices.entrySet()){
             Integer oligomerIndex = entry.getKey();
             int[] lefts = entry.getValue();
@@ -267,7 +267,8 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
      * @param network
      * @return
      */
-    public boolean isValidNetwork(IEncodedDomainBasedNetwork network){
+    @Override
+    public boolean isValidNetwork(IDomainBasedEncodedNetwork network){
         int[][] encodedOligomers = network.getOligomerSequencesEncoded();
         
         if (!isValid(encodedOligomers)) return false;
@@ -283,7 +284,8 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
          * @param updatedDomainIndex
          * @return
          */
-    public boolean isValidNetwork(IEncodedDomainBasedNetwork network, int updatedDomainIndex){
+    @Override
+    public boolean isValidNetwork(IDomainBasedEncodedNetwork network, int updatedDomainIndex){
         return this.isValid(network,updatedDomainIndex);
     }
 
@@ -293,7 +295,8 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
      * @param network
      * @return
      */
-    public boolean isValidPartialNetwork(IEncodedDomainBasedNetwork network){
+    @Override
+    public boolean isValidPartialNetwork(IDomainBasedEncodedNetwork network){
         int[][] encodedOligomers = network.getOligomerSequencesEncoded();
         
         if (!isValidPartial(encodedOligomers)) return false;
@@ -309,7 +312,8 @@ public class Validator implements EncodedDomainBasedNetworkFactory.IValidator{
      * @param updatedDomain
      * @return
      */
-    public boolean isValidPartialNetwork(IEncodedDomainBasedNetwork network, int updatedDomainIndex){
+    @Override
+    public boolean isValidPartialNetwork(IDomainBasedEncodedNetwork network, int updatedDomainIndex){
         return this.isValidPartial(network, updatedDomainIndex);
     }
     

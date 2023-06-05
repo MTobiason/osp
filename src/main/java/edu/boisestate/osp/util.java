@@ -41,51 +41,6 @@ import java.util.stream.IntStream;
  */
 public class util {
     
-    public static Map<String,int[]> assembleEncodedOligomers(Map<String,int[]> fixedDomains, Map<String,int[]> variableDomains, Map<String,String[]> oligomerDomains){
-        Map<String,int[]> encodedOligomers = new HashMap<>();
-
-        //for each oligomer
-        for (Map.Entry<String,String[]> entry : oligomerDomains.entrySet()){
-            String oligomer = entry.getKey();
-            String[] domainStrings = entry.getValue();
-            ArrayList<int[]> encodedSequences = new ArrayList<>();
-            
-            int totalLength = 0;
-            for( String domain : domainStrings){
-                //if domain is a complement
-                if (domain.startsWith("c.")){
-                    String compName = domain.substring(2);
-                    int[] domainSequence = fixedDomains.get(compName);
-                    if (domainSequence == null ) domainSequence = variableDomains.get(compName);
-                    if (domainSequence == null ) {
-                        System.out.println("Could not find complement of domain "+ domain +"." );
-                        System.exit(0);
-                    }
-                    int[] complementSequence = getComplement(domainSequence);
-                    encodedSequences.add(complementSequence);
-                    totalLength += complementSequence.length;
-                } else {
-                    int[] domainSequence = fixedDomains.get(domain);
-                    if (domainSequence == null ) domainSequence = variableDomains.get(domain);
-                    if (domainSequence == null ) {
-                        System.out.println("Could not find domain "+ domain +"." );
-                        System.exit(0);
-                    }
-                    encodedSequences.add(domainSequence);
-                    totalLength += domainSequence.length;
-                }
-            }
-            int[] encodedOligomer = new int[totalLength];
-            int nextBase = 0;
-            for (int[] sequence : encodedSequences){
-                System.arraycopy(sequence, 0, encodedOligomer, nextBase, sequence.length);
-                nextBase += sequence.length;
-            }
-            encodedOligomers.put(oligomer,encodedOligomer);
-        }
-        return encodedOligomers;
-    }
-    
     public static BigInteger calculateUniqueDuplexPoints (int length, int slc, int base){
         BigInteger score = BigInteger.valueOf(0);
         
@@ -363,17 +318,6 @@ public class util {
         return retCount;
     }
     
-    public static int[][] getBlankEncodedSequences(Map<String,String> encodedSequences){
-        int[][] ret = new int[encodedSequences.size()][];
-        
-        
-        for (Map.Entry<String,String> entry : encodedSequences.entrySet()){
-            ret.put(entry.getKey(),new int[entry.getValue().trim().length()]);
-        }
-        
-        return ret;
-    }
-    
     public static int[][] getBlankEncodedSequences(int[] sequenceLengths){
         int[][] ret = new int[sequenceLengths.length][];
         
@@ -384,109 +328,9 @@ public class util {
         return ret;
     }
     
-    public static String[][] getCombinations(Set<String> oligomers){
-        ArrayList<String> CO1 = new ArrayList<>(); //Combination Oligomer-1
-        ArrayList<String> CO2 = new ArrayList<>(); // Combination Oligomer-2
-        
-        String[] oligomerArray = oligomers.toArray(new String[0]);
-                
-        for (int i = 0; i < oligomerArray.length;i++){
-            for (int j = i; j < oligomerArray.length;j++){
-                CO1.add(oligomerArray[i]);
-                CO2.add(oligomerArray[j]);
-            }
-        }
-        
-        String[][] retArray = {CO1.toArray(new String[0]),CO2.toArray(new String[0])};
-        return retArray;
-    }
-    
-    public static int[] getComplement(int[] encodedSequence){
-        int[] retSequence = new int[encodedSequence.length];
-        IntStream.range(0,encodedSequence.length).forEach(i-> retSequence[i] = -encodedSequence[encodedSequence.length-i-1]);
-        return retSequence;
-    }
-    
     public static int[] getDomainLengths(String[] domains){
         int[] ret = Arrays.stream(domains).mapToInt(i->i.trim().length()).toArray();
         return ret;
-    }
-    
-    public static Map<String,int[]> getUniquelyEncodedVariableBases(Map<String,int[]> domains){
-        Map<String, int[]> uniqueDomains = new HashMap<>();
-        int currentBase = 2; 
-        for ( Map.Entry<String,int[]> entry : domains.entrySet()){
-            int length = entry.getValue().length;
-            int[] newV = new int[length];
-            for (int i = 0; i < length; i++){
-                currentBase++;
-                newV[i] = currentBase;
-            }
-            uniqueDomains.put(entry.getKey(), newV);
-        }
-        return uniqueDomains;
-    }
-    
-    public static Map<String,String> decode(Map<String,int[]> sequences){
-        Map<String,String> decoded = new HashMap<>();
-        sequences.forEach((k,v)-> {
-                int[] e = v;
-                char[] d = new char[e.length];
-                IntStream.range(0, e.length).forEach(i->d[i]= decode(e[i]));
-                decoded.put(k, String.valueOf(d));
-            }
-        );
-        return decoded;
-    }
-    
-    public static char decode(int e){
-        switch (e){
-            case -2:
-                return 'A';
-            case -1:
-                return 'C';
-            case 1:
-                return 'G';
-            case 2:
-                return 'T';
-            default: 
-                System.out.println("Error: encoded base \"" + e + "\" not recognized." );
-                System.exit(0);
-                return 0;
-        }
-    }
-    
-    public static Map<String,int[]> encode(Map<String,String> sequences){
-        Map<String,int[]> encoded = new HashMap<>();
-        sequences.forEach((k,v)-> {
-                char[] b = v.toCharArray();
-                int[] e = new int[b.length];
-                IntStream.range(0, b.length).forEach(i->e[i]= encode(b[i]));
-                encoded.put(k, e);
-            }
-        );
-        return encoded;
-    }
-    
-    public static int encode(char c){
-        switch (c){
-            case 'a':
-            case 'A':
-                return -2;
-            case 'c':
-            case 'C':
-                return -1;
-            case 'g':
-            case 'G':
-                return 1;
-            case 't':
-            case 'T':
-                return 2;
-            default: 
-                System.out.println("Error: Base \"" + c + "\" not recognized." );
-                System.exit(0);
-                return 0;
-        }
     }
             
     public static Map<String,String> importPairFromTxt(String filePath){

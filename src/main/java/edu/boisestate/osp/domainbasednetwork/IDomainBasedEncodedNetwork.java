@@ -24,12 +24,13 @@
 package edu.boisestate.osp.domainbasednetwork;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
  * @author mtobi
  */
-public interface IEncodedDomainBasedNetwork {
+public interface IDomainBasedEncodedNetwork {
     // fixed domain stuff
     /**
      * Returns an n x m array of integers where the n'th array represents the 
@@ -96,7 +97,7 @@ public interface IEncodedDomainBasedNetwork {
      * starts. 
      * @return
      */
-    public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerIndices();
+    Map<Integer,Map<Integer,int[]>> getVariableDomainToOligomerCoordinates();
     
     /**
      * Returns a map which connects a variable domain index to a second map.
@@ -105,5 +106,24 @@ public interface IEncodedDomainBasedNetwork {
      * binding complement of the domain starts.
      * @return
      */
-    public Map<Integer,Map<Integer,int[]>> getVariableDomainOligomerComplementIndices();
+    Map<Integer,Map<Integer,int[]>> getVariableDomainComplementToOligomerCoordinates();
+    
+    /**
+     * 
+     * Returns a map which connects a variable domain index to a set of values.
+     * The set of value indicates the indices of the oligomers on which this 
+     * domain or this domains complement occurs.
+     * @return
+     */
+    Map<Integer,Set<Integer>> getVariableDomainToOligomerIndices();
+    
+    /**
+     * 
+     * Returns a map which connects a variable domain index to an int array.
+     * The int array is 2 x m. These arrays together store m pairs of oligomer
+     * indices representing the unique combinations associated with a given 
+     * variable domain.
+     * @return
+     */
+    Map<Integer,int[][]> getVariableDomainToOligomerCombinations();
 }
