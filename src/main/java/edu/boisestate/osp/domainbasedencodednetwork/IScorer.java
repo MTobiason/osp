@@ -21,24 +21,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.domainbasednetwork;
+package edu.boisestate.osp.domainbasedencodednetwork;
 
 /**
  *
  * @author mtobi
  */
-public interface IDomainBasedEncodedScoredNetwork extends IDomainBasedEncodedNetwork{
-   
-    /**
-     * returns a string describing the score of the network.
-     * @return
-     */
-    String getScore();
-    
-    /**
-     * Returns a reference to the object which scored this network.
-     * @return
-     */
-    Object getScorer();
+public interface IScorer {
+        
+        /**
+         * Returns a scored version of the given network;
+         * @param network
+         * @return
+         */
+        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedNetwork network);
+        
+        /**
+         * Returns a version of the given network scored using this scorer;
+         * @param network
+         * @return
+         */
+        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork network);
+        
+        /**
+         * Returns a scored version of the given network.
+         * @param previousNetwork The prior network
+         * @param newNetwork The new network which has had one variable domain updated.
+         * @param updatedDomainIndex The domain index of the variable domain which was updated.
+         * @return
+         */
+        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex);
 }
-    

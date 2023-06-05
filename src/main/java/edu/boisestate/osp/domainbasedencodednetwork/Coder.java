@@ -21,58 +21,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.domainbasednetwork;
+package edu.boisestate.osp.domainbasedencodednetwork;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.IntStream;
 
 /**
  *
  * @author mtobi
  */
-public class Coder implements FactoryDomainBasedEncodedNetwork.ICoder, Validator.ICoder{
+public class Coder implements ICoder{
     
     Coder(){
-        
     }
     
     @Override
-    public int getEncodedA(){
-        return -2;
-    }
-    
-    @Override
-    public int getEncodedC(){
-        return -1;
-    }
-    
-    @Override
-    public int getEncodedG(){
-        return 1;
-    }
-    
-    @Override
-    public int getEncodedT(){
-        return 2;
-    }
-    
-    @Override
-    public String[] decode(int[][] encodedSequences){
-        String[] decoded = new String[encodedSequences.length];
-        for(int i : IntStream.range(0,encodedSequences.length).toArray()){
-            decoded[i] = decode(encodedSequences[i]);
-        }
-        return decoded;
-    }
-    
-    public static char decode(int e){
+    public char decode(int e){
         switch (e){
             case -2:
                 return 'A';
             case -1:
                 return 'C';
+            case 0:
+                return 'X';
             case 1:
                 return 'G';
             case 2:
@@ -84,6 +55,7 @@ public class Coder implements FactoryDomainBasedEncodedNetwork.ICoder, Validator
         }
     }
     
+    @Override
     public String decode(int[] encodedSequence){
         StringBuilder sb = new StringBuilder();
         for(int i : encodedSequence){
@@ -93,29 +65,16 @@ public class Coder implements FactoryDomainBasedEncodedNetwork.ICoder, Validator
     }
     
     @Override
-    public int[][] encode(String[] sequences){
-        int[][] encoded = new int[sequences.length][];
-        for(int i : IntStream.range(0,sequences.length).toArray()){
-            char[] b = sequences[i].toCharArray();
-            int[] e = new int[b.length];
-            encoded[i] = IntStream.range(0, b.length).map(j-> encode(b[j])).toArray();
+    public String[] decode(int[][] encodedSequences){
+        String[] decoded = new String[encodedSequences.length];
+        for(int i : IntStream.range(0,encodedSequences.length).toArray()){
+            decoded[i] = decode(encodedSequences[i]);
         }
-        return encoded;
+        return decoded;
     }
     
-    public static Map<String,int[]> encode(Map<String,String> sequences){
-        Map<String,int[]> encoded = new HashMap<>();
-        sequences.forEach((k,v)-> {
-                char[] b = v.toCharArray();
-                int[] e = new int[b.length];
-                IntStream.range(0, b.length).forEach(i->e[i]= encode(b[i]));
-                encoded.put(k, e);
-            }
-        );
-        return encoded;
-    }
-    
-    public static int encode(char c){
+    @Override
+    public int encode(char c){
         switch (c){
             case 'a':
             case 'A':
@@ -136,6 +95,22 @@ public class Coder implements FactoryDomainBasedEncodedNetwork.ICoder, Validator
         }
     }
     
+    @Override
+    public int[] encode(String sequence){
+        
+        char[] b = sequence.toCharArray();
+        int[] encoded = IntStream.range(0, b.length).map(j-> encode(b[j])).toArray();
+        
+        return encoded;
+    }
+    
+    @Override
+    public int[][] encode(String[] sequences){
+        int[][] encoded = Arrays.stream(sequences).map(sequence-> sequence.chars().map(j-> encode((char)j)).toArray()).toArray(x->new int[x][]);
+        return encoded;
+    }
+    
+    @Override
     public int[] getComplement(int[] encodedSequence){
         int[] retSequence = IntStream.range(0,encodedSequence.length).map(i-> -encodedSequence[encodedSequence.length-i-1]).toArray();
         return retSequence;

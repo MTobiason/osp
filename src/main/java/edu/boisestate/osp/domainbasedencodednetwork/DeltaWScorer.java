@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.domainbasednetwork;
+package edu.boisestate.osp.domainbasedencodednetwork;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import java.util.stream.Stream;
  *
  * @author mtobi
  */
-public class DeltaWScorer implements FactoryDomainBasedEncodedNetwork.IScorer{
+public class DeltaWScorer implements IScorer{
     final Map<String,String> usedParameters;
 
     final int intraSLC;

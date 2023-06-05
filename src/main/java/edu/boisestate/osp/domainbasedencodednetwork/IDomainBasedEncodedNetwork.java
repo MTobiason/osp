@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.domainbasednetwork;
+package edu.boisestate.osp.domainbasedencodednetwork;
 
 import java.util.Map;
 import java.util.Set;
@@ -126,4 +126,6 @@ public interface IDomainBasedEncodedNetwork {
      * @return
      */
     Map<Integer,int[][]> getVariableDomainToOligomerCombinations();
+    
+    
 }

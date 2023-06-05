@@ -38,7 +38,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import edu.boisestate.osp.domainbasednetwork.IDomainBasedEncodedScoredNetwork;
+import edu.boisestate.osp.domainbasedencodednetwork.IDomainBasedEncodedScoredNetwork;
 
 /**
  *

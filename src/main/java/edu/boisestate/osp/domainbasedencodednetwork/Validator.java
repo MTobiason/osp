@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.domainbasednetwork;
+package edu.boisestate.osp.domainbasedencodednetwork;
 
 import edu.boisestate.osp.util;
 import java.util.Map;
@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author mtobi
  */
-public class Validator implements FactoryDomainBasedEncodedNetwork.IValidator{
+public class Validator implements IValidator{
     final int maxAA;
     final int maxCC;
     final int maxGG;

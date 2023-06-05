@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package edu.boisestate.osp.domainbasednetwork;
+package edu.boisestate.osp.domainbasedencodednetwork;
 
 import edu.boisestate.osp.util;
 import java.util.ArrayList;
@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
@@ -139,97 +138,6 @@ public class FactoryDomainBasedEncodedNetwork {
         this.vdctoc = getVariableDomainComplementToOligomerCoordinates();
         this.firstPartialEncodedOligomerSequences = assembleFirstPartialSolution();
         this.vdCombo = getDomainToOligomerCombinationsMap(variableDomains,oligomerDomains,vdto);
-    }
-    
-    public interface IValidator{
-        
-        /**
-         * Returns true if the network is valid and false otherwise.
-         * @param network
-         * @return
-         */
-        boolean isValidNetwork(IDomainBasedEncodedNetwork network);
-        
-        /**
-         * For a previously valid network, returns true if the network is still 
-         * valid after domain updatedDomain has been updated and false 
-         * otherwise.
-         * @param network
-         * @param updatedDomainIndex
-         * @return
-         */
-        boolean isValidNetwork (IDomainBasedEncodedNetwork network, int updatedDomainIndex);
-        
-        /**
-         * Returns true the partial network is valid and false otherwise.A partial network may contain 0's in encoded sequences.
-         * @param network
-         * @return
-         */
-        boolean isValidPartialNetwork (IDomainBasedEncodedNetwork network);
-        
-        /**
-         * For a previously valid partial network, returns true if the network 
-         * is still valid after domain updatedDomain has been updated and false 
-         * otherwise.A partial network may contain 0's in encoded sequences.
-         * @param network
-         * @param updatedDomainIndex
-         * @return
-         */
-        boolean isValidPartialNetwork (IDomainBasedEncodedNetwork network, int updatedDomainIndex);
-    }
-    
-    public interface ICoder{
-        /**
-         * Generates an encoding for each of the given sequences. Encoding must 
-         * be an integer value for each base. A value of zero indicates a blank
-         * base.
-         * @param Sequences
-         * @return
-         */
-        int[][] encode(String[] Sequences);
-        
-        /**
-         * Returns an integer array containing the complement of the given 
-         * encoded sequence.
-         * @param encodedSequence
-         * @return
-         */
-        int[] getComplement(int[] encodedSequence);
-        
-        /**
-         * Decodes a given encoding back to a string of base-sequences. 
-         * base.
-         * @param encodedSequences
-         * @return
-         */
-        String[] decode(int[][] encodedSequences);
-        
-    }
-    
-    public interface IScorer{
-        
-        /**
-         * Returns a scored version of the given network;
-         * @param network
-         * @return
-         */
-        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedNetwork network);
-        
-        /**
-         * Returns a version of the given network scored using this scorer;
-         * @param network
-         * @return
-         */
-        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork network);
-        
-        /**
-         * Returns a scored version of the given network.
-         * @param previousNetwork The prior network
-         * @param newNetwork The new network which has had one variable domain updated.
-         * @param updatedDomainIndex The domain index of the variable domain which was updated.
-         * @return
-         */
-        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex);
     }
     
     private class InnerNetwork implements IDomainBasedEncodedNetwork{
