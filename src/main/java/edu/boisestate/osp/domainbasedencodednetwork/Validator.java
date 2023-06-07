@@ -25,6 +25,8 @@ package edu.boisestate.osp.domainbasedencodednetwork;
 
 import edu.boisestate.osp.util;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 /**
  *
@@ -41,6 +43,8 @@ public class Validator implements IValidator{
     final int encodedG;
     final int encodedT;
     
+    Map<Integer,int[]> knownRanges = new ConcurrentHashMap<>();
+    
     /**
      * Creates a validator which will return false if a given encoding contains 
      * a stretch of consecutive bases longer than the provided thresholds.
@@ -50,22 +54,15 @@ public class Validator implements IValidator{
      * @param maxTT
      */
     public Validator(ICoder coder, int maxAA, int maxCC, int maxGG, int maxTT){
-        this.encodedA = coder.getEncodedA();
-        this.encodedC = coder.getEncodedC();
-        this.encodedG = coder.getEncodedG();
-        this.encodedT = coder.getEncodedT();
+        this.encodedA = coder.encode('A');
+        this.encodedC = coder.encode('C');
+        this.encodedG = coder.encode('G');
+        this.encodedT = coder.encode('T');
         
         this.maxAA = maxAA;
         this.maxCC = maxCC;
         this.maxGG = maxGG;
         this.maxTT = maxTT;
-    }
-    
-    public interface ICoder{
-        int getEncodedA();
-        int getEncodedC();
-        int getEncodedG();
-        int getEncodedT();
     }
     
     // returns false if any sequence contains a stretch longer than the 
@@ -96,26 +93,37 @@ public class Validator implements IValidator{
     
     // returns false if any sequence contains a stretch longer than the 
     // corresponding threshold OR a zero.
-    private boolean isValid(int[][] encodedSequences){
+    private boolean isValid(int[][] encodedSequences, boolean[][] isVariableArray){
         int previousBase;
         int currentRun;
-        for(int[] encodedSequence : encodedSequences){
+        int encodedSequence[];
+        int base;
+        boolean touchesVariable;
+        for(int i : knownRanges.computeIfAbsent(encodedSequences.length, x->IntStream.range(0,x).toArray())){
+            encodedSequence = encodedSequences[i];
+            touchesVariable = false;
             previousBase = 0;
             currentRun = 1;
-            for (int base : encodedSequence){
+            
+            for(int j : knownRanges.computeIfAbsent(encodedSequence.length, x->IntStream.range(0,x).toArray())){
+                base = encodedSequence[j];
                 if (base == 0) return false;
                 if (base == previousBase){
+                    touchesVariable = (touchesVariable || isVariableArray[i][j]);
                     currentRun++;
-                    if (previousBase == encodedA){
-                        if (currentRun > maxAA) return false;
-                    } else if (previousBase == encodedC){
-                        if (currentRun > maxCC) return false;
-                    } else if (previousBase == encodedG){
-                        if (currentRun > maxGG) return false;
-                    } else if (previousBase == encodedT){
-                        if (currentRun > maxTT) return false;
+                    if (touchesVariable){
+                        if (previousBase == encodedA){
+                            if (currentRun > maxAA) return false;
+                        } else if (previousBase == encodedC){
+                            if (currentRun > maxCC) return false;
+                        } else if (previousBase == encodedG){
+                            if (currentRun > maxGG) return false;
+                        } else if (previousBase == encodedT){
+                            if (currentRun > maxTT) return false;
+                        }
                     }
                 } else {
+                    touchesVariable = isVariableArray[i][j];
                     currentRun = 1;
                 }
                 previousBase = base;
@@ -263,7 +271,11 @@ public class Validator implements IValidator{
     }
 
     /**
-     * Returns true if the network is valid and false otherwise.
+     * Returns true if the network is valid and false otherwise. A valid network
+     * contains no stretch of consecutive identical bases greater than the 
+     * provided threshold. The exception to this rule is for stretches of such 
+     * bases which do not touch a variable domain (i.e. are part of the fixed 
+     * design of the network).
      * @param network
      * @return
      */
@@ -271,7 +283,7 @@ public class Validator implements IValidator{
     public boolean isValidNetwork(IDomainBasedEncodedNetwork network){
         int[][] encodedOligomers = network.getOligomerSequencesEncoded();
         
-        if (!isValid(encodedOligomers)) return false;
+        if (!isValid(encodedOligomers,network.getOligomerBaseIsVariableArray())) return false;
 
         return true;
     }

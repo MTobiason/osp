@@ -58,6 +58,7 @@ public class FactoryDomainBasedEncodedNetwork {
     final String[][]  oligomerDomains; // oligomer-domains
     final Map<String,Integer> oligomerIndices;
     final String[] oligomerNames;
+    final boolean[][] oligomerBaseIsVariableArray;
     
     final int[][] firstPartialEncodedOligomerSequences; // blank-encoded-oligomer-sequences
 
@@ -70,8 +71,8 @@ public class FactoryDomainBasedEncodedNetwork {
     final Map<Integer,int[][]> vdCombo;
 
     // Creates a factory for creating networks of a given design
-    FactoryDomainBasedEncodedNetwork (Map<String,String> fixedDomains, Map<String,String> variableDomains, Map<String,String[]> oligomerDomains){
-        this.coder = new Coder();
+    public FactoryDomainBasedEncodedNetwork (ICoder coder, Map<String,String> fixedDomains, Map<String,String[]> oligomerDomains, Map<String,String> variableDomains){
+        this.coder = coder;
         
         this.fixedDomainIndices = new HashMap<>();
         Integer index = 0;
@@ -88,7 +89,7 @@ public class FactoryDomainBasedEncodedNetwork {
         
         this.variableDomainIndices = new HashMap<>();
         index = 0;
-        for (String domain: fixedDomains.keySet()){
+        for (String domain: variableDomains.keySet()){
             this.variableDomainIndices.put(domain,index);
             index++;
         }
@@ -108,7 +109,7 @@ public class FactoryDomainBasedEncodedNetwork {
         
         this.oligomerIndices = new HashMap<>();
         index = 0;
-        for (String domain: fixedDomains.keySet()){
+        for (String domain: oligomerDomains.keySet()){
             this.oligomerIndices.put(domain,index);
             index++;
         }
@@ -121,8 +122,7 @@ public class FactoryDomainBasedEncodedNetwork {
         
         this.oligomerDomains = new String[oligomerCount][];
         for (Map.Entry<String,Integer> entry:  oligomerIndices.entrySet()){
-            String[] previousSequence = oligomerDomains.get(entry.getKey());
-            this.oligomerDomains[entry.getValue()] = Arrays.copyOf(previousSequence,previousSequence.length);
+            this.oligomerDomains[entry.getValue()] = oligomerDomains.get(entry.getKey());
         }
         
         this.variableDomainInitialSequences = new String[variableDomainCount];
@@ -138,6 +138,7 @@ public class FactoryDomainBasedEncodedNetwork {
         this.vdctoc = getVariableDomainComplementToOligomerCoordinates();
         this.firstPartialEncodedOligomerSequences = assembleFirstPartialSolution();
         this.vdCombo = getDomainToOligomerCombinationsMap(variableDomains,oligomerDomains,vdto);
+        this.oligomerBaseIsVariableArray = getBaseIsVariableArray(this.firstPartialEncodedOligomerSequences);
     }
     
     private class InnerNetwork implements IDomainBasedEncodedNetwork{
@@ -187,7 +188,7 @@ public class FactoryDomainBasedEncodedNetwork {
         
         @Override
         public String[] getOligomerNames() {
-            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+            return oligomerNames;
         }
         
         @Override
@@ -199,6 +200,11 @@ public class FactoryDomainBasedEncodedNetwork {
         @Override
         public int[][] getOligomerSequencesEncoded() {
             return encodedOligomers;
+        }
+        
+        @Override
+        public boolean[][] getOligomerBaseIsVariableArray(){
+            return oligomerBaseIsVariableArray;
         }
         
         @Override
@@ -248,13 +254,13 @@ public class FactoryDomainBasedEncodedNetwork {
         ArrayList<Integer> tempBag = new ArrayList<>();
 
         //for each variable domain
-            // add a number of elements equal to the base length to the domain selection bag.
+        // add a number of elements equal to the base length to the domain selection bag.
         for (Map.Entry<String,String> entry : initialVariableDomains.entrySet()){
             Integer domainIndex = variableDomainIndices.get(entry.getKey());
             int length = entry.getValue().trim().length();
-           for(int i = 0; i < length; i++){
-               tempBag.add(domainIndex);
-           }
+            for(int i = 0; i < length; i++){
+                tempBag.add(domainIndex);
+            }
        }
         
         int[] ret = tempBag.stream().mapToInt(i->i).toArray();
@@ -276,7 +282,7 @@ public class FactoryDomainBasedEncodedNetwork {
     }
     
     // returns a new network based on a given fixedDomains, oligomerDomains, and variable domains. If the given network is invalid according to validator, a random valid network is instead returned.
-    public IDomainBasedEncodedScoredNetwork getNewNetwork( Map<String,String> variableDomains, IValidator validator, IScorer scorer){
+    public IDomainBasedEncodedScoredNetwork getNewNetwork( Map<String,String> variableDomains, IScorer scorer, IValidator validator){
         String[] vd = new String[variableDomainCount];
         for (Map.Entry<String,Integer> entry :  variableDomainIndices.entrySet()){
             vd[entry.getValue()] = variableDomains.get(entry.getKey());
@@ -289,7 +295,7 @@ public class FactoryDomainBasedEncodedNetwork {
         
         if (!validator.isValidNetwork(retNet)) {
             System.out.println("Initial oligomers invalid. Replacing with randomly seeded oligomers.");
-            retNet = getType1Mutation(retNet,validator,scorer);
+            retNet = getType1Mutation(retNet,scorer,validator);
         }
         return retNet;
     }
@@ -310,7 +316,66 @@ public class FactoryDomainBasedEncodedNetwork {
         return newSequence;
     }
     
-    IDomainBasedEncodedScoredNetwork getType1Mutation(IDomainBasedEncodedScoredNetwork existingNetwork, IValidator validator, IScorer scorer){
+    public IDomainBasedEncodedNetwork getType1Mutation(IDomainBasedEncodedNetwork existingNetwork, IValidator validator){
+        final int[][] oldEVD = existingNetwork.getVariableDomainSequencesEncoded();
+        final int[][] oldEOS = existingNetwork.getOligomerSequencesEncoded();
+        int[][] bevd = util.getBlankEncodedSequences(variableDomainLengths);
+        
+        InnerNetwork partialNetwork = new InnerNetwork(bevd,firstPartialEncodedOligomerSequences);
+        int[][] newEVD;
+        int[][] newEOS;
+        int seedings = 0;
+        boolean valid = false;
+        // attempt to seed all domains
+        do {
+            newEOS = Arrays.copyOf(firstPartialEncodedOligomerSequences,firstPartialEncodedOligomerSequences.length);
+            newEVD = Arrays.copyOf(bevd,bevd.length);
+            partialNetwork.encodedVariableDomains = newEVD;
+            partialNetwork.encodedOligomers = newEOS;
+            int[] domainSelectionBag = IntStream.range(0,variableDomainCount).toArray();
+
+            Random rnd = ThreadLocalRandom.current();
+            // for each domain in the domain selection bag.
+            currentSeeding:
+            for (int i = domainSelectionBag.length-1; i >= 0; i--){
+
+                // select a domain to be mutated and remove it from the bag.
+                int k = rnd.nextInt(i + 1);
+                int a = domainSelectionBag[k];
+                domainSelectionBag[k] = domainSelectionBag[i];
+                domainSelectionBag[i] = a;
+
+                int selectedDomainIndex = domainSelectionBag[i];
+                final int[] oldDomain = oldEVD[selectedDomainIndex];
+
+                //attempt to mutate this domain 100 times;
+                int attempts2 = 0;
+                int[] newDomain;
+                // attempt to randomize the domain
+                do {
+                    newDomain = getType1Mutation(oldDomain);
+                    newEVD[selectedDomainIndex] = newDomain;
+                    newEOS = placeDomain(newEOS,selectedDomainIndex,newDomain);
+                    partialNetwork.encodedVariableDomains = newEVD;
+                    partialNetwork.encodedOligomers = newEOS;
+                    valid = validator.isValidPartialNetwork(partialNetwork,selectedDomainIndex);
+                    attempts2++;
+                } while (attempts2 < 1000 && (!valid));
+
+                if(!valid) break currentSeeding;
+            }
+            seedings++;
+        } while (seedings < 1000 && !valid);
+
+        if(!valid){
+            System.out.println("Failed to identify a valid network during random seeding.");
+            System.exit(0);
+        }
+
+        return partialNetwork;
+    }
+    
+    public IDomainBasedEncodedScoredNetwork getType1Mutation(IDomainBasedEncodedScoredNetwork existingNetwork, IScorer scorer, IValidator validator){
         final int[][] oldEVD = existingNetwork.getVariableDomainSequencesEncoded();
         final int[][] oldEOS = existingNetwork.getOligomerSequencesEncoded();
         int[][] bevd = util.getBlankEncodedSequences(variableDomainLengths);
@@ -435,7 +500,7 @@ public class FactoryDomainBasedEncodedNetwork {
         return ret;
     }
     
-    IDomainBasedEncodedScoredNetwork getType2Mutation(IDomainBasedEncodedScoredNetwork existingNetwork, IValidator validator, IScorer scorer){
+    public IDomainBasedEncodedScoredNetwork getType2Mutation(IDomainBasedEncodedScoredNetwork existingNetwork, IScorer scorer, IValidator validator){
         int[][] oldEVD = existingNetwork.getVariableDomainSequencesEncoded();
         int[][] newEVD = Arrays.copyOf(oldEVD,oldEVD.length);
         int[][] oldEOS = existingNetwork.getOligomerSequencesEncoded();
@@ -465,7 +530,7 @@ public class FactoryDomainBasedEncodedNetwork {
             return existingNetwork;
         }
         
-        IDomainBasedEncodedScoredNetwork retNet = scorer.getScored(newNetwork);
+        IDomainBasedEncodedScoredNetwork retNet = scorer.getScored(existingNetwork,newNetwork,sdi);
         return retNet;
     }
 
@@ -485,7 +550,7 @@ public class FactoryDomainBasedEncodedNetwork {
             return newSequence;
         }
     
-    IDomainBasedEncodedNetwork getType3Mutation(IDomainBasedEncodedNetwork existingNetwork, IValidator validator, IScorer scorer){
+    public IDomainBasedEncodedScoredNetwork getType3Mutation(IDomainBasedEncodedScoredNetwork existingNetwork, IScorer scorer, IValidator validator){
         int[][] oldEVD = existingNetwork.getVariableDomainSequencesEncoded();
         int[][] newEVD = Arrays.copyOf(oldEVD,oldEVD.length);
         int[][] oldEOS = existingNetwork.getOligomerSequencesEncoded();
@@ -515,7 +580,7 @@ public class FactoryDomainBasedEncodedNetwork {
             return existingNetwork;
         }
         
-        IDomainBasedEncodedScoredNetwork retNet = scorer.getScored(newNetwork);
+        IDomainBasedEncodedScoredNetwork retNet = scorer.getScored(existingNetwork,newNetwork,sdi);
         return retNet;
     }
     
@@ -594,6 +659,24 @@ public class FactoryDomainBasedEncodedNetwork {
         }
         return encodedOligomers;
     }
+    
+    private boolean[][] getBaseIsVariableArray(int[][] assembledPartialSolution){
+        boolean[][] retArray = new boolean[assembledPartialSolution.length][];
+        
+        for(int i=0; i < assembledPartialSolution.length; i++){
+            boolean[] newArray = new boolean[assembledPartialSolution[i].length];
+            for (int j=0; j < assembledPartialSolution[i].length; j++){
+                if (assembledPartialSolution[i][j]== 0){
+                    newArray[j]=true;
+                } else{
+                    newArray[j]=false;
+                }
+            }
+            retArray[i] = newArray;
+        }
+        return retArray;
+    }
+
 
     private Map<Integer,Map<Integer,int[]>> getVariableDomainComplementToOligomerCoordinates (){
         Map<Integer,Map<Integer,int[]>> retDCTOM = new HashMap<>();
@@ -883,8 +966,15 @@ public class FactoryDomainBasedEncodedNetwork {
             //add all combinations of these oligomers.
             for (int i = 0; i < affectedOligomersArray.length; i++){
                 for (int j = i; j < affectedOligomersArray.length; j++){
-                    firstOligomers.add(affectedOligomersArray[i]);
-                    secondOligomers.add(affectedOligomersArray[j]);
+                    int index1 = affectedOligomersArray[i];
+                    int index2 = affectedOligomersArray[j];
+                    if(firstPartialEncodedOligomerSequences[index1].length >= firstPartialEncodedOligomerSequences[index2].length){
+                        firstOligomers.add(index1);
+                        secondOligomers.add(index2);
+                    } else {
+                        firstOligomers.add(index2);
+                        secondOligomers.add(index1);
+                    }
                 }
             }
             
@@ -892,8 +982,15 @@ public class FactoryDomainBasedEncodedNetwork {
             for (int i = 0; i < affectedOligomersArray.length; i++){
                 for (int j : IntStream.range(0,oligomerCount).toArray()){
                     if (!vdto.contains(j)){
-                        firstOligomers.add(affectedOligomersArray[i]);
-                        secondOligomers.add(j);
+                        int index1 = affectedOligomersArray[i];
+                        int index2 = j;
+                        if(firstPartialEncodedOligomerSequences[index1].length >= firstPartialEncodedOligomerSequences[index2].length){
+                            firstOligomers.add(index1);
+                            secondOligomers.add(index2);
+                        } else {
+                            firstOligomers.add(index2);
+                            secondOligomers.add(index1);
+                        }
                     }
                 }
             }

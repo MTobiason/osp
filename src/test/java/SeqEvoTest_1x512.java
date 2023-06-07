@@ -49,8 +49,8 @@ public class SeqEvoTest_1x512 {
             oligomerDomains.put("Duplex-1-Bottom", new String[] {"c.Domain-1"});
         }
         
-        SeqEvo s = new SeqEvo(parameters, fixedDomains, variableDomains, oligomerDomains);
-        s.optimize();
+        SeqEvo s = new SeqEvo(parameters);
+        SeqEvo.Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
     }
     
 }

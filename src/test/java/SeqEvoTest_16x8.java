@@ -1,4 +1,5 @@
 import edu.boisestate.osp.SeqEvo;
+import edu.boisestate.osp.SeqEvo.Report;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -91,8 +92,8 @@ public class SeqEvoTest_16x8 {
             oligomerDomains.put("Duplex-16-Bottom", new String[] {"c.Domain-16"});
         }
         
-        SeqEvo s = new SeqEvo(parameters, fixedDomains, variableDomains, oligomerDomains);
-        s.optimize();
+        SeqEvo s = new SeqEvo(parameters);
+        Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
     }
     
 }

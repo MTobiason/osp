@@ -34,6 +34,7 @@ public class SeqEvoTest_4x256 {
     
     public static void main(String[] args){
         Map<String,String> parameters = new TreeMap<>();{
+            parameters.put("CPL","1000");
         }
         
         Map<String,String> fixedDomains = new TreeMap<>();{
@@ -56,8 +57,8 @@ public class SeqEvoTest_4x256 {
             oligomerDomains.put("Duplex-4-Bottom", new String[] {"c.Domain-4"});
         }
         
-        SeqEvo s = new SeqEvo(parameters, fixedDomains, variableDomains, oligomerDomains);
-        s.optimize();
+        SeqEvo s = new SeqEvo(parameters);
+        SeqEvo.Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
     }
     
 }

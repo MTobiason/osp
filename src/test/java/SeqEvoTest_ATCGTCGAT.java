@@ -1,6 +1,4 @@
 
-
-
 import edu.boisestate.osp.SeqEvo;
 import java.util.Map;
 import java.util.TreeMap;
@@ -56,8 +54,8 @@ public class SeqEvoTest_ATCGTCGAT {
             oligomerDomains.put("Bottom-Strand", new String[] {"c.C", "c.B", "c.A"});
         }
         
-        SeqEvo s = new SeqEvo(parameters, fixedDomains, variableDomains, oligomerDomains);
-        s.optimize();
+        SeqEvo s = new SeqEvo(parameters);
+        SeqEvo.Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
     }
     
 }

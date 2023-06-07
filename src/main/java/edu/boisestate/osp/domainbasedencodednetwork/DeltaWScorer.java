@@ -25,26 +25,26 @@ package edu.boisestate.osp.domainbasedencodednetwork;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  *
  * @author mtobi
  */
 public class DeltaWScorer implements IScorer{
-    final Map<String,String> usedParameters;
-
     final int intraSLC;
     final int intraSB;
     final int interSLC;
     final int interSB;
+    final int maxLength;
     final int swx;
+    
+    final Map<Integer,int[]> knownRanges;
     
     final Map<Integer,BigInteger> knownIntraScores;
     final Map<Integer,BigInteger> knownInterScores;
@@ -53,10 +53,10 @@ public class DeltaWScorer implements IScorer{
     final BigInteger baselineN;
     final BigInteger baselineW;
 
-    DeltaWScorer(Map<String,String> fixedDomains, Map<String,String> variableDomains, Map<String,String[]> oligomerDomains, int intraSB, int intraSLC, int interSB, int interSLC, int swx){
-        usedParameters = new HashMap<>();
+    public DeltaWScorer(Map<String,String> fixedDomains, Map<String,String[]> oligomerDomains, Map<String,String> variableDomains, int intraSB, int intraSLC, int interSB, int interSLC, int swx){
         knownIntraScores = new ConcurrentHashMap<>();
         knownInterScores = new ConcurrentHashMap<>();
+        knownRanges = new ConcurrentHashMap<>();
         
         this.intraSB = intraSB;
         this.intraSLC = intraSLC;
@@ -67,12 +67,12 @@ public class DeltaWScorer implements IScorer{
         Map<String,int[]> efd = encode(fixedDomains); // encoded fixed domains
         Map<String,int[]> uevd = getUniquelyEncodedDomains(variableDomains); // uniequely encoded initial variable domains
         Map<String,int[]> ueo = assembleEncodedOligomers(efd, uevd, oligomerDomains);
-        int[][] ueoArray = Stream.of(ueo.values()).toArray(i->new int[i][]);
-
+        int[][] ueoArray = ueo.values().stream().toArray(i->new int[i][]);
+        
+        maxLength = Arrays.stream(ueoArray).mapToInt(x -> x.length).max().getAsInt();
+        
         baselineO = calculateO(ueoArray);
-
         baselineN = calculateN(ueoArray);
-
         baselineW = calculateW(baselineO,baselineN);
     }
     
@@ -140,6 +140,11 @@ public class DeltaWScorer implements IScorer{
         public int[][] getOligomerSequencesEncoded() {
             return unscoredNetwork.getOligomerSequencesEncoded();
         }
+        
+        @Override
+        public boolean[][] getOligomerBaseIsVariableArray(){
+            return unscoredNetwork.getOligomerBaseIsVariableArray();
+        }
 
         @Override
         public Map<String, Integer> getVariableDomainIndices() {
@@ -183,11 +188,31 @@ public class DeltaWScorer implements IScorer{
         
     }
     
+    @Override
+    public int compareFitness(IDomainBasedEncodedScoredNetwork network1, IDomainBasedEncodedScoredNetwork network2){
+        BigInteger score1;
+        if(network1.getScorer() == DeltaWScorer.this){
+            score1 = new BigInteger(network1.getScore());
+        } else {
+           score1 = calculateW(network1.getOligomerSequencesEncoded()).subtract(baselineW);
+        }
+        
+        BigInteger score2;
+        if(network2.getScorer() == DeltaWScorer.this){
+            score2 = new BigInteger(network2.getScore());
+        } else {
+           score2 = calculateW(network2.getOligomerSequencesEncoded()).subtract(baselineW);
+        }
+       
+       return -score1.compareTo(score2);
+    }
+    
     /**
     * Returns a scored version of the given network;
     * @param network
     * @return
     */
+    @Override
    public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedNetwork network){
        String score = getScoreString(network);
        return new InnerNetwork(network,score);
@@ -198,6 +223,7 @@ public class DeltaWScorer implements IScorer{
     * @param network
     * @return
     */
+    @Override
    public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork network){
        String score = getScoreString(network);
        return new InnerNetwork(network,score);
@@ -210,6 +236,7 @@ public class DeltaWScorer implements IScorer{
     * @param updatedDomainIndex The domain index of the variable domain which was updated.
     * @return
     */
+    @Override
    public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex){
        String score = getScoreString(previousNetwork, newNetwork, updatedDomainIndex);
        return new InnerNetwork(newNetwork,score);
@@ -290,7 +317,7 @@ public class DeltaWScorer implements IScorer{
         int b1;
         int b2;
         int length;
-        Integer singleCount = Integer.valueOf(1);
+        Integer singleCount = 1;
         // for each oligomer
         for(int i : IntStream.range(0,encodedOligomers.length).toArray()){
             encodedOligomer = encodedOligomers[i];
@@ -392,13 +419,13 @@ public class DeltaWScorer implements IScorer{
             S1Bases = oligomers[i1];
             S1length = S1Bases.length;		
             b1Max = S1length-1;
-            // for the second base in each combination
+            // for the second oligomer in each combination
             for (int i2 = i1; i2 < oligomers.length; i2++){
                 S2Bases = oligomers[i2];
                 S2length = S2Bases.length;
                 b2Max = S2length-1;
 
-                for( int j = 0; j <b2Max+1; j++ ){
+                for( int j = 0; j <S2length; j++ ){
                     structureLength = 0;
                     b1 = 0; // index of base on the top strand;
                     b2 = (b2Max + j ) % (b2Max+1);// index of base on the bottom strand;
@@ -465,9 +492,10 @@ public class DeltaWScorer implements IScorer{
     }
 
     private BigInteger calculateAffectedO (IDomainBasedEncodedNetwork network, int updatedVariableDomainIndex){
+        int[] lengthCounts = new int[maxLength+1];
         int[][] encodedOligomers = network.getOligomerSequencesEncoded();
         Set<Integer> affectedOligomerIndices = network.getVariableDomainToOligomerIndices().get(updatedVariableDomainIndex);
-        Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
+        //Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
         
         int[] encodedOligomer;
         int[] S1;
@@ -486,7 +514,7 @@ public class DeltaWScorer implements IScorer{
             b1Max = S1length-1;
             //j=0;
 
-            for (int j : IntStream.range(0,S1length).toArray()) {
+            for( int j : knownRanges.computeIfAbsent(S1length,x->IntStream.range(0,x).toArray())){
                 structureLength = 0;
                 b1 = (S1length - (j)/2) % S1length; // index of base on the top strand;
                 b2 = (b1Max -((j+1)/2)) ;// index of base on the bottom strand;
@@ -509,7 +537,8 @@ public class DeltaWScorer implements IScorer{
                     {
                         if (structureLength >= intraSLC)
                         {
-                            lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                            lengthCounts[structureLength]++;
+                            //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
                         }
                         b1 = 0;
                         structureLength = 0;
@@ -519,7 +548,8 @@ public class DeltaWScorer implements IScorer{
                     {
                         if (structureLength >= intraSLC)
                         {
-                            lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                            lengthCounts[structureLength]++;
+                            //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
                         }
                         b2 = b1Max;
                         structureLength = 0;
@@ -533,7 +563,8 @@ public class DeltaWScorer implements IScorer{
                     {
                         if (structureLength >= intraSLC)
                         {
-                            lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                            lengthCounts[structureLength]++;
+                            //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
                         }
                         structureLength =0;
                     }
@@ -542,28 +573,31 @@ public class DeltaWScorer implements IScorer{
                 //if the loop ended with an active structure, record it.
                 if (structureLength >= intraSLC)
                 {
-                    lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                    lengthCounts[structureLength]++;
+                    //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
                 }
-                j++;
             };
         }
 
         BigInteger retScore = BigInteger.valueOf(0);
-        for(Map.Entry<Integer,AtomicInteger> entry: lengthCounts.entrySet()){
-            int length = entry.getKey();
-            int counts = entry.getValue().get();
-            BigInteger lengthScore = knownIntraScores.computeIfAbsent(length, (x)->calculateUniqueDuplexPoints(x, intraSLC, intraSB));
-            retScore = retScore.add(lengthScore.multiply(BigInteger.valueOf(counts)));
+        for(int i : knownRanges.computeIfAbsent(lengthCounts.length,x->IntStream.range(0,x).toArray())){
+            int length = i;
+            int counts = lengthCounts[i];
+            if (counts >0){
+                BigInteger lengthScore = knownIntraScores.computeIfAbsent(length, (x)->calculateUniqueDuplexPoints(x, intraSLC, intraSB));
+                retScore = retScore.add(lengthScore.multiply(BigInteger.valueOf(counts)));
+            }
         }
 
         return retScore;
     }
 
     private BigInteger calculateAffectedN (IDomainBasedEncodedNetwork network, int updatedVariableDomainIndex){
-        Map<Integer,AtomicInteger> lengthCounts = new ConcurrentHashMap<>();
+        //Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
+        
+        int[] lengthCounts = new int[maxLength+1];
         int[][] encodedOligomers = network.getOligomerSequencesEncoded();
         int[][] aoc = network.getVariableDomainToOligomerCombinations().get(updatedVariableDomainIndex);
-        
         
         int[] S1Bases;
         int[] S2Bases;
@@ -574,68 +608,67 @@ public class DeltaWScorer implements IScorer{
         int structureLength;
         int b1;
         int b2;
-
+        
         // for each oligomer combination
-        for( int i :IntStream.range(0,aoc[0].length).toArray()){
+        for( int i : knownRanges.computeIfAbsent(aoc[0].length,x->IntStream.range(0,x).toArray())){
             S1Bases = encodedOligomers[aoc[0][i]];
             S2Bases = encodedOligomers[aoc[1][i]];
-            if (S1Bases.length < S2Bases.length){
-                int[] temp = S1Bases;
-                S1Bases = S2Bases;
-                S2Bases = temp;
-            }
             S1length = S1Bases.length;		
             b1Max = S1length-1;
             S2length = S2Bases.length;
             b2Max = S2length-1;
-            for (int j : IntStream.range(0,S2length).toArray()){
+            for (int j : knownRanges.computeIfAbsent(S2length,x->IntStream.range(0,x).toArray())){
                 structureLength = 0;
                 b1 = 0; // index of base on the top strand;
-                b2 = (b2Max + j ) % (b2Max+1);// index of base on the bottom strand;
-
-                // consider the first base pair.
-                if (S1Bases[b1] == -S2Bases[b2]){
-                        structureLength = 1;
-                };
-
-                while (b1 < b1Max){
-                    b1++;
-
-                    if( b2 == 0){
+                b2 = (b2Max + j) % (S2length);// index of base on the bottom strand;
+                
+                // for each base in the stretch.
+                do{
+                    //are the current bases complementary?
+                    if (S1Bases[b1] + S2Bases[b2] == 0){
+                        structureLength++;
+                    } else {
                         if (structureLength >= interSLC){
-                            lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                            lengthCounts[structureLength]++;
+                            //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                            //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                        }
+                        structureLength = 0;
+                    }
+                    
+                    //increment
+                    b1++;
+                    if(b2 == 0){
+                        if (structureLength >= interSLC){
+                            lengthCounts[structureLength]++;
+                            //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                            //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
                         }
                         b2 = b2Max;
                         structureLength = 0;
-                    } else {b2--;};
+                    } else {b2--;}
+                } while (b1 <= b1Max);
 
-                    //if the bases are complementary, increase structure length, else record structure;
-                    if (S1Bases[b1] == -S2Bases[b2]){
-                        structureLength++;
-                    } else
-                    {
-                        if (structureLength >= interSLC){
-                            lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
-                        }
-                        structureLength = 0;
-                    };
-                };
                 //if the loop ended with an active structure, record it.
-                if (structureLength >= interSLC)
-                {
-                    lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
-                };
-            };
-        };
-
-        BigInteger retScore = BigInteger.valueOf(0);
-        for(Map.Entry<Integer,AtomicInteger> entry: lengthCounts.entrySet()){
-            int length = entry.getKey();
-            int counts = entry.getValue().get();
-            BigInteger lengthScore = knownInterScores.computeIfAbsent(length, (x)->calculateUniqueDuplexPoints(x, interSLC, interSB));
-            retScore = retScore.add(lengthScore.multiply(BigInteger.valueOf(counts)));
+                if (structureLength >= interSLC){
+                    lengthCounts[structureLength]++;
+                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                    //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                }
+            }
         }
 
+        //System.out.println("Inter Oligomer Structures:");
+        BigInteger retScore = BigInteger.valueOf(0);
+        for(int i : knownRanges.computeIfAbsent(lengthCounts.length,x->IntStream.range(0,x).toArray())){
+            int length = i;
+            int counts = lengthCounts[i];
+            if (counts >0){
+                //System.out.println(length+", "+counts);
+                BigInteger lengthScore = knownInterScores.computeIfAbsent(length, (x)->calculateUniqueDuplexPoints(x, interSLC, interSB));
+                retScore = retScore.add(lengthScore.multiply(BigInteger.valueOf(counts)));
+            }
+        }
         return retScore;
     }
 
@@ -658,39 +691,6 @@ public class DeltaWScorer implements IScorer{
             uniqueDomains.put(entry.getKey(), newV);
         }
         return uniqueDomains;
-    }
-    
-    private static Map<String,int[]> encode(Map<String,String> sequences){
-        Map<String,int[]> encoded = new HashMap<>();
-        sequences.forEach((k,v)-> {
-                char[] b = v.toCharArray();
-                int[] e = new int[b.length];
-                IntStream.range(0, b.length).forEach(i->e[i]=encode(b[i]));
-                encoded.put(k, e);
-            }
-        );
-        return encoded;
-    }
-    
-    private static int encode(char c){
-        switch (c){
-            case 'a':
-            case 'A':
-                return -2;
-            case 'c':
-            case 'C':
-                return -1;
-            case 'g':
-            case 'G':
-                return 1;
-            case 't':
-            case 'T':
-                return 2;
-            default: 
-                System.out.println("Error: Base \"" + c + "\" not recognized." );
-                System.exit(0);
-                return 0;
-        }
     }
     
     private static Map<String,int[]> assembleEncodedOligomers(Map<String,int[]> fixedDomains, Map<String,int[]> variableDomains, Map<String,String[]> oligomerDomains){
@@ -771,5 +771,38 @@ public class DeltaWScorer implements IScorer{
         }
         
         return score;
+    }
+    
+     private static Map<String,int[]> encode(Map<String,String> sequences){
+        Map<String,int[]> encoded = new HashMap<>();
+        sequences.forEach((k,v)-> {
+                char[] b = v.toCharArray();
+                int[] e = new int[b.length];
+                IntStream.range(0, b.length).forEach(i->e[i]=encode(b[i]));
+                encoded.put(k, e);
+            }
+        );
+        return encoded;
+    }
+    
+    private static int encode(char c){
+        switch (c){
+            case 'a':
+            case 'A':
+                return -2;
+            case 'c':
+            case 'C':
+                return -1;
+            case 'g':
+            case 'G':
+                return 1;
+            case 't':
+            case 'T':
+                return 2;
+            default: 
+                System.out.println("Error: Base \"" + c + "\" not recognized." );
+                System.exit(0);
+                return 0;
+        }
     }
 }

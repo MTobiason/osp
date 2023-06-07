@@ -28,27 +28,37 @@ package edu.boisestate.osp.domainbasedencodednetwork;
  * @author mtobi
  */
 public interface IScorer {
-        
-        /**
-         * Returns a scored version of the given network;
-         * @param network
-         * @return
-         */
-        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedNetwork network);
-        
-        /**
-         * Returns a version of the given network scored using this scorer;
-         * @param network
-         * @return
-         */
-        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork network);
-        
-        /**
-         * Returns a scored version of the given network.
-         * @param previousNetwork The prior network
-         * @param newNetwork The new network which has had one variable domain updated.
-         * @param updatedDomainIndex The domain index of the variable domain which was updated.
-         * @return
-         */
-        IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex);
+    
+    /**
+     * Returns 1 if network1 is more fit than network2.
+     * Returns 0 if network1 and network2 are equally fit.
+     * Returns -1 if network1 is less fit than network 2.
+     * @param network1
+     * @param network2
+     * @return
+     */
+    int compareFitness(IDomainBasedEncodedScoredNetwork network1, IDomainBasedEncodedScoredNetwork network2);
+    
+    /**
+     * Returns a scored version of the given network;
+     * @param network
+     * @return
+     */
+    IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedNetwork network);
+
+    /**
+     * Returns a version of the given network scored using this scorer;
+     * @param network
+     * @return
+     */
+    IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork network);
+
+    /**
+     * Returns a scored version of the given network.
+     * @param previousNetwork The prior network
+     * @param newNetwork The new network which has had one variable domain updated.
+     * @param updatedDomainIndex The domain index of the variable domain which was updated.
+     * @return
+     */
+    IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex);
 }

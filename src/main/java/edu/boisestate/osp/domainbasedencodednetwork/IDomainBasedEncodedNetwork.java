@@ -73,6 +73,14 @@ public interface IDomainBasedEncodedNetwork {
      */
     int[][] getOligomerSequencesEncoded();
     
+    /**
+     * Returns a 2D array with the same dimensions as getOligomerSequencesEncoded
+     * Each boolean in this array indicates if the base at the matching location
+     * is either fixed (false) or variable (true).
+     * @return
+     */
+    boolean[][] getOligomerBaseIsVariableArray();
+    
     // variable domain stuff
     /**
      * Returns a map specifying the location of each variable domain in the encoded

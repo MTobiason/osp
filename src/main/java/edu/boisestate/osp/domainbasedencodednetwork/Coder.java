@@ -32,7 +32,7 @@ import java.util.stream.IntStream;
  */
 public class Coder implements ICoder{
     
-    Coder(){
+    public Coder(){
     }
     
     @Override

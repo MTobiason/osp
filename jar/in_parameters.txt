@@ -1,1 +1,5 @@
-CPL 100
+maxAA 6
+maxTT 6
+maxCC 3
+maxGG 3
+CPL 10000
