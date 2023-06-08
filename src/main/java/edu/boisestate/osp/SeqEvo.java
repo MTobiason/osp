@@ -28,11 +28,16 @@ import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import edu.boisestate.osp.domainbasedencodednetwork.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  *
@@ -40,6 +45,7 @@ import java.util.TreeMap;
  */
 public class SeqEvo {
     final static String version = "2.0";
+    final static int NUMBERTHREADS = Runtime.getRuntime().availableProcessors();
     
     // parameters stuff
     final static String PFP_LABEL = "PFP"; //parameters File Path
@@ -83,9 +89,9 @@ public class SeqEvo {
     final int GPC; // Generations Per Cycle
     final static String GPC_LABEL = "GPC";
     final static String GPC_DEFAULT = "1";
-    final int NDPM; // New Daughters Per Mother
-    final static String NDPM_LABEL = "NDPM";
-    final static String NDPM_DEFAULT = "1";
+    final int NDPG; // New Daughters Per Generation
+    final static String NDPG_LABEL = "NDPG";
+    final static String NDPG_DEFAULT = "1";
     final int NL; // Number of Lineages
     final static String NL_LABEL = "NL";
     final static String NL_DEFAULT = "8";
@@ -143,8 +149,8 @@ public class SeqEvo {
         usedParameters.put(CPL_LABEL,String.valueOf(this.CPL));
         this.GPC = Integer.parseInt(parameters.getOrDefault(GPC_LABEL,GPC_DEFAULT));
         usedParameters.put(GPC_LABEL,String.valueOf(this.GPC));
-        this.NDPM = Integer.parseInt(parameters.getOrDefault(NDPM_LABEL,NDPM_DEFAULT));
-        usedParameters.put(NDPM_LABEL,String.valueOf(this.NDPM));
+        this.NDPG = Integer.parseInt(parameters.getOrDefault(NDPG_LABEL,NDPG_DEFAULT));
+        usedParameters.put(NDPG_LABEL,String.valueOf(this.NDPG));
         this.NMPC = Integer.parseInt(parameters.getOrDefault(NMPC_LABEL,NMPC_DEFAULT));
         usedParameters.put(NMPC_LABEL,String.valueOf(this.NMPC));
         this.NL = Integer.parseInt(parameters.getOrDefault(NL_LABEL,NL_DEFAULT));
@@ -189,7 +195,6 @@ public class SeqEvo {
         usedParameters.put(ODFP_LABEL, OFP);
         final Map<String,String[]> oligomerDomains = util.importListFromTxt(OFP);
         
-        
         // output stuff
         final String ORFP = parameters.getOrDefault(ORFP_LABEL, ORFP_DEFAULT);
         usedParameters.put(ORFP_LABEL,ORFP);
@@ -212,7 +217,7 @@ public class SeqEvo {
         final ICoder coder = new Coder();
         
         // factory stuff
-        final FactoryDomainBasedEncodedNetwork networkFactory = new FactoryDomainBasedEncodedNetwork(coder, fixedDomains, oligomerDomains, initialVariableDomains);
+        final FactoryDomainBasedEncodedNetwork factory = new FactoryDomainBasedEncodedNetwork(coder, fixedDomains, oligomerDomains, initialVariableDomains);
         
         // Scoring stuff
         final IScorer scorer = new DeltaWScorer(fixedDomains, oligomerDomains, initialVariableDomains, INTRASB, INTRASLC, INTERSB, INTERSLC, SWX);
@@ -220,10 +225,13 @@ public class SeqEvo {
         // Validator stuff
         final IValidator validator = new Validator(coder, MAXAA, MAXCC, MAXGG, MAXTT);
         
-        IDomainBasedEncodedNetwork gen0 = networkFactory.getNewNetwork(initialVariableDomains);
+        // Work supervisor
+        final MutationSupervisor mutationSupervisor = new MutationSupervisor(NUMBERTHREADS,factory,scorer,validator);
+        
+        IDomainBasedEncodedNetwork gen0 = factory.getNewNetwork(initialVariableDomains);
         if (!validator.isValidNetwork(gen0)) {
             System.out.println("Initial network invalid. Replacing with random sequences.");
-            gen0 = networkFactory.getType1Mutation(gen0,validator);
+            gen0 = factory.getType1Mutation(gen0,validator);
         }
         if (!validator.isValidNetwork(gen0)){
             System.out.println("Failed to identify valid network.");
@@ -236,7 +244,10 @@ public class SeqEvo {
         double optStartTime = System.currentTimeMillis(); // start timer for optimization runtime.
         
         // optimize
-        IDomainBasedEncodedScoredNetwork finalGen = cycle1(networkFactory, scoredGen0, scorer, validator, NL, CPL, NMPC, GPC, NDPM);
+        //IDomainBasedEncodedScoredNetwork finalGen = cycle1(scoredGen0, scorer, workSupervisor, NL, CPL, NMPC, GPC, NDPG);
+        
+        Type1CycleReport report = (new Type1Cycle(scoredGen0, mutationSupervisor, scorer, NL, CPL, NMPC, GPC, NDPG)).call();
+        IDomainBasedEncodedScoredNetwork finalGen = report.fittest;
         
         System.out.println("fittestScore = "+finalGen.getScore());
         
@@ -250,18 +261,20 @@ public class SeqEvo {
         
         System.out.println("total time: "+ elapsedTimeString);
         
+        mutationSupervisor.close();
+        
         Report r = new Report(usedParameters,scoredGen0,finalGen,startTime,elapsedTimeString);
         return r;
     }
     
-    static private IDomainBasedEncodedScoredNetwork cycle1(FactoryDomainBasedEncodedNetwork networkFactory, IDomainBasedEncodedScoredNetwork network, IScorer scorer, IValidator validator, int NL, int CPL, int NMPC, int GPC, int NDPM){
+    static private IDomainBasedEncodedScoredNetwork cycle1(IDomainBasedEncodedScoredNetwork network, IScorer scorer, MutationSupervisor workSupervisor, int NL, int CPL, int NMPC, int GPC, int NDPG){
         //generate mutated networks.
-        IDomainBasedEncodedScoredNetwork[] beforeSubCycles = Stream.concat(Stream.of(network),Stream.generate(()->networkFactory.getType1Mutation(network,scorer,validator)).limit(NL-1).parallel()).toArray(x -> new IDomainBasedEncodedScoredNetwork[x]);
+        IDomainBasedEncodedScoredNetwork[] beforeSubCycles = Stream.concat(Stream.of(network),Arrays.stream(workSupervisor.getType1Mutation(network,NL-1))).toArray(x -> new IDomainBasedEncodedScoredNetwork[x]);
         IDomainBasedEncodedScoredNetwork[] afterSubCycles = Arrays.stream(beforeSubCycles).parallel()
             .map(n->{
             IDomainBasedEncodedScoredNetwork subCycleBest = n;
             for(int i =0; i < CPL; i++){
-                subCycleBest = cycle2(networkFactory,subCycleBest, scorer, validator ,NMPC, GPC, NDPM);
+                subCycleBest = cycle2(subCycleBest, scorer, workSupervisor ,NMPC, GPC, NDPG);
             }
             return subCycleBest;
         }).toArray(i->new IDomainBasedEncodedScoredNetwork[i]);
@@ -276,14 +289,14 @@ public class SeqEvo {
         return fittest;
     }
     
-    static private IDomainBasedEncodedScoredNetwork cycle2(FactoryDomainBasedEncodedNetwork networkFactory, IDomainBasedEncodedScoredNetwork network, IScorer scorer, IValidator validator, int NMPC, int GPC, int NDPM){
+    static private IDomainBasedEncodedScoredNetwork cycle2( IDomainBasedEncodedScoredNetwork network, IScorer scorer, MutationSupervisor workSupervisor, int NMPC, int GPC, int NDPG){
         //generate mutated networks.
-        IDomainBasedEncodedScoredNetwork[] beforeSubCycles = Stream.concat(Stream.of(network),Stream.generate(()->networkFactory.getType2Mutation(network,scorer,validator)).limit(NMPC)).toArray(x->new IDomainBasedEncodedScoredNetwork[x]);
-        IDomainBasedEncodedScoredNetwork[] afterSubCycles = Arrays.stream(beforeSubCycles)
+        IDomainBasedEncodedScoredNetwork[] beforeSubCycles = Stream.concat(Stream.of(network),Arrays.stream(workSupervisor.getType2Mutation(network,NMPC))).toArray(x->new IDomainBasedEncodedScoredNetwork[x]);
+        IDomainBasedEncodedScoredNetwork[] afterSubCycles = Arrays.stream(beforeSubCycles).parallel()
                 .map(n->{
                 IDomainBasedEncodedScoredNetwork subCycleBest = n;
                 for(int i =0; i < GPC; i++){
-                    subCycleBest = cycle3(networkFactory,subCycleBest,scorer,validator,NDPM);
+                    subCycleBest = cycle3(subCycleBest,scorer,workSupervisor,NDPG);
                 }
                 return subCycleBest;
             }).toArray(i->new IDomainBasedEncodedScoredNetwork[i]);
@@ -298,9 +311,9 @@ public class SeqEvo {
         return fittest;
     }
     
-    static private IDomainBasedEncodedScoredNetwork cycle3(FactoryDomainBasedEncodedNetwork networkFactory, IDomainBasedEncodedScoredNetwork network, IScorer scorer, IValidator validator, int NDPM){
+    static private IDomainBasedEncodedScoredNetwork cycle3(IDomainBasedEncodedScoredNetwork network, IScorer scorer, MutationSupervisor workSupervisor, int NDPG){
         //generate mutated networks.
-        IDomainBasedEncodedScoredNetwork[] newNetworks = Stream.generate(()->networkFactory.getType3Mutation(network,scorer,validator)).limit(NDPM).toArray(i->new IDomainBasedEncodedScoredNetwork[i]);
+        IDomainBasedEncodedScoredNetwork[] newNetworks = Arrays.stream(workSupervisor.getType3Mutation(network,NDPG)).toArray(x->new IDomainBasedEncodedScoredNetwork[x]);
         
         // compare scores.
         IDomainBasedEncodedScoredNetwork fittest = network;
@@ -312,75 +325,6 @@ public class SeqEvo {
         return fittest;
     }
         	
-//        //initialize IDomainDesign Arrays.
-//        Network[] lineageMothers = new Network[NL];
-//        Network[][] cycleMothers = new Network[NL][NMPC];
-//        Network[][][] cycleDaughters = new Network[NL][NMPC][NDPM];
-        
-        //initialize lineage mothers.
-        //lineageMothers = Stream.concat(Stream.of(gen0),Stream.generate(()->getType1Mutation(gen0)).limit(NL-1).parallel()).toArray((x)->new Network[x]);
-        //lineageMothers[0] = gen0;
-        
-        //begin heuristic process
-        
-        /*
-        //for each cycle
-        for( int cycle =0; cycle< CPL; cycle++){
-            
-            //create mothers
-            //for GPC iterations, iterate mothers.
-            
-            //for each lineage
-            for( int i = 0; i< NL; i++){
-                //for each cycle mother
-                for( int j = 0; j < NMPC; j++){
-                    if(j == 0){
-                        cycleMothers[i][0] = lineageMothers[i];
-                    }
-                    else{
-                        cycleMothers[i][j] = getType2Mutation(lineageMothers[i]);
-                    }
-                    //for each generation in the cycle
-                    for (int generation =0; generation < GPC; generation++){
-                        //mutate and score k daughters
-                        for (int k = 0; k< NDPM; k++){
-                                cycleDaughters[i][j][k] = getType3Mutation(cycleMothers[i][j]);
-                        }
-                        
-                        //for each of the k daughters, compare scores.
-                        for (int k =0; k < NDPM; k++){
-                            // if daughter is more or equally fit, daughter replaces mother
-                            if (compare(cycleDaughters[i][j][k],cycleMothers[i][j]) <=0){
-                                cycleMothers[i][j] = cycleDaughters[i][j][k];
-                            }
-                        }
-                    }
-                }
-                //for each of the cycle mothers
-                for (int j = 0; j < NMPC; j++){
-                    //if cycle mother is more or equally fit, cycle mother replaces lineage mother.
-                    if ( compare(cycleMothers[i][j],lineageMothers[i]) <= 0){
-                        lineageMothers[i] = cycleMothers[i][j];
-                    }
-                }
-            }
-        }
-        
-        //find the most fit design.
-        Network fittest = gen0;
-        
-        //for each lineage
-        for(int i =0; i< NL; i++){
-            //if the lineage mother is at least as fit as the most fit design.
-            if (compare(lineageMothers[i],fittest)<=0){
-                //it replaces the current most fit design.
-                fittest = lineageMothers[i];
-            }
-        }
-        */
-        
-        // compare scores.
-    
     static public class Report {
         Map<String,String> usedParameters;
         IDomainBasedEncodedScoredNetwork initialNetwork;
@@ -558,6 +502,393 @@ public class SeqEvo {
                 System.out.println("Error while exporting network.");
                 System.out.println(e.getMessage());
             }
+        }
+    }
+    
+    static private class MutationSupervisor {
+        private final ExecutorService service;
+        final FactoryDomainBasedEncodedNetwork factory;
+        final IScorer scorer;
+        final IValidator validator;
+        
+        MutationSupervisor(int numberThreads, FactoryDomainBasedEncodedNetwork factory,IScorer scorer, IValidator validator){
+            service = Executors.newFixedThreadPool(numberThreads);            
+            this.factory = factory;
+            this.scorer = scorer;
+            this.validator = validator;
+        }
+        
+        public IDomainBasedEncodedScoredNetwork getType1Mutation(IDomainBasedEncodedScoredNetwork network){
+            Type1MutationThread toQueue = new Type1MutationThread(network);
+            Future<IDomainBasedEncodedScoredNetwork> result = service.submit(toQueue);
+            IDomainBasedEncodedScoredNetwork ret;
+            try{
+                ret = result.get();
+            } catch (Exception e){
+                System.out.println("Exception during type 1 mutation.");
+                System.out.println(e.getMessage());
+                ret = network;
+            }
+            return ret;
+        }
+        
+        public IDomainBasedEncodedScoredNetwork[] getType1Mutation(IDomainBasedEncodedScoredNetwork network, int numberOfMutations){
+            Future<IDomainBasedEncodedScoredNetwork>[] results = new Future[numberOfMutations];
+            for(int i =0; i < numberOfMutations; i++){
+                Type1MutationThread toQueue = new Type1MutationThread(network);
+                results[i] = service.submit(toQueue);
+            }
+            
+            IDomainBasedEncodedScoredNetwork[] ret = new IDomainBasedEncodedScoredNetwork[numberOfMutations];
+            for(int i =0; i < numberOfMutations; i++){
+                try{
+                    ret[i] = results[i].get();
+                } catch (Exception e){
+                    System.out.println("Exception during type 3 mutation.");
+                    System.out.println(e.getMessage());
+                    ret[i] = network;
+                }
+            }
+            return ret;
+        }
+        
+        class Type1MutationThread implements Callable{
+            final IDomainBasedEncodedScoredNetwork network;
+            
+            Type1MutationThread(IDomainBasedEncodedScoredNetwork network){
+                this.network = network;
+            }
+            
+            @Override
+            public IDomainBasedEncodedScoredNetwork call(){
+                return factory.getType1Mutation(network, scorer, validator);
+            }
+        }
+        
+        public IDomainBasedEncodedScoredNetwork getType2Mutation(IDomainBasedEncodedScoredNetwork network){
+            Type2MutationThread toQueue = new Type2MutationThread(network);
+            Future<IDomainBasedEncodedScoredNetwork> result = service.submit(toQueue);
+            IDomainBasedEncodedScoredNetwork ret;
+            try{
+                ret = result.get();
+            } catch (Exception e){
+                System.out.println("Exception during type 2 mutation.");
+                System.out.println(e.getMessage());
+                ret = network;
+            }
+            return ret;
+        }
+        
+        public IDomainBasedEncodedScoredNetwork[] getType2Mutation(IDomainBasedEncodedScoredNetwork network, int numberOfMutations){
+            Future<IDomainBasedEncodedScoredNetwork>[] results = new Future[numberOfMutations];
+            for(int i =0; i < numberOfMutations; i++){
+                Type2MutationThread toQueue = new Type2MutationThread(network);
+                results[i] = service.submit(toQueue);
+            }
+            
+            IDomainBasedEncodedScoredNetwork[] ret = new IDomainBasedEncodedScoredNetwork[numberOfMutations];
+            for(int i =0; i < numberOfMutations; i++){
+                try{
+                    ret[i] = results[i].get();
+                } catch (Exception e){
+                    System.out.println("Exception during type 3 mutation.");
+                    System.out.println(e.getMessage());
+                    ret[i] = network;
+                }
+            }
+            return ret;
+        }
+        
+        class Type2MutationThread implements Callable{
+            final IDomainBasedEncodedScoredNetwork network;
+            
+            Type2MutationThread(IDomainBasedEncodedScoredNetwork network){
+                this.network = network;
+            }
+            
+            @Override
+            public IDomainBasedEncodedScoredNetwork call(){
+                return factory.getType2Mutation(network, scorer, validator);
+            }
+        }
+        
+        public IDomainBasedEncodedScoredNetwork getType3Mutation(IDomainBasedEncodedScoredNetwork network){
+            Type3MutationThread toQueue = new Type3MutationThread(network);
+            Future<IDomainBasedEncodedScoredNetwork> result = service.submit(toQueue);
+            IDomainBasedEncodedScoredNetwork ret;
+            try{
+                ret = result.get();
+            } catch (Exception e){
+                System.out.println("Exception during type 3 mutation.");
+                System.out.println(e.getMessage());
+                ret = network;
+            }
+            return ret;
+        }
+        
+        public IDomainBasedEncodedScoredNetwork[] getType3Mutation(IDomainBasedEncodedScoredNetwork network, int numberOfMutations){
+            Future<IDomainBasedEncodedScoredNetwork>[] results = new Future[numberOfMutations];
+            for(int i =0; i < numberOfMutations; i++){
+                Type3MutationThread toQueue = new Type3MutationThread(network);
+                results[i] = service.submit(toQueue);
+            }
+            
+            IDomainBasedEncodedScoredNetwork[] ret = new IDomainBasedEncodedScoredNetwork[numberOfMutations];
+            for(int i =0; i < numberOfMutations; i++){
+                try{
+                    ret[i] = results[i].get();
+                } catch (Exception e){
+                    System.out.println("Exception during type 3 mutation.");
+                    System.out.println(e.getMessage());
+                    ret[i] = network;
+                }
+            }
+            return ret;
+        }
+        
+        class Type3MutationThread implements Callable{
+            final IDomainBasedEncodedScoredNetwork network;
+            
+            Type3MutationThread(IDomainBasedEncodedScoredNetwork network){
+                this.network = network;
+            }
+            
+            @Override
+            public IDomainBasedEncodedScoredNetwork call(){
+                return factory.getType3Mutation(network, scorer, validator);
+            }
+        }
+        
+        public void close(){
+            service.shutdownNow();
+        }
+    }
+    
+    
+    static private class Type1Cycle implements Callable{
+        final MutationSupervisor mutationSupervisor;
+        final IScorer scorer;
+        
+        final IDomainBasedEncodedScoredNetwork initialNetwork;
+        final int NL;
+        final int CPL;
+        final int NMPC;
+        final int GPC;
+        final int NDPG;
+        
+        Type2Cycle[] subCycles;
+        
+        Type1Cycle (IDomainBasedEncodedScoredNetwork initialNetwork, MutationSupervisor mutationSupervisor, IScorer scorer, int NL, int CPL,int NMPC,int GPC,int NDPG){
+            this.initialNetwork = initialNetwork;
+            this.mutationSupervisor=mutationSupervisor;
+            this.scorer = scorer;
+            this.NL = NL;
+            this.CPL = CPL;
+            this.NMPC = NMPC;
+            this.GPC = GPC;
+            this.NDPG = NDPG;
+        }
+        
+        @Override
+        public Type1CycleReport call(){
+            final ExecutorService es = Executors.newCachedThreadPool();
+            final String[][] fittestScores = new String[NL][];
+            
+            //generate mutated networks.
+            IDomainBasedEncodedScoredNetwork[] NewLineageMothers = mutationSupervisor.getType1Mutation(initialNetwork,NL-1);
+            subCycles = new Type2Cycle[NL];
+            
+            Future<Type2CycleReport>[] futures = new Future[NL];
+            subCycles[0] = new Type2Cycle(initialNetwork,mutationSupervisor,es,scorer,CPL,NMPC,GPC,NDPG);
+            futures[0] = es.submit(subCycles[0]);
+            
+            for(int i = 0; i < NL-1; i++){
+                subCycles[i+1] = new Type2Cycle(NewLineageMothers[i],mutationSupervisor,es,scorer,CPL,NMPC,GPC,NDPG);
+                futures[i+1] = es.submit(subCycles[i+1]);
+            }
+            
+            Type2CycleReport[] reports = new Type2CycleReport[NL];
+            IDomainBasedEncodedScoredNetwork[] fittestLineageMothers = new IDomainBasedEncodedScoredNetwork[NL];
+            
+            try{
+                for(int i = 0; i < NL; i++){
+                    reports[i]= futures[i].get();
+                    fittestLineageMothers[i] = reports[i].fittest;
+                }
+            }catch(Exception e){System.out.print(e.getMessage());}
+            
+            IDomainBasedEncodedScoredNetwork fittest = fittestLineageMothers[0];
+            for(int i = 1; i < NL; i++){
+                if(scorer.compareFitness(fittestLineageMothers[i],fittest)>=0){
+                    fittest = fittestLineageMothers[i];
+                }
+            }
+            
+            for(int i = 0; i < NL; i++){
+                fittestScores[i] = reports[i].fittestScores;
+            }
+            
+            es.shutdownNow();
+            
+            Type1CycleReport ret = new Type1CycleReport(fittest,fittestScores,fittestLineageMothers);
+            return ret;
+        }
+    }
+    static public class Type1CycleReport{
+        IDomainBasedEncodedScoredNetwork fittest;
+        IDomainBasedEncodedScoredNetwork[] fittestLineageMothers;
+        String[][] fittestScores;
+        Type1CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[][] fittestScores, IDomainBasedEncodedScoredNetwork[] fittestLineageMothers){
+            this.fittest = fittest;
+            this.fittestScores = fittestScores;
+            this.fittestLineageMothers = fittestLineageMothers;
+        }
+    }
+    
+    static private class Type2Cycle implements Callable{
+        final ExecutorService es;
+        final MutationSupervisor mutationSupervisor;
+        final IScorer scorer;
+        
+        final IDomainBasedEncodedScoredNetwork initialNetwork;
+        final int CPL;
+        final int NMPC;
+        final int GPC;
+        final int NDPG;
+        
+        Type2Cycle ( IDomainBasedEncodedScoredNetwork initialNetwork, MutationSupervisor mutationSupervisor, ExecutorService executorService, IScorer scorer, int CPL,int NMPC,int GPC,int NDPG){
+            this.es = executorService;
+            this.initialNetwork = initialNetwork;
+            this.mutationSupervisor=mutationSupervisor;
+            this.scorer = scorer;
+            this.CPL = CPL;
+            this.NMPC = NMPC;
+            this.GPC = GPC;
+            this.NDPG = NDPG;
+        }
+        
+        @Override
+        public Type2CycleReport call(){
+            ArrayList<String> fittestScores = new ArrayList<>();
+            int cycleIndex=0;
+            IDomainBasedEncodedScoredNetwork currentFittest = initialNetwork;
+            IDomainBasedEncodedScoredNetwork[] subCycleMothers = new IDomainBasedEncodedScoredNetwork[NMPC+1];
+            Type3Cycle[] subCycles = new Type3Cycle[NMPC+1];
+            subCycles[0] = new Type3Cycle(initialNetwork,mutationSupervisor,es,scorer,GPC,NDPG);
+            for(int i = 0; i < NMPC; i++){
+                subCycles[i+1] = new Type3Cycle(initialNetwork,mutationSupervisor,es,scorer,GPC,NDPG);
+            }
+            Future<Type3CycleReport>[] futures = new Future[NMPC+1];
+            IDomainBasedEncodedScoredNetwork[] subCycleFittest = new IDomainBasedEncodedScoredNetwork[NMPC+1];
+            String[] fittestSubScores;
+            int fittestIndex;
+            
+            do{
+                IDomainBasedEncodedScoredNetwork[] newCycleMothers = mutationSupervisor.getType2Mutation(currentFittest,NMPC);
+                
+                subCycleMothers[0] = currentFittest;
+                for(int i = 1; i < NMPC+1; i++){
+                    subCycleMothers[i] = newCycleMothers[i-1];
+                }
+
+                for(int i = 0; i < NMPC+1; i++){
+                    subCycles[i].updateState(subCycleMothers[i]);
+                    futures[i] = es.submit(subCycles[i]);
+                }
+                
+                try{
+                    for(int i=0; i < NMPC+1; i++){
+                        subCycleFittest[i] = futures[i].get().fittest;
+                    }
+                } catch (Exception e){}
+                
+                fittestIndex =0;
+                for(int i =0; i < NMPC+1;i++){
+                    if (scorer.compareFitness(subCycleFittest[i], subCycleFittest[fittestIndex])>=0){
+                        fittestIndex = i;
+                    }
+                }
+                
+                currentFittest = subCycleFittest[fittestIndex];
+                try{
+                    fittestScores.add(subCycleMothers[fittestIndex].getScore());
+                    fittestSubScores = futures[fittestIndex].get().fittestScores;
+                    for(String score: fittestSubScores){
+                        fittestScores.add(score);
+                    }
+                } catch (Exception e){System.out.println(e.getMessage());}
+                
+                cycleIndex++;
+            } while (cycleIndex < CPL);
+            
+            Type2CycleReport ret = new Type2CycleReport(currentFittest, fittestScores.toArray(new String[0]));
+            return ret;
+        }
+        
+    }
+    
+    static public class Type2CycleReport{
+        IDomainBasedEncodedScoredNetwork fittest;
+        String[] fittestScores;
+        Type2CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[] fittestScores){
+            this.fittest = fittest;
+            this.fittestScores = fittestScores;
+        }
+    }
+    
+    static private class Type3Cycle implements Callable{
+        final ExecutorService es;
+        final MutationSupervisor mutationSupervisor;
+        final IScorer scorer;
+        
+        IDomainBasedEncodedScoredNetwork initialNetwork;
+        final int GPC;
+        final int NDPG;
+        
+        Type3Cycle ( IDomainBasedEncodedScoredNetwork initialNetwork, MutationSupervisor mutationSupervisor, ExecutorService executorService, IScorer scorer, int GPC,int NDPG){
+            this.es = executorService;
+            this.initialNetwork = initialNetwork;
+            this.mutationSupervisor=mutationSupervisor;
+            this.scorer = scorer;
+            this.GPC = GPC;
+            this.NDPG = NDPG;
+        }
+        
+        public void updateState(IDomainBasedEncodedScoredNetwork initialNetwork){
+            this.initialNetwork = initialNetwork;
+        }
+        
+        @Override
+        public Type3CycleReport call(){
+            String[] fittestScores = new String[GPC];
+            int generationIndex = 0;
+            IDomainBasedEncodedScoredNetwork currentFittest = initialNetwork;
+            
+            do{
+                IDomainBasedEncodedScoredNetwork[] newDaughters = mutationSupervisor.getType3Mutation(currentFittest,NDPG);
+
+                for(int i =0; i < NDPG;i++){
+                    if (scorer.compareFitness(newDaughters[i], currentFittest)>=0){
+                        currentFittest = newDaughters[i];
+                    }
+                }
+                fittestScores[generationIndex] = currentFittest.getScore();
+                
+                generationIndex++;
+            } while (generationIndex < GPC);
+            
+            Type3CycleReport ret = new Type3CycleReport(currentFittest, fittestScores);
+            return ret;
+        }
+        
+    }
+    
+    static public class Type3CycleReport{
+        IDomainBasedEncodedScoredNetwork fittest;
+        String[] fittestScores;
+        Type3CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[] fittestScores){
+            this.fittest = fittest;
+            this.fittestScores = fittestScores;
         }
     }
 }

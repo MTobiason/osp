@@ -36,6 +36,7 @@ public class SeqEvoTest_Ke_2012_brick {
     public static void main(String[] args){
         Map<String,String> parameters = new TreeMap<>();{
             parameters.put("CPL", "1000");
+            parameters.put("NL", "8");
             parameters.put("maxAA", "6");
             parameters.put("maxCC", "3");
             parameters.put("maxGG", "3");
