@@ -43,11 +43,12 @@ public class SeqEvoTest_Duplex_Scaling {
         Map<String,String> variableDomains = new TreeMap<>();
         Map<String,String[]> oligomerDomains = new TreeMap<>();
         
-        addVariableDomains(variableDomains,512,8/4);
-        addDuplexOligomerDomains(oligomerDomains,512);
+        addVariableDomains(variableDomains,2048,8/4);
+        addDuplexOligomerDomains(oligomerDomains,2048);
         
         SeqEvo s = new SeqEvo(parameters);
         Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
+        System.exit(0);
     }
     
     private static void addDuplexOligomerDomains(Map<String,String[]> oligomerDomains, int numberDuplexes){

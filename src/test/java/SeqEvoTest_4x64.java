@@ -57,6 +57,7 @@ public class SeqEvoTest_4x64 {
         
         SeqEvo s = new SeqEvo(parameters);
         SeqEvo.Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
+        System.exit(0);
     }
     
 }

@@ -37,14 +37,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.stream.IntStream;
 
 /**
  *
  * @author mtobi
  */
 public class SeqEvo {
-    final static String version = "2.0";
+    final static String VERSION = "2.0";
     final static int NUMBERTHREADS = Runtime.getRuntime().availableProcessors();
     
     // parameters stuff
@@ -67,6 +67,10 @@ public class SeqEvo {
     final static String OVDFP_DEFAULT = "out_domains_variable.txt";
     final static String OOSFP_LABEL = "OOFP"; // Output Oligomer Sequences File Path
     final static String OOSFP_DEFAULT = "out_oligomers.txt"; //
+    final static String OSTFP_LABEL = "OSTFP"; // Output Score Trajectories File Path
+    final static String OSTFP_DEFAULT = "out_score_trajectories.csv";
+    final static String OLSTFP_LABEL = "OLSTFP"; // Output Score Trajectories File Path
+    final static String OLSTFP_DEFAULT = "out_score_trajectories_log.csv";
     
     // mutation parameters
     final int MAXAA; // Max number of consecutive AA's
@@ -202,12 +206,17 @@ public class SeqEvo {
         usedParameters.put(OVDFP_LABEL,OVDFP);
         final String OOSFP = parameters.getOrDefault(OOSFP_LABEL, OOSFP_DEFAULT);
         usedParameters.put(OOSFP_LABEL,OOSFP);
+        final String OSTFP = parameters.getOrDefault(OSTFP_LABEL, OSTFP_DEFAULT);
+        usedParameters.put(OSTFP_LABEL,OSTFP);
+        final String OLSTFP = parameters.getOrDefault(OLSTFP_LABEL, OLSTFP_DEFAULT);
+        usedParameters.put(OLSTFP_LABEL,OLSTFP);
         
         SeqEvo s = new SeqEvo(parameters);
         
         Report report = s.run(fixedDomains,initialVariableDomains,oligomerDomains);
         
-        report.exportToFile(usedParameters,report,ORFP,OVDFP,OOSFP);
+        report.exportToFile(usedParameters,ORFP,OVDFP,OOSFP,OSTFP,OLSTFP);
+        System.exit(0);
     }
     
     public Report run(Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains){
@@ -220,7 +229,9 @@ public class SeqEvo {
         final FactoryDomainBasedEncodedNetwork factory = new FactoryDomainBasedEncodedNetwork(coder, fixedDomains, oligomerDomains, initialVariableDomains);
         
         // Scoring stuff
-        final IScorer scorer = new DeltaWScorer(fixedDomains, oligomerDomains, initialVariableDomains, INTRASB, INTRASLC, INTERSB, INTERSLC, SWX);
+        final IScorer scorer = new DeltaWScorer(fixedDomains, oligomerDomains, initialVariableDomains, INTRASB, INTRASLC, INTERSB, INTERSLC, SWX, NUMBERTHREADS);
+        String scoreLabel = scorer.getScoreLabel();
+        String scoreUnits = scorer.getScoreUnits();
         
         // Validator stuff
         final IValidator validator = new Validator(coder, MAXAA, MAXCC, MAXGG, MAXTT);
@@ -239,17 +250,20 @@ public class SeqEvo {
         }
         
         IDomainBasedEncodedScoredNetwork scoredGen0 = scorer.getScored(gen0);
-        System.out.println("initialScore = "+scoredGen0.getScore());
+        System.out.println("Initial network "+scoreLabel+" ("+scoreUnits+"): "+scoredGen0.getScore());
         
         double optStartTime = System.currentTimeMillis(); // start timer for optimization runtime.
         
         // optimize
         //IDomainBasedEncodedScoredNetwork finalGen = cycle1(scoredGen0, scorer, workSupervisor, NL, CPL, NMPC, GPC, NDPG);
         
-        Type1CycleReport report = (new Type1Cycle(scoredGen0, mutationSupervisor, scorer, NL, CPL, NMPC, GPC, NDPG)).call();
-        IDomainBasedEncodedScoredNetwork finalGen = report.fittest;
+        Type1Cycle c1 = new Type1Cycle(scoredGen0, mutationSupervisor, scorer, NL, CPL, NMPC, GPC, NDPG);
+        Type1CycleReport report = c1.call();
         
-        System.out.println("fittestScore = "+finalGen.getScore());
+        IDomainBasedEncodedScoredNetwork finalGen = report.fittest;
+        String[][] lineageFittestScores = report.lineageFittestScores;
+        
+        System.out.println("Final network "+scoreLabel+" ("+scoreUnits+"): "+finalGen.getScore());
         
         //calculate runtime.
         double optEndTime   = System.currentTimeMillis(); // record evolutionary cycle endtime
@@ -259,11 +273,11 @@ public class SeqEvo {
         int S = (int)((elapsedTime/1000) % 60 );   // Seconds
         String elapsedTimeString = ( H + " h " + M + " m " + S + " s ");
         
-        System.out.println("total time: "+ elapsedTimeString);
+        System.out.println("Optimization time: "+ elapsedTimeString);
         
         mutationSupervisor.close();
         
-        Report r = new Report(usedParameters,scoredGen0,finalGen,startTime,elapsedTimeString);
+        Report r = new Report(usedParameters,scoredGen0,finalGen,startTime,elapsedTimeString,lineageFittestScores,scoreLabel, scoreUnits);
         return r;
     }
     
@@ -331,21 +345,28 @@ public class SeqEvo {
         IDomainBasedEncodedScoredNetwork finalNetwork;
         String startTime;
         String elapsedTime;
-        String version = SeqEvo.version;
+        String version = SeqEvo.VERSION;
+        String[][] lineageFittestScores;
+        String scoreLabel;
+        String scoreUnits;
         
-        Report(Map<String,String> usedParameters, IDomainBasedEncodedScoredNetwork initialNetwork, IDomainBasedEncodedScoredNetwork finalNetwork, String startTime, String elapsedTime){
+        Report(Map<String,String> usedParameters, IDomainBasedEncodedScoredNetwork initialNetwork, IDomainBasedEncodedScoredNetwork finalNetwork, String startTime, String elapsedTime, String[][] lineageFittestScores, String scoreLabel, String scoreUnits){
             this.usedParameters = usedParameters;
             this.initialNetwork = initialNetwork;
             this.finalNetwork = finalNetwork;
             this.startTime = startTime;
             this.elapsedTime = elapsedTime;
+            this.lineageFittestScores = lineageFittestScores;
+            this.scoreLabel = scoreLabel;
+            this.scoreUnits = scoreUnits;
+                    
         }
         
-        private void exportToFile(Map<String,String> otherUsedParameters, Report report, String ORFP, String OVDFP, String OOSFP){
+        private void exportToFile(Map<String,String> otherUsedParameters, String ORFP, String OVDFP, String OOSFP, String OSTFP, String OLSTFP){
             Map<String,String> allUsedParameters = new HashMap<>(otherUsedParameters);
-            allUsedParameters.putAll(report.usedParameters);
+            allUsedParameters.putAll(this.usedParameters);
 
-            IDomainBasedEncodedScoredNetwork finalNetwork = report.finalNetwork;
+            IDomainBasedEncodedScoredNetwork finalNetwork = this.finalNetwork;
 
             try{
                 // Export Report file
@@ -354,9 +375,9 @@ public class SeqEvo {
                     PrintWriter PW = new PrintWriter( FW);
 
                     PW.println("Report generated by SeqEvo.");
-                    PW.println("Program version: "+report.version);
-                    PW.println("Start time: "+report.startTime);
-                    PW.println("Elapsed time during optimization: "+report.elapsedTime);
+                    PW.println("Program version: "+this.version);
+                    PW.println("Start time: "+this.startTime);
+                    PW.println("Elapsed time during optimization: "+this.elapsedTime);
 
                     // print used parameters.
                     PW.println();
@@ -370,6 +391,14 @@ public class SeqEvo {
                     for(Map.Entry<String,String> entry : sortedUsedParameters.entrySet()){
                         PW.println(entry.getKey()+ " " + entry.getValue());
                     }
+                    
+                    PW.println();
+                    PW.println("**************");
+                    PW.println("Fitness Scores");
+                    PW.println("**************");
+                    PW.println();
+                    PW.println("Initial network "+this.scoreLabel+" ("+this.scoreUnits+"): " +this.initialNetwork.getScore());
+                    PW.println("Final   network "+this.scoreLabel+" ("+this.scoreUnits+"): " +this.finalNetwork.getScore());
 
                     // print initial network
                     PW.println();
@@ -379,30 +408,30 @@ public class SeqEvo {
                     PW.println();
 
                     Map<String,Integer> sortedFixedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedFixedDomains.putAll(report.initialNetwork.getFixedDomainIndices());
+                    sortedFixedDomains.putAll(this.initialNetwork.getFixedDomainIndices());
                     PW.println("Fixed Domains:");
                     PW.println("--------------");
                     for(Map.Entry<String,Integer> entry : sortedFixedDomains.entrySet()){
-                        PW.println(report.initialNetwork.getFixedDomainNames()[entry.getValue()]+ " " + report.initialNetwork.getFixedDomainSequences()[entry.getValue()]);
+                        PW.println(this.initialNetwork.getFixedDomainNames()[entry.getValue()]+ " " + this.initialNetwork.getFixedDomainSequences()[entry.getValue()]);
                     }
 
                     Map<String,Integer> sortedVariableDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedVariableDomains.putAll(report.initialNetwork.getVariableDomainIndices());
+                    sortedVariableDomains.putAll(this.initialNetwork.getVariableDomainIndices());
                     PW.println();
                     PW.println("Variable Domains:");
                     PW.println("-----------------");
                     for(Map.Entry<String,Integer> entry : sortedVariableDomains.entrySet()){
-                        PW.println(report.initialNetwork.getVariableDomainNames()[entry.getValue()]+ " " + report.initialNetwork.getVariableDomainSequences()[entry.getValue()]);
+                        PW.println(this.initialNetwork.getVariableDomainNames()[entry.getValue()]+ " " + this.initialNetwork.getVariableDomainSequences()[entry.getValue()]);
                     }
 
                     Map<String,Integer> sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedOligomers.putAll(report.initialNetwork.getOligomerIndices());
+                    sortedOligomers.putAll(this.initialNetwork.getOligomerIndices());
                     PW.println();
                     PW.println("Oligomer Domains:");
                     PW.println("-------------------");
                     for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
-                        PW.print(report.initialNetwork.getOligomerNames()[entry.getValue()]);
-                        for(String domain : report.initialNetwork.getOligomerDomains()[entry.getValue()]){
+                        PW.print(this.initialNetwork.getOligomerNames()[entry.getValue()]);
+                        for(String domain : this.initialNetwork.getOligomerDomains()[entry.getValue()]){
                             PW.print(" "+ domain);
                         }
                         PW.println();
@@ -412,7 +441,7 @@ public class SeqEvo {
                     PW.println("Oligomer Sequences:");
                     PW.println("-------------------");
                     for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
-                        PW.println(report.initialNetwork.getOligomerNames()[entry.getValue()]+ " " + report.initialNetwork.getOligomerSequences()[entry.getValue()]);
+                        PW.println(this.initialNetwork.getOligomerNames()[entry.getValue()]+ " " + this.initialNetwork.getOligomerSequences()[entry.getValue()]);
                     }
 
                     PW.println();
@@ -422,30 +451,30 @@ public class SeqEvo {
                     PW.println();
 
                     sortedFixedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedFixedDomains.putAll(report.finalNetwork.getFixedDomainIndices());
+                    sortedFixedDomains.putAll(this.finalNetwork.getFixedDomainIndices());
                     PW.println("Fixed Domains:");
                     PW.println("--------------");
                     for(Map.Entry<String,Integer> entry : sortedFixedDomains.entrySet()){
-                        PW.println(report.finalNetwork.getFixedDomainNames()[entry.getValue()]+ " " + report.finalNetwork.getFixedDomainSequences()[entry.getValue()]);
+                        PW.println(this.finalNetwork.getFixedDomainNames()[entry.getValue()]+ " " + this.finalNetwork.getFixedDomainSequences()[entry.getValue()]);
                     }
 
                     sortedVariableDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedVariableDomains.putAll(report.finalNetwork.getVariableDomainIndices());
+                    sortedVariableDomains.putAll(this.finalNetwork.getVariableDomainIndices());
                     PW.println();
                     PW.println("Variable Domains:");
                     PW.println("-----------------");
                     for(Map.Entry<String,Integer> entry : sortedVariableDomains.entrySet()){
-                        PW.println(report.finalNetwork.getVariableDomainNames()[entry.getValue()]+ " " + report.finalNetwork.getVariableDomainSequences()[entry.getValue()]);
+                        PW.println(this.finalNetwork.getVariableDomainNames()[entry.getValue()]+ " " + this.finalNetwork.getVariableDomainSequences()[entry.getValue()]);
                     }
 
                     sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedOligomers.putAll(report.finalNetwork.getOligomerIndices());
+                    sortedOligomers.putAll(this.finalNetwork.getOligomerIndices());
                     PW.println();
                     PW.println("Oligomer Domains:");
                     PW.println("-------------------");
                     for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
-                        PW.print(report.finalNetwork.getOligomerNames()[entry.getValue()]);
-                        for(String domain : report.finalNetwork.getOligomerDomains()[entry.getValue()]){
+                        PW.print(this.finalNetwork.getOligomerNames()[entry.getValue()]);
+                        for(String domain : this.finalNetwork.getOligomerDomains()[entry.getValue()]){
                             PW.print(" "+ domain);
                         }
                         PW.println();
@@ -455,17 +484,8 @@ public class SeqEvo {
                     PW.println("Oligomer Sequences:");
                     PW.println("-------------------");
                     for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
-                        PW.println(report.finalNetwork.getOligomerNames()[entry.getValue()]+ " " + report.finalNetwork.getOligomerSequences()[entry.getValue()]);
+                        PW.println(this.finalNetwork.getOligomerNames()[entry.getValue()]+ " " + this.finalNetwork.getOligomerSequences()[entry.getValue()]);
                     }
-
-                    // print initial network
-                    PW.println();
-                    PW.println("***************");
-                    PW.println("Fitness Scores");
-                    PW.println("***************");
-                    PW.println();
-                    PW.println("Initial score: " +report.initialNetwork.getScore());
-                    PW.println("Final score: " +report.finalNetwork.getScore());
 
                     PW.close();
                 }
@@ -476,7 +496,7 @@ public class SeqEvo {
                     PrintWriter PW = new PrintWriter( FW);
                     
                     Map<String,Integer> sortedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedDomains.putAll(report.finalNetwork.getVariableDomainIndices());
+                    sortedDomains.putAll(this.finalNetwork.getVariableDomainIndices());
 
                     String[] vds = finalNetwork.getVariableDomainSequences();
                     for(Map.Entry<String,Integer> entry: sortedDomains.entrySet()){
@@ -491,10 +511,55 @@ public class SeqEvo {
                     PrintWriter PW = new PrintWriter( FW);
                     
                     Map<String,Integer> sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedOligomers.putAll(report.finalNetwork.getOligomerIndices());
+                    sortedOligomers.putAll(this.finalNetwork.getOligomerIndices());
                     String[] os = finalNetwork.getOligomerSequences();
                     for(Map.Entry<String,Integer> entry: sortedOligomers.entrySet()){
                         PW.println(entry.getKey()+ " " + os[entry.getValue()]);
+                    }
+                    PW.close();
+                }
+                
+                // Export score trajectory.
+
+                if (!OSTFP.equalsIgnoreCase("False")){
+                    FileWriter FW = new FileWriter( OSTFP );
+                    PrintWriter PW = new PrintWriter( FW);
+                    
+                    String[][] scores = this.lineageFittestScores;
+                    int[] lineageIndexes = IntStream.range(0,scores.length).toArray();
+                    PW.print("Generation Number");
+                        for (int j : lineageIndexes){
+                            PW.print(",Lineage "+j+" ("+this.scoreLabel+" - "+this.scoreUnits+")");
+                        }
+                        PW.println();
+                    for(int i : IntStream.range(0,scores[0].length).toArray()){
+                        PW.print(i+1);
+                        for (int j : lineageIndexes){
+                            PW.print(","+scores[j][i]);
+                        }
+                        PW.println();
+                    }
+                    PW.close();
+                }
+                
+                //export log score trajectory
+                if (!OLSTFP.equalsIgnoreCase("False")){
+                    FileWriter FW = new FileWriter( OLSTFP );
+                    PrintWriter PW = new PrintWriter( FW);
+                    
+                    String[][] scores = this.lineageFittestScores;
+                    int[] lineageIndexes = IntStream.range(0,scores.length).toArray();
+                    PW.print("Generation Number");
+                        for (int j : lineageIndexes){
+                            PW.print(",Lineage "+j+" ("+this.scoreLabel+" - "+this.scoreUnits+")");
+                        }
+                        PW.println();
+                    for(int i = 1; i < scores[0].length; i = i*2){
+                        PW.print(i);
+                        for (int j : lineageIndexes){
+                            PW.print(","+scores[j][i-1]);
+                        }
+                        PW.println();
                     }
                     PW.close();
                 }
@@ -693,18 +758,17 @@ public class SeqEvo {
         public Type1CycleReport call(){
             final ExecutorService es = Executors.newCachedThreadPool();
             final String[][] fittestScores = new String[NL][];
-            
-            //generate mutated networks.
-            IDomainBasedEncodedScoredNetwork[] NewLineageMothers = mutationSupervisor.getType1Mutation(initialNetwork,NL-1);
             subCycles = new Type2Cycle[NL];
-            
-            Future<Type2CycleReport>[] futures = new Future[NL];
             subCycles[0] = new Type2Cycle(initialNetwork,mutationSupervisor,es,scorer,CPL,NMPC,GPC,NDPG);
+            Future<Type2CycleReport>[] futures = new Future[NL];
             futures[0] = es.submit(subCycles[0]);
             
-            for(int i = 0; i < NL-1; i++){
-                subCycles[i+1] = new Type2Cycle(NewLineageMothers[i],mutationSupervisor,es,scorer,CPL,NMPC,GPC,NDPG);
-                futures[i+1] = es.submit(subCycles[i+1]);
+            //generate mutated networks.
+            IDomainBasedEncodedScoredNetwork[] newLineageMothers = mutationSupervisor.getType1Mutation(initialNetwork,NL-1);
+            
+            for(int i = 1; i < NL; i++){
+                subCycles[i] = new Type2Cycle(newLineageMothers[i-1],mutationSupervisor,es,scorer,CPL,NMPC,GPC,NDPG);
+                futures[i] = es.submit(subCycles[i]);
             }
             
             Type2CycleReport[] reports = new Type2CycleReport[NL];
@@ -712,20 +776,26 @@ public class SeqEvo {
             
             try{
                 for(int i = 0; i < NL; i++){
-                    reports[i]= futures[i].get();
+                    reports[i] = futures[i].get();
                     fittestLineageMothers[i] = reports[i].fittest;
                 }
-            }catch(Exception e){System.out.print(e.getMessage());}
+            } catch(Exception e){System.out.print(e.getMessage());}
             
             IDomainBasedEncodedScoredNetwork fittest = fittestLineageMothers[0];
             for(int i = 1; i < NL; i++){
-                if(scorer.compareFitness(fittestLineageMothers[i],fittest)>=0){
+                if(scorer.compareFitness(fittestLineageMothers[i],fittest) >= 0){
                     fittest = fittestLineageMothers[i];
                 }
             }
             
-            for(int i = 0; i < NL; i++){
-                fittestScores[i] = reports[i].fittestScores;
+            ArrayList<String>[] s = new ArrayList[NL];
+            s[0] = new ArrayList<String>(Arrays.asList(reports[0].fittestScores));
+            s[0].add(0,initialNetwork.getScore());
+            fittestScores[0] = s[0].toArray(new String[0]);
+            for(int i = 1; i < NL; i++){
+                s[i] = new ArrayList<String>(Arrays.asList(reports[i].fittestScores));
+                s[i].add(0,newLineageMothers[i-1].getScore());
+                fittestScores[i] = s[i].toArray(new String[0]);
             }
             
             es.shutdownNow();
@@ -737,10 +807,10 @@ public class SeqEvo {
     static public class Type1CycleReport{
         IDomainBasedEncodedScoredNetwork fittest;
         IDomainBasedEncodedScoredNetwork[] fittestLineageMothers;
-        String[][] fittestScores;
-        Type1CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[][] fittestScores, IDomainBasedEncodedScoredNetwork[] fittestLineageMothers){
+        String[][] lineageFittestScores;
+        Type1CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[][] lineageFittestScores, IDomainBasedEncodedScoredNetwork[] fittestLineageMothers){
             this.fittest = fittest;
-            this.fittestScores = fittestScores;
+            this.lineageFittestScores = lineageFittestScores;
             this.fittestLineageMothers = fittestLineageMothers;
         }
     }
@@ -800,7 +870,7 @@ public class SeqEvo {
                     for(int i=0; i < NMPC+1; i++){
                         subCycleFittest[i] = futures[i].get().fittest;
                     }
-                } catch (Exception e){}
+                } catch (Exception e){System.out.println(e.getMessage());}
                 
                 fittestIndex =0;
                 for(int i =0; i < NMPC+1;i++){

@@ -50,6 +50,7 @@ public class SeqEvoTest_1x256 {
         
         SeqEvo s = new SeqEvo(parameters);
         SeqEvo.Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
+        System.exit(0);
     }
     
 }

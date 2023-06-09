@@ -94,6 +94,7 @@ public class SeqEvoTest_16x8 {
         
         SeqEvo s = new SeqEvo(parameters);
         Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
+        System.exit(0);
     }
     
 }

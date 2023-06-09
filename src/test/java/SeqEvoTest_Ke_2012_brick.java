@@ -1549,6 +1549,7 @@ public class SeqEvoTest_Ke_2012_brick {
         
         SeqEvo s = new SeqEvo(parameters);
         SeqEvo.Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
+        System.exit(0);
     }
     
 }

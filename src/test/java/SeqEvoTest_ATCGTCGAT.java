@@ -56,6 +56,7 @@ public class SeqEvoTest_ATCGTCGAT {
         
         SeqEvo s = new SeqEvo(parameters);
         SeqEvo.Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
+        System.exit(0);
     }
     
 }

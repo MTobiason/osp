@@ -23,13 +23,21 @@
  */
 package edu.boisestate.osp.domainbasedencodednetwork;
 
+import edu.boisestate.osp.SeqEvo;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 /**
@@ -52,8 +60,11 @@ public class DeltaWScorer implements IScorer{
     final BigInteger baselineO;
     final BigInteger baselineN;
     final BigInteger baselineW;
-
-    public DeltaWScorer(Map<String,String> fixedDomains, Map<String,String[]> oligomerDomains, Map<String,String> variableDomains, int intraSB, int intraSLC, int interSB, int interSLC, int swx){
+    
+    final int NUMBERTHREADS;
+    final ScoringSupervisor ss;
+    
+    public DeltaWScorer(Map<String,String> fixedDomains, Map<String,String[]> oligomerDomains, Map<String,String> variableDomains, int intraSB, int intraSLC, int interSB, int interSLC, int swx, int numberThreads){
         knownIntraScores = new ConcurrentHashMap<>();
         knownInterScores = new ConcurrentHashMap<>();
         knownRanges = new ConcurrentHashMap<>();
@@ -74,6 +85,9 @@ public class DeltaWScorer implements IScorer{
         baselineO = calculateO(ueoArray);
         baselineN = calculateN(ueoArray);
         baselineW = calculateW(baselineO,baselineN);
+        
+        NUMBERTHREADS = numberThreads;
+        ss = new ScoringSupervisor(NUMBERTHREADS);
     }
     
     private class InnerNetwork implements IDomainBasedEncodedScoredNetwork{
@@ -237,13 +251,27 @@ public class DeltaWScorer implements IScorer{
     * @return
     */
     @Override
-   public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex){
-       String score = getScoreString(previousNetwork, newNetwork, updatedDomainIndex);
-       return new InnerNetwork(newNetwork,score);
-       
-   }
-   
-   private String getScoreString(IDomainBasedEncodedNetwork network){
+    public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex){
+        String score = ss.getScoreString(DeltaWScorer.this, previousNetwork, newNetwork, updatedDomainIndex);
+        return new InnerNetwork(newNetwork,score);
+
+    }
+
+    @Override
+    public String getScoreLabel(){
+        return "Wx";
+    }
+    
+    /**
+     * Returns a human-readable string for describing the units of this score.
+     * @return
+     */
+    @Override
+    public String getScoreUnits(){
+        return "fitness points";
+    }
+    
+    private String getScoreString(IDomainBasedEncodedNetwork network){
         BigInteger W = calculateW(network.getOligomerSequencesEncoded());
         BigInteger deltaW = W.subtract(baselineW);
 
@@ -805,4 +833,182 @@ public class DeltaWScorer implements IScorer{
                 return 0;
         }
     }
+    
+    static private class ScoringSupervisor{
+        ExecutorService es;
+        DeltaWScorer scorer;
+        int numberThreads;
+        
+        ScoringSupervisor(int numberThreads){
+            es = Executors.newFixedThreadPool(numberThreads);
+            this.numberThreads = numberThreads;
+            Runtime.getRuntime().addShutdownHook( new Thread(){
+                @Override
+                public void run(){
+                    es.shutdownNow();
+                }
+            });
+        }
+        
+        String getScoreString(DeltaWScorer scorer, IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedVariableDomainIndex){
+            BigInteger deltaW;
+       
+            if(previousNetwork.getScorer() == scorer){
+                int[][] aoc = previousNetwork.getVariableDomainToOligomerCombinations().get(updatedVariableDomainIndex);
+                
+                // calculate old partial O
+                BigInteger oldPartialO = scorer.calculateAffectedO(previousNetwork, updatedVariableDomainIndex);
+                
+                // start calculation of old partial N
+                Callable[] oldSubN = new Callable[numberThreads];
+                Future<BigInteger>[] oldFutures = new Future[numberThreads];
+                int combPerThread = (aoc[0].length+numberThreads-1)/numberThreads; // Math.ceil of aoc[0].length / numberThreads
+                for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
+                    int firstIndex = i*combPerThread;
+                    int lastIndex = Math.min(firstIndex+combPerThread, aoc[0].length);
+                    oldSubN[i] = new NCalculator(previousNetwork, scorer, updatedVariableDomainIndex, firstIndex, lastIndex);
+                    oldFutures[i] = es.submit(oldSubN[i]);
+                }
+                
+                // calculate new parital O
+                BigInteger newPartialO = scorer.calculateAffectedO(newNetwork, updatedVariableDomainIndex);
+                
+                // start calculation of new partial N
+                Callable[] newSubN = new Callable[numberThreads];
+                Future<BigInteger>[] newFutures = new Future[numberThreads];
+                for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
+                    int firstIndex = i*combPerThread;
+                    int lastIndex = Math.min(firstIndex+combPerThread, aoc[0].length);
+                    newSubN[i] = new NCalculator(newNetwork, scorer, updatedVariableDomainIndex, firstIndex, lastIndex);
+                    newFutures[i] = es.submit(newSubN[i]);
+                }
+                
+                // finish calculation of old partial N
+                BigInteger oldPartialN = BigInteger.valueOf(0);
+                for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
+                    try {
+                        oldPartialN = oldPartialN.add(oldFutures[i].get());
+                    } catch (Exception e) {System.out.println(e.getMessage());}
+                }
+                
+                BigInteger newPartialN = BigInteger.valueOf(0);
+                for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
+                    try {
+                        newPartialN = newPartialN.add(newFutures[i].get());
+                    } catch (Exception e) {System.out.println(e.getMessage());}
+                }
+                
+                // calculate partialW
+                BigInteger oldPartialW = oldPartialO.multiply(BigInteger.valueOf(scorer.swx)).add(oldPartialN);
+                BigInteger newPartialW = newPartialO.multiply(BigInteger.valueOf(scorer.swx)).add(newPartialN);
+                BigInteger oldDeltaW = new BigInteger(previousNetwork.getScore());
+                deltaW = oldDeltaW.subtract(oldPartialW).add(newPartialW);
+                //System.out.println(deltaW);
+            } else {
+               deltaW = scorer.calculateW(newNetwork.getOligomerSequencesEncoded()).subtract(scorer.baselineW);
+            }
+            
+            String retString = deltaW.toString();
+            //System.out.println(retString);
+
+            return retString;
+         }
+        
+        static private class NCalculator implements Callable{
+            final DeltaWScorer scorer;
+            final int firstIndex;
+            final int lastIndex;
+            final IDomainBasedEncodedNetwork network;
+            final int updatedDomainIndex; 
+            //Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
+            
+            NCalculator(IDomainBasedEncodedNetwork network, DeltaWScorer scorer, int updatedDomainIndex, int firstIndex, int lastIndex){
+                this.firstIndex = firstIndex;
+                this.lastIndex = lastIndex;
+                this.network = network;
+                this.scorer = scorer;
+                this.updatedDomainIndex = updatedDomainIndex;
+            }
+        
+            public BigInteger call(){
+                int[] lengthCounts = new int[scorer.maxLength+1];
+                int[][] encodedOligomers = network.getOligomerSequencesEncoded();
+                int[][] aoc = network.getVariableDomainToOligomerCombinations().get(updatedDomainIndex);
+
+                int[] S1Bases;
+                int[] S2Bases;
+                int S1length;
+                int b1Max;
+                int S2length;
+                int b2Max;
+                int structureLength;
+                int b1;
+                int b2;
+
+                // for each oligomer combination
+                for( int k : scorer.knownRanges.computeIfAbsent(lastIndex-firstIndex,x->IntStream.range(0,x).toArray())){
+                    int i = k+firstIndex;
+                    S1Bases = encodedOligomers[aoc[0][i]];
+                    S2Bases = encodedOligomers[aoc[1][i]];
+                    S1length = S1Bases.length;		
+                    b1Max = S1length-1;
+                    S2length = S2Bases.length;
+                    b2Max = S2length-1;
+                    for (int j : scorer.knownRanges.computeIfAbsent(S2length,x->IntStream.range(0,x).toArray())){
+                        structureLength = 0;
+                        b1 = 0; // index of base on the top strand;
+                        b2 = (b2Max + j) % (S2length);// index of base on the bottom strand;
+
+                        // for each base in the stretch.
+                        do{
+                            //are the current bases complementary?
+                            if (S1Bases[b1] + S2Bases[b2] == 0){
+                                structureLength++;
+                            } else {
+                                if (structureLength >= scorer.interSLC){
+                                    lengthCounts[structureLength]++;
+                                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                                    //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                                }
+                                structureLength = 0;
+                            }
+
+                            //increment
+                            b1++;
+                            if(b2 == 0){
+                                if (structureLength >= scorer.interSLC){
+                                    lengthCounts[structureLength]++;
+                                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                                    //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                                }
+                                b2 = b2Max;
+                                structureLength = 0;
+                            } else {b2--;}
+                        } while (b1 <= b1Max);
+
+                        //if the loop ended with an active structure, record it.
+                        if (structureLength >= scorer.interSLC){
+                            lengthCounts[structureLength]++;
+                            //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                            //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
+                        }
+                    }
+                }
+
+                //System.out.println("Inter Oligomer Structures:");
+                BigInteger retScore = BigInteger.valueOf(0);
+                for(int i : scorer.knownRanges.computeIfAbsent(lengthCounts.length,x->IntStream.range(0,x).toArray())){
+                    int length = i;
+                    int counts = lengthCounts[i];
+                    if (counts >0){
+                        //System.out.println(length+", "+counts);
+                        BigInteger lengthScore = scorer.knownInterScores.computeIfAbsent(length, (x)->calculateUniqueDuplexPoints(x, scorer.interSLC, scorer.interSB));
+                        retScore = retScore.add(lengthScore.multiply(BigInteger.valueOf(counts)));
+                    }
+                }
+                return retScore;
+            }
+        }
+    }
+        
 }

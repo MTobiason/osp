@@ -61,4 +61,16 @@ public interface IScorer {
      * @return
      */
     IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex);
+    
+    /**
+     * Returns a human-readable string for labeling this score. 
+     * @return
+     */
+    String getScoreLabel();
+    
+    /**
+     * Returns a human-readable string for describing the units of this score.
+     * @return
+     */
+    String getScoreUnits();
 }
