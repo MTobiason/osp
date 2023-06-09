@@ -23,7 +23,6 @@
  */
 package edu.boisestate.osp.domainbasedencodednetwork;
 
-import edu.boisestate.osp.SeqEvo;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,12 +31,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 /**
@@ -801,7 +797,7 @@ public class DeltaWScorer implements IScorer{
         return score;
     }
     
-     private static Map<String,int[]> encode(Map<String,String> sequences){
+    private static Map<String,int[]> encode(Map<String,String> sequences){
         Map<String,int[]> encoded = new HashMap<>();
         sequences.forEach((k,v)-> {
                 char[] b = v.toCharArray();
@@ -836,7 +832,6 @@ public class DeltaWScorer implements IScorer{
     
     static private class ScoringSupervisor{
         ExecutorService es;
-        DeltaWScorer scorer;
         int numberThreads;
         
         ScoringSupervisor(int numberThreads){
@@ -903,14 +898,11 @@ public class DeltaWScorer implements IScorer{
                 BigInteger newPartialW = newPartialO.multiply(BigInteger.valueOf(scorer.swx)).add(newPartialN);
                 BigInteger oldDeltaW = new BigInteger(previousNetwork.getScore());
                 deltaW = oldDeltaW.subtract(oldPartialW).add(newPartialW);
-                //System.out.println(deltaW);
             } else {
                deltaW = scorer.calculateW(newNetwork.getOligomerSequencesEncoded()).subtract(scorer.baselineW);
             }
             
             String retString = deltaW.toString();
-            //System.out.println(retString);
-
             return retString;
          }
         
@@ -959,27 +951,20 @@ public class DeltaWScorer implements IScorer{
                         b1 = 0; // index of base on the top strand;
                         b2 = (b2Max + j) % (S2length);// index of base on the bottom strand;
 
-                        // for each base in the stretch.
                         do{
-                            //are the current bases complementary?
                             if (S1Bases[b1] + S2Bases[b2] == 0){
                                 structureLength++;
                             } else {
                                 if (structureLength >= scorer.interSLC){
                                     lengthCounts[structureLength]++;
-                                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
-                                    //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
                                 }
                                 structureLength = 0;
                             }
 
-                            //increment
                             b1++;
                             if(b2 == 0){
                                 if (structureLength >= scorer.interSLC){
                                     lengthCounts[structureLength]++;
-                                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
-                                    //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
                                 }
                                 b2 = b2Max;
                                 structureLength = 0;
@@ -989,19 +974,15 @@ public class DeltaWScorer implements IScorer{
                         //if the loop ended with an active structure, record it.
                         if (structureLength >= scorer.interSLC){
                             lengthCounts[structureLength]++;
-                            //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
-                            //lengthCounts.computeIfAbsent(structureLength,(x)->new AtomicInteger(0)).incrementAndGet();
                         }
                     }
                 }
 
-                //System.out.println("Inter Oligomer Structures:");
                 BigInteger retScore = BigInteger.valueOf(0);
                 for(int i : scorer.knownRanges.computeIfAbsent(lengthCounts.length,x->IntStream.range(0,x).toArray())){
                     int length = i;
                     int counts = lengthCounts[i];
                     if (counts >0){
-                        //System.out.println(length+", "+counts);
                         BigInteger lengthScore = scorer.knownInterScores.computeIfAbsent(length, (x)->calculateUniqueDuplexPoints(x, scorer.interSLC, scorer.interSB));
                         retScore = retScore.add(lengthScore.multiply(BigInteger.valueOf(counts)));
                     }

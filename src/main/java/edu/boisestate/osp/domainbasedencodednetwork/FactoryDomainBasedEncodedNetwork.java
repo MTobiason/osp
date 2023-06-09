@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
@@ -679,11 +680,11 @@ public class FactoryDomainBasedEncodedNetwork {
 
 
     private Map<Integer,Map<Integer,int[]>> getVariableDomainComplementToOligomerCoordinates (){
-        Map<Integer,Map<Integer,int[]>> retDCTOM = new HashMap<>();
+        Map<Integer,Map<Integer,int[]>> retDCTOM = new ConcurrentHashMap<>();
 
         //initialize an entry for every domain;
         for (int i : IntStream.range(0,variableDomainCount).toArray()){
-            retDCTOM.put(i,new HashMap<Integer,int[]>());
+            retDCTOM.put(i,new ConcurrentHashMap<Integer,int[]>());
         }
 
         //for each oligomer
@@ -748,7 +749,7 @@ public class FactoryDomainBasedEncodedNetwork {
     }
     
     private Map<Integer,Set<Integer>> getVariableDomainToOligomers (){
-        Map<Integer,Set<Integer>> retMap = new HashMap<>();
+        Map<Integer,Set<Integer>> retMap = new ConcurrentHashMap<>();
 
         //initialize an entry for every domain;
         for (int i : IntStream.range(0,variableDomainCount).toArray()){
@@ -787,11 +788,11 @@ public class FactoryDomainBasedEncodedNetwork {
     }
     
     private Map<Integer,Map<Integer,int[]>> getVariableDomainToOligomerCoordinates (){
-        Map<Integer,Map<Integer,int[]>> retDTOM = new HashMap<>();
+        Map<Integer,Map<Integer,int[]>> retDTOM = new ConcurrentHashMap<>();
 
         //initialize an entry for every domain;
         for (int i : IntStream.range(0,variableDomainCount).toArray()){
-            retDTOM.put(i,new HashMap<Integer,int[]>());
+            retDTOM.put(i,new ConcurrentHashMap<Integer,int[]>());
         }
 
         //for each oligomer
@@ -947,7 +948,7 @@ public class FactoryDomainBasedEncodedNetwork {
     }
     
     private Map<Integer,int[][]> getDomainToOligomerCombinationsMap (Map<String,String> variableDomains, Map<String,String[]> oligomerDomains, Map<Integer,Set<Integer>> variableDomainsToOligomers){
-        Map<Integer,int[][]> ret = new HashMap<>(); //Domains To Oligomers Map
+        Map<Integer,int[][]> ret = new ConcurrentHashMap<>(); //Domains To Oligomers Map
 
         //for each domain
             // make a 2D array of strings to store the first and second oligomer.

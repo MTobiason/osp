@@ -1,7 +1,1 @@
-maxAA 6
-maxTT 6
-maxCC 6
-maxGG 6
-CPL 10000
-intraSLC 3
-interSLC 8
+CPL 100000
