@@ -35,7 +35,6 @@ public class SeqEvoTest_16x8 {
     
     public static void main(String[] args){
         Map<String,String> parameters = new TreeMap<>();{
-            parameters.put("CPL", "1000");
         }
         Map<String,String> fixedDomains = new TreeMap<>();{
         }

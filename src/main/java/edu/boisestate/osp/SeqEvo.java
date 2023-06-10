@@ -216,11 +216,19 @@ public class SeqEvo {
         Report report = s.run(fixedDomains,initialVariableDomains,oligomerDomains);
         
         report.exportToFile(usedParameters,ORFP,OVDFP,OOSFP,OSTFP,OLSTFP);
+        
+        System.out.println("Initial network "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.initialNetwork.getScore());
+        System.out.println("Final network "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.finalNetwork.getScore());
+        
+        System.out.println("Optimization time: "+ report.optimizationTime);
+        System.out.println("Total time: " + report.totalTime);
+        
         System.exit(0);
     }
     
     public Report run(Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains){
-        final String startTime = new Date().toString();
+        final String startTimeString = new Date().toString();
+        double startTime = System.currentTimeMillis(); // start timer for optimization runtime.
         
         // coder stuff
         final ICoder coder = new Coder();
@@ -250,34 +258,34 @@ public class SeqEvo {
         }
         
         IDomainBasedEncodedScoredNetwork scoredGen0 = scorer.getScored(gen0);
-        System.out.println("Initial network "+scoreLabel+" ("+scoreUnits+"): "+scoredGen0.getScore());
         
         double optStartTime = System.currentTimeMillis(); // start timer for optimization runtime.
         
         // optimize
-        //IDomainBasedEncodedScoredNetwork finalGen = cycle1(scoredGen0, scorer, workSupervisor, NL, CPL, NMPC, GPC, NDPG);
-        
         Type1Cycle c1 = new Type1Cycle(scoredGen0, mutationSupervisor, scorer, NL, CPL, NMPC, GPC, NDPG);
         Type1CycleReport report = c1.call();
         
         IDomainBasedEncodedScoredNetwork finalGen = report.fittest;
         String[][] lineageFittestScores = report.lineageFittestScores;
         
-        System.out.println("Final network "+scoreLabel+" ("+scoreUnits+"): "+finalGen.getScore());
-        
         //calculate runtime.
         double optEndTime   = System.currentTimeMillis(); // record evolutionary cycle endtime
-        double elapsedTime = optEndTime-optStartTime;
-        int H = (int)((elapsedTime/1000) / (60 *60)); // Hours
-        int M = (int)(((elapsedTime/1000) / 60) % 60 ); // Minutes
-        int S = (int)((elapsedTime/1000) % 60 );   // Seconds
-        String elapsedTimeString = ( H + " h " + M + " m " + S + " s ");
+        double optimizationTimeSeconds = (optEndTime-optStartTime)/1000;
+        int H = (int)(optimizationTimeSeconds / (60 *60)); // Hours
+        int M = (int)((optimizationTimeSeconds / 60) % 60 ); // Minutes
+        int S = (int)(optimizationTimeSeconds % 60 );   // Seconds
+        String optimizationTimeString = ( H + " h " + M + " m " + S + " s ");
         
-        System.out.println("Optimization time: "+ elapsedTimeString);
+        double endTime = System.currentTimeMillis(); // record evolutionary cycle endtime
+        double totalTimeSeconds = (endTime-startTime)/1000;
+        H = (int)(totalTimeSeconds / (60 *60)); // Hours
+        M = (int)((totalTimeSeconds / 60) % 60 ); // Minutes
+        S = (int)(totalTimeSeconds % 60 );   // Seconds
+        String totalTimeString = ( H + " h " + M + " m " + S + " s ");
         
         mutationSupervisor.close();
         
-        Report r = new Report(usedParameters,scoredGen0,finalGen,startTime,elapsedTimeString,lineageFittestScores,scoreLabel, scoreUnits);
+        Report r = new Report(usedParameters,scoredGen0,finalGen,startTimeString,optimizationTimeString,totalTimeString,optimizationTimeSeconds,totalTimeSeconds,lineageFittestScores,scoreLabel, scoreUnits);
         return r;
     }
     
@@ -340,26 +348,31 @@ public class SeqEvo {
     }
         	
     static public class Report {
-        Map<String,String> usedParameters;
-        IDomainBasedEncodedScoredNetwork initialNetwork;
-        IDomainBasedEncodedScoredNetwork finalNetwork;
-        String startTime;
-        String elapsedTime;
-        String version = SeqEvo.VERSION;
-        String[][] lineageFittestScores;
-        String scoreLabel;
-        String scoreUnits;
+        public final Map<String,String> usedParameters;
+        public final IDomainBasedEncodedScoredNetwork initialNetwork;
+        public final IDomainBasedEncodedScoredNetwork finalNetwork;
+        public final String startTime;
+        public final String optimizationTime;
+        public final String totalTime;
+        public final double optimizationTimeSeconds;
+        public final double totalTimeSeconds;
+        public final String version = SeqEvo.VERSION;
+        public final String[][] lineageFittestScores;
+        public final String scoreLabel;
+        public final String scoreUnits;
         
-        Report(Map<String,String> usedParameters, IDomainBasedEncodedScoredNetwork initialNetwork, IDomainBasedEncodedScoredNetwork finalNetwork, String startTime, String elapsedTime, String[][] lineageFittestScores, String scoreLabel, String scoreUnits){
+        Report(Map<String,String> usedParameters, IDomainBasedEncodedScoredNetwork initialNetwork, IDomainBasedEncodedScoredNetwork finalNetwork, String startTime, String optimizationTime, String totalTime, double optimizationTimeSeconds, double totalTimeSeconds, String[][] lineageFittestScores, String scoreLabel, String scoreUnits){
             this.usedParameters = usedParameters;
             this.initialNetwork = initialNetwork;
             this.finalNetwork = finalNetwork;
             this.startTime = startTime;
-            this.elapsedTime = elapsedTime;
+            this.optimizationTime = optimizationTime;
+            this.totalTime = totalTime;
+            this.optimizationTimeSeconds = optimizationTimeSeconds;
+            this.totalTimeSeconds = totalTimeSeconds;
             this.lineageFittestScores = lineageFittestScores;
             this.scoreLabel = scoreLabel;
             this.scoreUnits = scoreUnits;
-                    
         }
         
         private void exportToFile(Map<String,String> otherUsedParameters, String ORFP, String OVDFP, String OOSFP, String OSTFP, String OLSTFP){
@@ -377,7 +390,8 @@ public class SeqEvo {
                     PW.println("Report generated by SeqEvo.");
                     PW.println("Program version: "+this.version);
                     PW.println("Start time: "+this.startTime);
-                    PW.println("Elapsed time during optimization: "+this.elapsedTime);
+                    PW.println("Optimization time: "+this.optimizationTime);
+                    PW.println("Total time: "+this.totalTime);
 
                     // print used parameters.
                     PW.println();
@@ -576,7 +590,7 @@ public class SeqEvo {
         final IScorer scorer;
         final IValidator validator;
         
-        MutationSupervisor(int numberThreads, FactoryDomainBasedEncodedNetwork factory,IScorer scorer, IValidator validator){
+        MutationSupervisor(int numberThreads, FactoryDomainBasedEncodedNetwork factory, IScorer scorer, IValidator validator){
             service = Executors.newFixedThreadPool(numberThreads);            
             this.factory = factory;
             this.scorer = scorer;

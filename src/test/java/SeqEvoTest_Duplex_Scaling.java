@@ -35,19 +35,52 @@ import java.util.TreeMap;
 public class SeqEvoTest_Duplex_Scaling {
     
     public static void main(String[] args){
+        int[] duplexNumbers = {1,2,4,8,16,32,64,128,256,512,1024};
+        int[] duplexSizes = {8/4,16/4,32/4,64/4,128/4,256/4,512/4,1024/4};
+        
+        double[] numberTimes = new double[duplexNumbers.length];
+        for (int i =0; i < duplexNumbers.length; i++){
+            System.out.println("Starting "+duplexNumbers[i]+" duplexes");
+            numberTimes[i] = measureTime(duplexNumbers[i], 8/4);
+            System.out.println("Time: "+numberTimes[i]);
+        }
+        
+        double[] sizeTimes = new double[duplexSizes.length];
+        for (int i =0; i < duplexSizes.length; i++){
+            System.out.println("Starting "+duplexSizes[i]*4+" base-pairs");
+            sizeTimes[i] = measureTime(1, duplexSizes[i]);
+            System.out.println("Time: "+sizeTimes[i]);
+        }
+        
+        System.out.println("Number duplexes,total time");
+        for (int i =0; i < duplexNumbers.length; i++){
+            System.out.println(duplexNumbers[i]+"\t"+numberTimes[i]);
+        }
+        
+        System.out.println("Duplex sizes,total time");
+        for (int i =0; i < duplexSizes.length; i++){
+            System.out.println(duplexSizes[i]*4+"\t"+sizeTimes[i]);
+        }
+        
+        System.exit(0);
+    }
+    
+        
+    private static double measureTime(int numberDuplexes, int oneFourthBasesPerDuplex){
         Map<String,String> parameters = new TreeMap<>();{
+            //parameters.put("CPL", "1000");
         }
         
         Map<String,String> fixedDomains = new TreeMap<>();
         Map<String,String> variableDomains = new TreeMap<>();
         Map<String,String[]> oligomerDomains = new TreeMap<>();
         
-        addVariableDomains(variableDomains,1,256/4);
-        addDuplexOligomerDomains(oligomerDomains,1);
+        addVariableDomains(variableDomains,numberDuplexes,oneFourthBasesPerDuplex);
+        addDuplexOligomerDomains(oligomerDomains,numberDuplexes);
         
         SeqEvo s = new SeqEvo(parameters);
         Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
-        System.exit(0);
+        return r.totalTimeSeconds;
     }
     
     private static void addDuplexOligomerDomains(Map<String,String[]> oligomerDomains, int numberDuplexes){

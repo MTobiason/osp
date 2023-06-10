@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 /**
@@ -48,7 +49,11 @@ public class DeltaWScorer implements IScorer{
     final int maxLength;
     final int swx;
     
+    AtomicInteger scorings = new AtomicInteger(0);
+    
     final Map<Integer,int[]> knownRanges;
+    final Map<Integer,Map<Integer,BasePair[][]>> knownBasePairs;
+    final Map<Integer,BasePair[][]> vdToBP = new ConcurrentHashMap<>();
     
     final Map<Integer,BigInteger> knownIntraScores;
     final Map<Integer,BigInteger> knownInterScores;
@@ -64,6 +69,7 @@ public class DeltaWScorer implements IScorer{
         knownIntraScores = new ConcurrentHashMap<>();
         knownInterScores = new ConcurrentHashMap<>();
         knownRanges = new ConcurrentHashMap<>();
+        knownBasePairs = new ConcurrentHashMap<>();
         
         this.intraSB = intraSB;
         this.intraSLC = intraSLC;
@@ -205,6 +211,7 @@ public class DeltaWScorer implements IScorer{
             score1 = new BigInteger(network1.getScore());
         } else {
            score1 = calculateW(network1.getOligomerSequencesEncoded()).subtract(baselineW);
+           scorings.incrementAndGet();
         }
         
         BigInteger score2;
@@ -212,6 +219,7 @@ public class DeltaWScorer implements IScorer{
             score2 = new BigInteger(network2.getScore());
         } else {
            score2 = calculateW(network2.getOligomerSequencesEncoded()).subtract(baselineW);
+           scorings.incrementAndGet();
         }
        
        return -score1.compareTo(score2);
@@ -223,9 +231,10 @@ public class DeltaWScorer implements IScorer{
     * @return
     */
     @Override
-   public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedNetwork network){
-       String score = getScoreString(network);
-       return new InnerNetwork(network,score);
+    public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedNetwork network){
+        String score = getScoreString(network);
+        scorings.incrementAndGet();
+        return new InnerNetwork(network,score);
    }
 
    /**
@@ -234,9 +243,10 @@ public class DeltaWScorer implements IScorer{
     * @return
     */
     @Override
-   public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork network){
-       String score = getScoreString(network);
-       return new InnerNetwork(network,score);
+    public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork network){
+        String score = getScoreString(network);
+        scorings.incrementAndGet();
+        return new InnerNetwork(network,score);
    }
 
    /**
@@ -249,6 +259,7 @@ public class DeltaWScorer implements IScorer{
     @Override
     public IDomainBasedEncodedScoredNetwork getScored(IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedDomainIndex){
         String score = ss.getScoreString(DeltaWScorer.this, previousNetwork, newNetwork, updatedDomainIndex);
+        scorings.incrementAndGet();
         return new InnerNetwork(newNetwork,score);
 
     }
@@ -849,10 +860,8 @@ public class DeltaWScorer implements IScorer{
             BigInteger deltaW;
        
             if(previousNetwork.getScorer() == scorer){
-                int[][] aoc = previousNetwork.getVariableDomainToOligomerCombinations().get(updatedVariableDomainIndex);
                 
-                // calculate old partial O
-                BigInteger oldPartialO = scorer.calculateAffectedO(previousNetwork, updatedVariableDomainIndex);
+                int[][] aoc = previousNetwork.getVariableDomainToOligomerCombinations().get(updatedVariableDomainIndex);
                 
                 // start calculation of old partial N
                 Callable[] oldSubN = new Callable[numberThreads];
@@ -861,12 +870,9 @@ public class DeltaWScorer implements IScorer{
                 for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
                     int firstIndex = i*combPerThread;
                     int lastIndex = Math.min(firstIndex+combPerThread, aoc[0].length);
-                    oldSubN[i] = new NCalculator(previousNetwork, scorer, updatedVariableDomainIndex, firstIndex, lastIndex);
+                    oldSubN[i] = new NCalculator(previousNetwork, scorer, updatedVariableDomainIndex, aoc, firstIndex, lastIndex);
                     oldFutures[i] = es.submit(oldSubN[i]);
                 }
-                
-                // calculate new parital O
-                BigInteger newPartialO = scorer.calculateAffectedO(newNetwork, updatedVariableDomainIndex);
                 
                 // start calculation of new partial N
                 Callable[] newSubN = new Callable[numberThreads];
@@ -874,9 +880,15 @@ public class DeltaWScorer implements IScorer{
                 for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
                     int firstIndex = i*combPerThread;
                     int lastIndex = Math.min(firstIndex+combPerThread, aoc[0].length);
-                    newSubN[i] = new NCalculator(newNetwork, scorer, updatedVariableDomainIndex, firstIndex, lastIndex);
+                    newSubN[i] = new NCalculator(newNetwork, scorer, updatedVariableDomainIndex, aoc, firstIndex, lastIndex);
                     newFutures[i] = es.submit(newSubN[i]);
                 }
+                
+                // calculate old partial O
+                BigInteger oldPartialO = scorer.calculateAffectedO(previousNetwork, updatedVariableDomainIndex);
+                
+                // calculate new parital O
+                BigInteger newPartialO = scorer.calculateAffectedO(newNetwork, updatedVariableDomainIndex);
                 
                 // finish calculation of old partial N
                 BigInteger oldPartialN = BigInteger.valueOf(0);
@@ -908,13 +920,15 @@ public class DeltaWScorer implements IScorer{
         
         static private class NCalculator implements Callable{
             final DeltaWScorer scorer;
+            final int[][] aoc;
             final int firstIndex;
             final int lastIndex;
             final IDomainBasedEncodedNetwork network;
             final int updatedDomainIndex; 
             //Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
             
-            NCalculator(IDomainBasedEncodedNetwork network, DeltaWScorer scorer, int updatedDomainIndex, int firstIndex, int lastIndex){
+            NCalculator(IDomainBasedEncodedNetwork network, DeltaWScorer scorer, int updatedDomainIndex, int[][] aoc, int firstIndex, int lastIndex){
+                this.aoc = aoc;
                 this.firstIndex = firstIndex;
                 this.lastIndex = lastIndex;
                 this.network = network;
@@ -925,34 +939,38 @@ public class DeltaWScorer implements IScorer{
             public BigInteger call(){
                 int[] lengthCounts = new int[scorer.maxLength+1];
                 int[][] encodedOligomers = network.getOligomerSequencesEncoded();
-                int[][] aoc = network.getVariableDomainToOligomerCombinations().get(updatedDomainIndex);
 
-                int[] S1Bases;
-                int[] S2Bases;
-                int S1length;
-                int b1Max;
-                int S2length;
-                int b2Max;
+                int[] basesS1;
+                int[] basesS2;
+                int lengthS1=0;
+                int lengthS2=0;
                 int structureLength;
-                int b1;
-                int b2;
+                BasePair[][] allBP = new BasePair[0][];
 
                 // for each oligomer combination
                 for( int k : scorer.knownRanges.computeIfAbsent(lastIndex-firstIndex,x->IntStream.range(0,x).toArray())){
                     int i = k+firstIndex;
-                    S1Bases = encodedOligomers[aoc[0][i]];
-                    S2Bases = encodedOligomers[aoc[1][i]];
-                    S1length = S1Bases.length;		
-                    b1Max = S1length-1;
-                    S2length = S2Bases.length;
-                    b2Max = S2length-1;
-                    for (int j : scorer.knownRanges.computeIfAbsent(S2length,x->IntStream.range(0,x).toArray())){
-                        structureLength = 0;
-                        b1 = 0; // index of base on the top strand;
-                        b2 = (b2Max + j) % (S2length);// index of base on the bottom strand;
-
-                        do{
-                            if (S1Bases[b1] + S2Bases[b2] == 0){
+                    if( encodedOligomers[aoc[0][i]].length >= encodedOligomers[aoc[1][i]].length){
+                        basesS1 = encodedOligomers[aoc[0][i]];
+                        basesS2 = encodedOligomers[aoc[1][i]];
+                    } else {
+                        basesS1 = encodedOligomers[aoc[1][i]];
+                        basesS2 = encodedOligomers[aoc[0][i]];
+                    }
+                    if (lengthS1 != basesS1.length || lengthS2!= basesS2.length){
+                        lengthS1 = basesS1.length;
+                        lengthS2 = basesS2.length;
+                        allBP = getKnownBasePairs(scorer, lengthS1, lengthS2);
+                    }
+                    lengthS1 = basesS1.length;
+                    lengthS2 = basesS2.length;
+                    
+                    // for each stretch of base pairs.
+                    for (BasePair[] bps : allBP){
+                        structureLength=0;
+                        // for each base-pair in the stretch.
+                        for(BasePair bp : bps){
+                            if(basesS1[bp.index1]+basesS2[bp.index2] == 0){
                                 structureLength++;
                             } else {
                                 if (structureLength >= scorer.interSLC){
@@ -960,18 +978,7 @@ public class DeltaWScorer implements IScorer{
                                 }
                                 structureLength = 0;
                             }
-
-                            b1++;
-                            if(b2 == 0){
-                                if (structureLength >= scorer.interSLC){
-                                    lengthCounts[structureLength]++;
-                                }
-                                b2 = b2Max;
-                                structureLength = 0;
-                            } else {b2--;}
-                        } while (b1 <= b1Max);
-
-                        //if the loop ended with an active structure, record it.
+                        }
                         if (structureLength >= scorer.interSLC){
                             lengthCounts[structureLength]++;
                         }
@@ -991,5 +998,148 @@ public class DeltaWScorer implements IScorer{
             }
         }
     }
+    static private class BasePair{
+        final int index1;
+        final int index2;
+        BasePair(int index1, int index2){
+            this.index1 = index1;
+            this.index2 = index2;
+        }
+    }
+    
+    // returns an n x m array of base pairs.
+    // each n represents a longest possible duplex, aka base-alignment.
+    // each m represents a pase pair in the alignment.
+    static private BasePair[][] getKnownBasePairs(DeltaWScorer scorer, IDomainBasedEncodedNetwork network, int variableDomainIndex){
+        BasePair[][] bps = scorer.vdToBP.computeIfAbsent(variableDomainIndex,x->scorer.calculateBasePairs(scorer,network,variableDomainIndex));
+        return bps;
+    }
+    
+    // returns an n x m array of base pairs.
+    // each n represents a longest possible duplex, aka base-alignment.
+    // each m represents a pase pair in the alignment.
+    static private BasePair[][] getKnownBasePairs(DeltaWScorer scorer, int oligomer1Length, int oligomer2Length){
+        Map<Integer,BasePair[][]> firstMap = scorer.knownBasePairs.computeIfAbsent(oligomer1Length,x->new ConcurrentHashMap<Integer,BasePair[][]>());
+        BasePair[][] bps = firstMap.computeIfAbsent(oligomer2Length,x->calculateBasePairs(scorer,oligomer1Length,oligomer2Length));
+        return bps;
+    }
+    
+    // returns an n x m array of base pairs.
+    // each n represents a longest possible duplex, aka base-alignment.
+    // each m represents a pase pair in the alignment.
+    // oligomer1Length must be larger than or equal to oligomer2Length
+    static private BasePair[][] calculateBasePairs(DeltaWScorer scorer,int oligomer1Length, int oligomer2Length){
+        int S1length;
+        int b1Max;
+        int S2length;
+        int b2Max;
+        int b1;
+        int b2;
+        ArrayList<BasePair[]> duplexList = new ArrayList<>();
+        ArrayList<BasePair> bpList = new ArrayList<>();
+
+        // for each oligomer combination
+        S1length = oligomer1Length;		
+        b1Max = S1length-1;
+        S2length = oligomer2Length;
+        b2Max = S2length-1;
+        //for each oligomer alignment
+        for (int j : scorer.knownRanges.computeIfAbsent(S2length,x->IntStream.range(0,x).toArray())){
+            b1 = 0; // index of base on the top strand;
+            b2 = (b2Max + j) % (S2length);// index of base on the bottom strand;
+
+            do{
+                // add a base pair to the array.
+                bpList.add(new BasePair(b1,b2));
+
+                //advance to the next base
+                b1++;
+                if(b2 == 0){
+                    BasePair[] copiedArray = Arrays.copyOf(bpList.toArray(x->new BasePair[x]),bpList.size());
+                    duplexList.add(copiedArray);
+                    bpList.clear();
+                    b2 = b2Max;
+                } else {b2--;}
+            } while (b1 <= b1Max);
+            
+            // if the loop ended with a duplex.
+            if(bpList.size() > 0){
+                BasePair[] copiedArray = Arrays.copyOf(bpList.toArray(x->new BasePair[x]),bpList.size());
+                duplexList.add(copiedArray);
+                bpList.clear();
+            }
+        }
         
+        BasePair[][] ret = duplexList.toArray(x->new BasePair[x][]);
+        return ret;
+    }
+    
+    // returns an n x m array of base pairs.
+    // each n represents a longest possible duplex, aka base-alignment.
+    // each m represents a pase pair in the alignment.
+    // oligomer1Length must be larger than or equal to oligomer2Length
+    static private BasePair[][] calculateBasePairs(DeltaWScorer scorer, IDomainBasedEncodedNetwork network, int variableDomainIndex){
+        int[][] aoc = network.getVariableDomainToOligomerCombinations().get(variableDomainIndex);
+        int[][] encodedOligomers = network.getOligomerSequencesEncoded();
+        int lengthS1=0;
+        int[] basesS1;
+        int b1Max;
+        int lengthS2=0;
+        int[] basesS2;
+        int b2Max;
+        int b1;
+        int b2;
+        ArrayList<BasePair[]> duplexList = new ArrayList<>();
+        ArrayList<BasePair> bpList = new ArrayList<>();
+
+        // for each oligomer combination
+        for(int i=0; i < aoc[0].length;i++){
+            if( encodedOligomers[aoc[0][i]].length >= encodedOligomers[aoc[1][i]].length){
+                basesS1 = encodedOligomers[aoc[0][i]];
+                basesS2 = encodedOligomers[aoc[1][i]];
+            } else {
+                basesS1 = encodedOligomers[aoc[1][i]];
+                basesS2 = encodedOligomers[aoc[0][i]];
+            }
+            if (lengthS1 != basesS1.length || lengthS2!= basesS2.length){
+                lengthS1 = basesS1.length;
+                lengthS2 = basesS2.length;
+            }
+            
+            lengthS1 = basesS1.length;		
+            b1Max = lengthS1-1;
+            lengthS2 = basesS2.length;
+            b2Max = lengthS2-1;
+            
+            //for each oligomer alignment
+            for (int j : scorer.knownRanges.computeIfAbsent(lengthS2,x->IntStream.range(0,x).toArray())){
+                b1 = 0; // index of base on the top strand;
+                b2 = (b2Max + j) % (lengthS2);// index of base on the bottom strand;
+
+                do{
+                    // add a base pair to the array.
+                    bpList.add(new BasePair(b1,b2));
+
+                    //advance to the next base
+                    b1++;
+                    if(b2 == 0){
+                        BasePair[] copiedArray = Arrays.copyOf(bpList.toArray(x->new BasePair[x]),bpList.size());
+                        duplexList.add(copiedArray);
+                        bpList.clear();
+                        b2 = b2Max;
+                    } else {b2--;}
+                } while (b1 <= b1Max);
+
+                // if the loop ended with a duplex.
+                if(bpList.size() > 0){
+                    BasePair[] copiedArray = Arrays.copyOf(bpList.toArray(x->new BasePair[x]),bpList.size());
+                    duplexList.add(copiedArray);
+                    bpList.clear();
+                }
+            }
+        }
+        
+        BasePair[][] ret = duplexList.toArray(x->new BasePair[x][]);
+        return ret;
+    }
 }
