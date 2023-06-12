@@ -34,6 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -53,7 +55,6 @@ public class DeltaWScorer implements IScorer{
     
     final Map<Integer,int[]> knownRanges;
     final Map<Integer,Map<Integer,BasePair[][]>> knownBasePairs;
-    final Map<Integer,BasePair[][]> vdToBP = new ConcurrentHashMap<>();
     
     final Map<Integer,BigInteger> knownIntraScores;
     final Map<Integer,BigInteger> knownInterScores;
@@ -842,46 +843,64 @@ public class DeltaWScorer implements IScorer{
     }
     
     static private class ScoringSupervisor{
-        ExecutorService es;
+        final ExecutorService es;
         int numberThreads;
+        final LinkedBlockingQueue<Runnable> workQueue;
         
         ScoringSupervisor(int numberThreads){
-            es = Executors.newFixedThreadPool(numberThreads);
             this.numberThreads = numberThreads;
-            Runtime.getRuntime().addShutdownHook( new Thread(){
+            es = Executors.newFixedThreadPool(numberThreads);
+            workQueue = new LinkedBlockingQueue<Runnable>();
+            for(int i: IntStream.range(0,numberThreads).toArray()){
+                es.submit(new Worker(workQueue));
+            }
+            /*Runtime.getRuntime().addShutdownHook( new Thread(){
                 @Override
                 public void run(){
                     es.shutdownNow();
                 }
-            });
+            });*/
         }
         
         String getScoreString(DeltaWScorer scorer, IDomainBasedEncodedScoredNetwork previousNetwork, IDomainBasedEncodedNetwork newNetwork, int updatedVariableDomainIndex){
             BigInteger deltaW;
+            String retString;
        
             if(previousNetwork.getScorer() == scorer){
-                
                 int[][] aoc = previousNetwork.getVariableDomainToOligomerCombinations().get(updatedVariableDomainIndex);
                 
-                // start calculation of old partial N
-                Callable[] oldSubN = new Callable[numberThreads];
-                Future<BigInteger>[] oldFutures = new Future[numberThreads];
-                int combPerThread = (aoc[0].length+numberThreads-1)/numberThreads; // Math.ceil of aoc[0].length / numberThreads
-                for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
+                int threadsPerNetwork = (numberThreads+1)/2;
+                int combPerThread = (aoc[0].length+1)/2;//(aoc[0].length+threadsPerNetwork-1)/threadsPerNetwork;
+                
+                ArrayList<Integer> lastIndexes = new ArrayList<>();
+                for(int i=0; (i < threadsPerNetwork ) && (i*combPerThread < aoc[0].length) ; i++){
                     int firstIndex = i*combPerThread;
-                    int lastIndex = Math.min(firstIndex+combPerThread, aoc[0].length);
-                    oldSubN[i] = new NCalculator(previousNetwork, scorer, updatedVariableDomainIndex, aoc, firstIndex, lastIndex);
-                    oldFutures[i] = es.submit(oldSubN[i]);
+                    Integer lastIndex = Math.min(firstIndex+combPerThread, aoc[0].length);
+                    lastIndexes.add(lastIndex);
+                }
+                Integer[] lastIndexesArray = lastIndexes.toArray(x->new Integer[x]);
+                int[] indexList = IntStream.range(1,lastIndexesArray.length).toArray();
+                
+                // start calculation of old partial N
+                NRequest[] oldRequests = new NRequest[threadsPerNetwork];
+                oldRequests[0] = new NRequest(previousNetwork, scorer, aoc, 0, lastIndexesArray[0]);
+                workQueue.add(oldRequests[0]);
+                for(int i:indexList){
+                    int firstIndex = lastIndexesArray[i-1];
+                    int lastIndex = lastIndexesArray[i];
+                    oldRequests[i] = new NRequest(previousNetwork, scorer, aoc, firstIndex, lastIndex);
+                    workQueue.add(oldRequests[i]);
                 }
                 
                 // start calculation of new partial N
-                Callable[] newSubN = new Callable[numberThreads];
-                Future<BigInteger>[] newFutures = new Future[numberThreads];
-                for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
-                    int firstIndex = i*combPerThread;
-                    int lastIndex = Math.min(firstIndex+combPerThread, aoc[0].length);
-                    newSubN[i] = new NCalculator(newNetwork, scorer, updatedVariableDomainIndex, aoc, firstIndex, lastIndex);
-                    newFutures[i] = es.submit(newSubN[i]);
+                NRequest[] newRequests = new NRequest[threadsPerNetwork];
+                newRequests[0] = new NRequest(newNetwork, scorer, aoc, 0, lastIndexesArray[0]);
+                workQueue.add(newRequests[0]);
+                for(int i:indexList){
+                    int firstIndex = lastIndexesArray[i-1];
+                    int lastIndex = lastIndexesArray[i];
+                    newRequests[i] = new NRequest(newNetwork, scorer, aoc, firstIndex, lastIndex);
+                    workQueue.add(newRequests[i]);
                 }
                 
                 // calculate old partial O
@@ -891,18 +910,15 @@ public class DeltaWScorer implements IScorer{
                 BigInteger newPartialO = scorer.calculateAffectedO(newNetwork, updatedVariableDomainIndex);
                 
                 // finish calculation of old partial N
-                BigInteger oldPartialN = BigInteger.valueOf(0);
-                for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
-                    try {
-                        oldPartialN = oldPartialN.add(oldFutures[i].get());
-                    } catch (Exception e) {System.out.println(e.getMessage());}
+                BigInteger oldPartialN = new BigInteger(oldRequests[0].getResult());
+                for(int i:indexList){
+                    oldPartialN = oldPartialN.add(new BigInteger(oldRequests[i].getResult()));
                 }
                 
-                BigInteger newPartialN = BigInteger.valueOf(0);
-                for(int i=0; (i < numberThreads ) && (i < aoc[0].length) ; i++){
-                    try {
-                        newPartialN = newPartialN.add(newFutures[i].get());
-                    } catch (Exception e) {System.out.println(e.getMessage());}
+                // finish calculation of new partial N
+                BigInteger newPartialN = new BigInteger(newRequests[0].getResult());
+                for(int i:indexList){
+                    newPartialN = newPartialN.add(new BigInteger(newRequests[i].getResult()));
                 }
                 
                 // calculate partialW
@@ -910,33 +926,64 @@ public class DeltaWScorer implements IScorer{
                 BigInteger newPartialW = newPartialO.multiply(BigInteger.valueOf(scorer.swx)).add(newPartialN);
                 BigInteger oldDeltaW = new BigInteger(previousNetwork.getScore());
                 deltaW = oldDeltaW.subtract(oldPartialW).add(newPartialW);
+                retString = deltaW.toString();
             } else {
                deltaW = scorer.calculateW(newNetwork.getOligomerSequencesEncoded()).subtract(scorer.baselineW);
+               retString = deltaW.toString();
             }
             
-            String retString = deltaW.toString();
             return retString;
          }
         
-        static private class NCalculator implements Callable{
+        static private class Worker implements Runnable{
+            LinkedBlockingQueue<Runnable> queue;
+            Worker(LinkedBlockingQueue<Runnable> queue){
+                this.queue = queue;
+            }
+            public void run(){
+                while (!Thread.currentThread().isInterrupted()){
+                    try{
+                        Runnable r = queue.take();
+                        synchronized (r) {
+                            r.run();
+                            r.notify();
+                        }
+                    } catch (Exception e) {System.out.println(e);}
+                }
+            }
+        }
+        
+        static private class NRequest implements Runnable{
             final DeltaWScorer scorer;
             final int[][] aoc;
             final int firstIndex;
             final int lastIndex;
             final IDomainBasedEncodedNetwork network;
-            final int updatedDomainIndex; 
+            String result;
+            final AtomicBoolean isDone;
             //Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
             
-            NCalculator(IDomainBasedEncodedNetwork network, DeltaWScorer scorer, int updatedDomainIndex, int[][] aoc, int firstIndex, int lastIndex){
+            NRequest(IDomainBasedEncodedNetwork network, DeltaWScorer scorer,  int[][] aoc, int firstIndex, int lastIndex){
+                isDone = new AtomicBoolean(false);
                 this.aoc = aoc;
                 this.firstIndex = firstIndex;
                 this.lastIndex = lastIndex;
                 this.network = network;
                 this.scorer = scorer;
-                this.updatedDomainIndex = updatedDomainIndex;
+            }
+            
+            public String getResult(){
+                synchronized (NRequest.this){
+                    while (!isDone.get()){
+                        try{
+                            NRequest.this.wait();
+                        } catch (Exception e) {System.out.println(e);}
+                    }
+                    return this.result;
+                }
             }
         
-            public BigInteger call(){
+            public void run(){
                 int[] lengthCounts = new int[scorer.maxLength+1];
                 int[][] encodedOligomers = network.getOligomerSequencesEncoded();
 
@@ -994,7 +1041,8 @@ public class DeltaWScorer implements IScorer{
                         retScore = retScore.add(lengthScore.multiply(BigInteger.valueOf(counts)));
                     }
                 }
-                return retScore;
+                this.result = retScore.toString();
+                this.isDone.set(true);
             }
         }
     }
@@ -1007,13 +1055,6 @@ public class DeltaWScorer implements IScorer{
         }
     }
     
-    // returns an n x m array of base pairs.
-    // each n represents a longest possible duplex, aka base-alignment.
-    // each m represents a pase pair in the alignment.
-    static private BasePair[][] getKnownBasePairs(DeltaWScorer scorer, IDomainBasedEncodedNetwork network, int variableDomainIndex){
-        BasePair[][] bps = scorer.vdToBP.computeIfAbsent(variableDomainIndex,x->scorer.calculateBasePairs(scorer,network,variableDomainIndex));
-        return bps;
-    }
     
     // returns an n x m array of base pairs.
     // each n represents a longest possible duplex, aka base-alignment.
@@ -1074,72 +1115,4 @@ public class DeltaWScorer implements IScorer{
         return ret;
     }
     
-    // returns an n x m array of base pairs.
-    // each n represents a longest possible duplex, aka base-alignment.
-    // each m represents a pase pair in the alignment.
-    // oligomer1Length must be larger than or equal to oligomer2Length
-    static private BasePair[][] calculateBasePairs(DeltaWScorer scorer, IDomainBasedEncodedNetwork network, int variableDomainIndex){
-        int[][] aoc = network.getVariableDomainToOligomerCombinations().get(variableDomainIndex);
-        int[][] encodedOligomers = network.getOligomerSequencesEncoded();
-        int lengthS1=0;
-        int[] basesS1;
-        int b1Max;
-        int lengthS2=0;
-        int[] basesS2;
-        int b2Max;
-        int b1;
-        int b2;
-        ArrayList<BasePair[]> duplexList = new ArrayList<>();
-        ArrayList<BasePair> bpList = new ArrayList<>();
-
-        // for each oligomer combination
-        for(int i=0; i < aoc[0].length;i++){
-            if( encodedOligomers[aoc[0][i]].length >= encodedOligomers[aoc[1][i]].length){
-                basesS1 = encodedOligomers[aoc[0][i]];
-                basesS2 = encodedOligomers[aoc[1][i]];
-            } else {
-                basesS1 = encodedOligomers[aoc[1][i]];
-                basesS2 = encodedOligomers[aoc[0][i]];
-            }
-            if (lengthS1 != basesS1.length || lengthS2!= basesS2.length){
-                lengthS1 = basesS1.length;
-                lengthS2 = basesS2.length;
-            }
-            
-            lengthS1 = basesS1.length;		
-            b1Max = lengthS1-1;
-            lengthS2 = basesS2.length;
-            b2Max = lengthS2-1;
-            
-            //for each oligomer alignment
-            for (int j : scorer.knownRanges.computeIfAbsent(lengthS2,x->IntStream.range(0,x).toArray())){
-                b1 = 0; // index of base on the top strand;
-                b2 = (b2Max + j) % (lengthS2);// index of base on the bottom strand;
-
-                do{
-                    // add a base pair to the array.
-                    bpList.add(new BasePair(b1,b2));
-
-                    //advance to the next base
-                    b1++;
-                    if(b2 == 0){
-                        BasePair[] copiedArray = Arrays.copyOf(bpList.toArray(x->new BasePair[x]),bpList.size());
-                        duplexList.add(copiedArray);
-                        bpList.clear();
-                        b2 = b2Max;
-                    } else {b2--;}
-                } while (b1 <= b1Max);
-
-                // if the loop ended with a duplex.
-                if(bpList.size() > 0){
-                    BasePair[] copiedArray = Arrays.copyOf(bpList.toArray(x->new BasePair[x]),bpList.size());
-                    duplexList.add(copiedArray);
-                    bpList.clear();
-                }
-            }
-        }
-        
-        BasePair[][] ret = duplexList.toArray(x->new BasePair[x][]);
-        return ret;
-    }
 }

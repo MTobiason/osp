@@ -289,64 +289,6 @@ public class SeqEvo {
         return r;
     }
     
-    static private IDomainBasedEncodedScoredNetwork cycle1(IDomainBasedEncodedScoredNetwork network, IScorer scorer, MutationSupervisor workSupervisor, int NL, int CPL, int NMPC, int GPC, int NDPG){
-        //generate mutated networks.
-        IDomainBasedEncodedScoredNetwork[] beforeSubCycles = Stream.concat(Stream.of(network),Arrays.stream(workSupervisor.getType1Mutation(network,NL-1))).toArray(x -> new IDomainBasedEncodedScoredNetwork[x]);
-        IDomainBasedEncodedScoredNetwork[] afterSubCycles = Arrays.stream(beforeSubCycles).parallel()
-            .map(n->{
-            IDomainBasedEncodedScoredNetwork subCycleBest = n;
-            for(int i =0; i < CPL; i++){
-                subCycleBest = cycle2(subCycleBest, scorer, workSupervisor ,NMPC, GPC, NDPG);
-            }
-            return subCycleBest;
-        }).toArray(i->new IDomainBasedEncodedScoredNetwork[i]);
-        
-        // compare scores.
-        IDomainBasedEncodedScoredNetwork fittest = network;
-        for(IDomainBasedEncodedScoredNetwork n : afterSubCycles){
-            if(scorer.compareFitness(n,fittest) >= 0){
-                fittest = n;
-            }
-        }
-        return fittest;
-    }
-    
-    static private IDomainBasedEncodedScoredNetwork cycle2( IDomainBasedEncodedScoredNetwork network, IScorer scorer, MutationSupervisor workSupervisor, int NMPC, int GPC, int NDPG){
-        //generate mutated networks.
-        IDomainBasedEncodedScoredNetwork[] beforeSubCycles = Stream.concat(Stream.of(network),Arrays.stream(workSupervisor.getType2Mutation(network,NMPC))).toArray(x->new IDomainBasedEncodedScoredNetwork[x]);
-        IDomainBasedEncodedScoredNetwork[] afterSubCycles = Arrays.stream(beforeSubCycles).parallel()
-                .map(n->{
-                IDomainBasedEncodedScoredNetwork subCycleBest = n;
-                for(int i =0; i < GPC; i++){
-                    subCycleBest = cycle3(subCycleBest,scorer,workSupervisor,NDPG);
-                }
-                return subCycleBest;
-            }).toArray(i->new IDomainBasedEncodedScoredNetwork[i]);
-        
-        // compare scores.
-        IDomainBasedEncodedScoredNetwork fittest = network;
-        for(IDomainBasedEncodedScoredNetwork n : afterSubCycles){
-            if(scorer.compareFitness(n,fittest) >= 0){
-                fittest = n;
-            }
-        }
-        return fittest;
-    }
-    
-    static private IDomainBasedEncodedScoredNetwork cycle3(IDomainBasedEncodedScoredNetwork network, IScorer scorer, MutationSupervisor workSupervisor, int NDPG){
-        //generate mutated networks.
-        IDomainBasedEncodedScoredNetwork[] newNetworks = Arrays.stream(workSupervisor.getType3Mutation(network,NDPG)).toArray(x->new IDomainBasedEncodedScoredNetwork[x]);
-        
-        // compare scores.
-        IDomainBasedEncodedScoredNetwork fittest = network;
-        for(IDomainBasedEncodedScoredNetwork n : newNetworks){
-            if(scorer.compareFitness(n,fittest) >= 0){
-                fittest = n;
-            }
-        }
-        return fittest;
-    }
-        	
     static public class Report {
         public final Map<String,String> usedParameters;
         public final IDomainBasedEncodedScoredNetwork initialNetwork;
