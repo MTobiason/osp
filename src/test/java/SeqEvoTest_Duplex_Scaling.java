@@ -38,18 +38,18 @@ public class SeqEvoTest_Duplex_Scaling {
         int[] duplexNumbers = {1,2,4,8,16,32,64,128,256,512,1024};
         int[] duplexSizes = {8/4,16/4,32/4,64/4,128/4,256/4,512/4,1024/4};
         
-        double[] numberTimes = new double[duplexNumbers.length];
-        for (int i =0; i < duplexNumbers.length; i++){
-            System.out.println("Starting "+duplexNumbers[i]+" duplexes");
-            numberTimes[i] = measureTime(duplexNumbers[i], 8/4);
-            System.out.println("Time: "+numberTimes[i]);
-        }
-        
         double[] sizeTimes = new double[duplexSizes.length];
         for (int i =0; i < duplexSizes.length; i++){
             System.out.println("Starting "+duplexSizes[i]*4+" base-pairs");
             sizeTimes[i] = measureTime(1, duplexSizes[i]);
             System.out.println("Time: "+sizeTimes[i]);
+        }
+        
+        double[] numberTimes = new double[duplexNumbers.length];
+        for (int i =0; i < duplexNumbers.length; i++){
+            System.out.println("Starting "+duplexNumbers[i]+" duplexes");
+            numberTimes[i] = measureTime(duplexNumbers[i], 8/4);
+            System.out.println("Time: "+numberTimes[i]);
         }
         
         System.out.println("Number duplexes,total time");

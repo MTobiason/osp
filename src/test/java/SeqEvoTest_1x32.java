@@ -30,20 +30,16 @@ import java.util.TreeMap;
  *
  * @author mtobi
  */
-public class SeqEvoTest_1x512 {
+public class SeqEvoTest_1x32 {
     
     public static void main(String[] args){
         Map<String,String> parameters = new TreeMap<>();{
-            parameters.put("CPL","10000");
         }
-        
         Map<String,String> fixedDomains = new TreeMap<>();{
         }
-        
         Map<String,String> variableDomains = new TreeMap<>();{
-            variableDomains.put("Domain-1", "AAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTTAAAACCCCGGGGTTTT");
+            variableDomains.put("Domain-1", "AAAACCCCGGGGTTTTAAAACCCCGGGGTTTT");
         }
-        
         Map<String,String[]> oligomerDomains = new TreeMap<>();{
             oligomerDomains.put("Duplex-1-Top", new String[] {"Domain-1"});
             oligomerDomains.put("Duplex-1-Bottom", new String[] {"c.Domain-1"});
