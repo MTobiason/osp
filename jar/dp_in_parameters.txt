@@ -1,0 +1,3 @@
+FDFP se_in_domains_fixed.txt
+VDFP se_in_domains_variable.txt
+ODFP se_in_oligomer_domains.txt

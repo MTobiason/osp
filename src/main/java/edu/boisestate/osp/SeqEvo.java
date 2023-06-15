@@ -28,8 +28,6 @@ import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.stream.Stream;
-import edu.boisestate.osp.domainbasedencodednetwork.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.TreeMap;
@@ -49,28 +47,28 @@ public class SeqEvo {
     
     // parameters stuff
     final static String PFP_LABEL = "PFP"; //parameters File Path
-    final static String PFP_DEFAULT = "in_parameters.txt";
+    final static String PFP_DEFAULT = "se_in_parameters.txt";
     final Map<String,String> usedParameters;
     
     // input files
     final static String FDFP_LABEL = "FDFP"; // fixed-domains-file-path
-    final static String FDFP_DEFAULT = "in_domains_fixed.txt";
+    final static String FDFP_DEFAULT = "se_in_domains_fixed.txt";
     final static String VDFP_LABEL = "VDFP"; // variable-domains-file-path
-    final static String VDFP_DEFAULT = "in_domains_variable.txt";
+    final static String VDFP_DEFAULT = "se_in_domains_variable.txt";
     final static String ODFP_LABEL = "ODFP"; // oligomers-file-path
-    final static String ODFP_DEFAULT = "in_oligomer_domains.txt";
+    final static String ODFP_DEFAULT = "se_in_oligomer_domains.txt";
     
     // output files
     final static String ORFP_LABEL = "ORFP"; // Output Report File Path
-    final static String ORFP_DEFAULT = "out_se_report.txt";
+    final static String ORFP_DEFAULT = "se_out_report.txt";
     final static String OVDFP_LABEL = "OVDFP"; // Output Variable Domains File Path
-    final static String OVDFP_DEFAULT = "out_domains_variable.txt";
+    final static String OVDFP_DEFAULT = "se_out_domains_variable.txt";
     final static String OOSFP_LABEL = "OOFP"; // Output Oligomer Sequences File Path
-    final static String OOSFP_DEFAULT = "out_oligomers.txt"; //
+    final static String OOSFP_DEFAULT = "se_out_oligomers.txt"; //
     final static String OSTFP_LABEL = "OSTFP"; // Output Score Trajectories File Path
-    final static String OSTFP_DEFAULT = "out_score_trajectories.csv";
+    final static String OSTFP_DEFAULT = "se_out_score_trajectories.csv";
     final static String OLSTFP_LABEL = "OLSTFP"; // Output Score Trajectories File Path
-    final static String OLSTFP_DEFAULT = "out_score_trajectories_log.csv";
+    final static String OLSTFP_DEFAULT = "se_out_score_trajectories_log.csv";
     
     // mutation parameters
     final int MAXAA; // Max number of consecutive AA's
@@ -218,7 +216,7 @@ public class SeqEvo {
         report.exportToFile(usedParameters,ORFP,OVDFP,OOSFP,OSTFP,OLSTFP);
         
         System.out.println("Initial network "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.initialNetwork.getScore());
-        System.out.println("Final network "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.finalNetwork.getScore());
+        System.out.println("Fittest network "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.finalNetwork.getScore());
         
         System.out.println("Optimization time: "+ report.optimizationTime);
         System.out.println("Total time: " + report.totalTime);
@@ -237,7 +235,7 @@ public class SeqEvo {
         final FactoryDomainBasedEncodedNetwork factory = new FactoryDomainBasedEncodedNetwork(coder, fixedDomains, oligomerDomains, initialVariableDomains);
         
         // Scoring stuff
-        final IScorer scorer = new DeltaWScorer(fixedDomains, oligomerDomains, initialVariableDomains, INTRASB, INTRASLC, INTERSB, INTERSLC, SWX, NUMBERTHREADS);
+        final IScorer scorer = new DeltaWScorer(fixedDomains, oligomerDomains, initialVariableDomains, INTRASB, INTRASLC, INTERSB, INTERSLC, SWX, NUMBERTHREADS, 4);
         String scoreLabel = scorer.getScoreLabel();
         String scoreUnits = scorer.getScoreUnits();
         

@@ -52,7 +52,7 @@ if( Test-Path $Location\bin)
     MT-CheckExitCode("creating bin directory")
 }
 
-$Targets = 'SeqEvo'
+$Targets = 'SeqEvo', 'DevPro'
 ForEach ($Target in $Targets)
 {
     cd src
