@@ -1,3 +1,8 @@
-FDFP se_in_domains_fixed.txt
-VDFP se_in_domains_variable.txt
-ODFP se_in_oligomer_domains.txt
+fixed_domains_file in_fixedDomains.txt
+variable_domains_file se_out_domains_variable.txt
+oligomer_domains_file in_oligomers.txt
+//fixed_domains_file se_in_domains_fixed.txt
+//variable_domains_file se_in_domains_variable.txt
+//oligomer_domains_file se_in_oligomer_domains.txt
+intraSLC 3
+interSLC 8

@@ -36,12 +36,11 @@ public class DevProTest_Ke_2012_brick {
     
     public static void main(String[] args){
         Map<String,String> parameters = new TreeMap<>();{
-            parameters.put("CPL", "1000");
-            parameters.put("NL", "8");
-            parameters.put("maxAA", "6");
-            parameters.put("maxCC", "3");
-            parameters.put("maxGG", "3");
-            parameters.put("maxTT", "6");
+            parameters.put("interSB", "10");
+            parameters.put("interSLC", "1");
+            parameters.put("intraSB", "10");
+            //parameters.put("intraSLC", "1");
+            parameters.put("scoringWeightX", "10000");
         }
         Map<String,String> fixedDomains = new TreeMap<>();{
             fixedDomains.put("Domain-T8", "TTTTTTTT");
@@ -1567,8 +1566,6 @@ public class DevProTest_Ke_2012_brick {
         propertiesToRequest.add(dp.N_LABEL);
         propertiesToRequest.add(dp.O_LABEL);
         propertiesToRequest.add(dp.W_LABEL);
-        propertiesToRequest.add(dp.INTER_DUPLEX_COUNT_LABEL);
-        propertiesToRequest.add(dp.INTRA_DUPLEX_COUNT_LABEL);
         
         DevPro.Request request = new DevPro.Request(network, propertiesToRequest, parameters);
         DevPro.Report report = dp.analyze(request);
