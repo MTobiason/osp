@@ -23,22 +23,16 @@
  */
 package edu.boisestate.osp;
 
-import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.util.Map;
 import java.util.HashMap;
-import edu.boisestate.osp.util;
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  *
@@ -99,13 +93,30 @@ public class DevPro {
     final static String PDUE_LABEL = "Profile_Delta_Unique_Inter"; // Profile baseline Unique inter
     
     final static String DAUA_FILE_LABEL = "Duplexes_All_Unique_Intra_File";
-    final static String DAUE_FILE_LABEL = "Duplexes_All_Unique_Inter_File"; 
-    final static String DBUA_FILE_LABEL = "Duplexes_Baseline_Unique_Intra_File"; 
-    final static String DBUE_FILE_LABEL = "Duplexes_Baseline_Unique_Inter_File"; 
     final static String DAUA_LABEL = "Duplexes_All_Unique_Intra"; // List of all unique intra-oligomer duplexes.
+    final static String DAUE_FILE_LABEL = "Duplexes_All_Unique_Inter_File"; 
     final static String DAUE_LABEL = "Duplexes_All_Unique_Inter"; // List of all unique intra-oligomer duplexes.
+    final static String DBUA_FILE_LABEL = "Duplexes_Baseline_Unique_Intra_File"; 
     final static String DBUA_LABEL = "Duplexes_Baseline_Unique_Intra"; // List of baseline unique intra-oligomer duplexes.
+    final static String DBUE_FILE_LABEL = "Duplexes_Baseline_Unique_Inter_File"; 
     final static String DBUE_LABEL = "Duplexes_Baseline_Unique_Inter"; // List of baseline unique intra-oligomer duplexes.
+    final static String DDUA_FILE_LABEL = "Duplexes_Delta_Unique_Intra_File"; 
+    final static String DDUA_LABEL = "Duplexes_Delta_Unique_Intra"; // List of baseline unique intra-oligomer duplexes.
+    final static String DDUE_FILE_LABEL = "Duplexes_Delta_Unique_Inter_File"; 
+    final static String DDUE_LABEL = "Duplexes_Delta_Unique_Inter"; // List of baseline unique intra-oligomer duplexes.
+    
+    final static String LDAUA_FILE_LABEL = "Largest_Duplexes_All_Unique_Intra_File";
+    final static String LDAUA_LABEL = "Largest_Duplexes_All_Unique_Intra"; // List of all unique intra-oligomer duplexes.
+    final static String LDAUE_FILE_LABEL = "Largest_Duplexes_All_Unique_Inter_File"; 
+    final static String LDAUE_LABEL = "Largest_Duplexes_All_Unique_Inter"; // List of all unique intra-oligomer duplexes.
+    final static String LDBUA_FILE_LABEL = "Largest_Duplexes_Baseline_Unique_Intra_File"; 
+    final static String LDBUA_LABEL = "Largest_Duplexes_Baseline_Unique_Intra"; // List of baseline unique intra-oligomer duplexes.
+    final static String LDBUE_FILE_LABEL = "Largest_Duplexes_Baseline_Unique_Inter_File"; 
+    final static String LDBUE_LABEL = "Largest_Duplexes_Baseline_Unique_Inter"; // List of baseline unique intra-oligomer duplexes.
+    final static String LDDUA_FILE_LABEL = "Largest_Duplexes_Delta_Unique_Intra_File"; 
+    final static String LDDUA_LABEL = "Largest_Duplexes_Delta_Unique_Intra"; // List of baseline unique intra-oligomer duplexes.
+    final static String LDDUE_FILE_LABEL = "Largest_Duplexes_Delta_Unique_Inter_File"; 
+    final static String LDDUE_LABEL = "Largest_Duplexes_Delta_Unique_Inter"; // List of baseline unique intra-oligomer duplexes.
 
     final static String BASELINE_N_LABEL = "baselineN";
     final static String BASELINE_O_LABEL = "baselineO";
@@ -122,6 +133,7 @@ public class DevPro {
     final static String INTRA_SB_LABEL = "intraSB";
     final static String INTRA_SLC_LABEL = "intraSLC";
     final static String SWX_LABEL = "scoringWeightX";
+    public final static String NUMBER_LARGEST_DUPLEXES_LABEL = "numberLargestDuplexes";
     
     final Analyzer analyzer;
     
@@ -130,6 +142,7 @@ public class DevPro {
         availableParameters.put(INTER_SLC_LABEL, new IntegerParameter(Analyzer.INTER_SLC_LABEL, "Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores.", INTER_SLC_LABEL,"1",1,Integer.MAX_VALUE));
         availableParameters.put(INTRA_SB_LABEL, new IntegerParameter(Analyzer.INTRA_SB_LABEL, "Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex.", INTRA_SB_LABEL,"10",0,Integer.MAX_VALUE));
         availableParameters.put(INTRA_SLC_LABEL, new IntegerParameter(Analyzer.INTRA_SLC_LABEL, "Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores.", INTRA_SLC_LABEL,"1",1,Integer.MAX_VALUE));
+        availableParameters.put(NUMBER_LARGEST_DUPLEXES_LABEL, new IntegerParameter(Analyzer.NUMBER_LARGEST_DUPLEXES_LABEL, "Maximum number of duplexes to include when listing largest-duplexes.", NUMBER_LARGEST_DUPLEXES_LABEL,"1000",1,Integer.MAX_VALUE));
         availableParameters.put(SWX_LABEL, new IntegerParameter(Analyzer.SWX_LABEL, "W will be calculated as O times this value plus N.", SWX_LABEL,"10000",0,Integer.MAX_VALUE));
     }
     
@@ -165,6 +178,16 @@ public class DevPro {
         availableProperties.put(DAUE_LABEL, new DuplexProperty(Analyzer.DAUE_LABEL,"List of all inter-oligomer duplexes.", "true", DAUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DAUE_LABEL}));
         availableProperties.put(DBUA_LABEL, new DuplexProperty(Analyzer.DBUA_LABEL,"List of baseline intra-oligomer duplexes.", "true", DBUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DBUA_LABEL}));
         availableProperties.put(DBUE_LABEL, new DuplexProperty(Analyzer.DBUE_LABEL,"List of baseline inter-oligomer duplexes.", "true", DBUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DBUE_LABEL}));
+        availableProperties.put(DDUA_LABEL, new DuplexProperty(Analyzer.DDUA_LABEL,"List of delta intra-oligomer duplexes.", "true", DDUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DDUA_LABEL}));
+        availableProperties.put(DDUE_LABEL, new DuplexProperty(Analyzer.DDUE_LABEL,"List of delta inter-oligomer duplexes.", "true", DDUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DDUE_LABEL}));
+        
+        availableProperties.put(LDAUA_LABEL, new DuplexProperty(Analyzer.LDAUA_LABEL,"List of the largest intra-oligomer duplexes.", "true", LDAUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDAUA_LABEL}));
+        availableProperties.put(LDAUE_LABEL, new DuplexProperty(Analyzer.LDAUE_LABEL,"List of the largest inter-oligomer duplexes.", "true", LDAUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDAUE_LABEL}));
+        availableProperties.put(LDBUA_LABEL, new DuplexProperty(Analyzer.LDBUA_LABEL,"List of the largest baseline intra-oligomer duplexes.", "true", LDBUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDBUA_LABEL}));
+        availableProperties.put(LDBUE_LABEL, new DuplexProperty(Analyzer.LDBUE_LABEL,"List of the largest baseline inter-oligomer duplexes.", "true", LDBUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDBUE_LABEL}));
+        availableProperties.put(LDDUA_LABEL, new DuplexProperty(Analyzer.LDDUA_LABEL,"List of the largest delta intra-oligomer duplexes.", "true", LDDUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDDUA_LABEL}));
+        availableProperties.put(LDDUE_LABEL, new DuplexProperty(Analyzer.LDDUE_LABEL,"List of the largest delta inter-oligomer duplexes.", "true", LDDUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDDUE_LABEL}));
+        
     }
     
     final static Map<String,OutputFile> availableOutputFiles = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);{
@@ -187,6 +210,15 @@ public class DevPro {
         availableOutputFiles.put(DAUE_FILE_LABEL, new DuplexesFile("Duplexes_All_Unique_Inter.csv", "List of all unique inter-oligomer duplexes.", DAUE_FILE_LABEL, DAUE_LABEL, "true"));
         availableOutputFiles.put(DBUA_FILE_LABEL, new DuplexesFile("Duplexes_Baseline_Unique_Intra.csv", "List of baseline unique intra-oligomer duplexes.", DBUA_FILE_LABEL, DBUA_LABEL, "true"));
         availableOutputFiles.put(DBUE_FILE_LABEL, new DuplexesFile("Duplexes_Baseline_Unique_Inter.csv", "List of baseline unique inter-oligomer duplexes.", DBUE_FILE_LABEL, DBUE_LABEL, "true"));
+        availableOutputFiles.put(DDUA_FILE_LABEL, new DuplexesFile("Duplexes_Delta_Unique_Intra.csv", "List of delta unique intra-oligomer duplexes.", DDUA_FILE_LABEL, DDUA_LABEL, "true"));
+        availableOutputFiles.put(DDUE_FILE_LABEL, new DuplexesFile("Duplexes_Delta_Unique_Inter.csv", "List of delta unique inter-oligomer duplexes.", DDUE_FILE_LABEL, DDUE_LABEL, "true"));
+        
+        availableOutputFiles.put(LDAUA_FILE_LABEL, new DuplexesFile("Largest_Duplexes_All_Unique_Intra.csv", "List of the largest unique intra-oligomer duplexes.", LDAUA_FILE_LABEL, LDAUA_LABEL, "true"));
+        availableOutputFiles.put(LDAUE_FILE_LABEL, new DuplexesFile("Largest_Duplexes_All_Unique_Inter.csv", "List of all unique inter-oligomer duplexes.", LDAUE_FILE_LABEL, LDAUE_LABEL, "true"));
+        availableOutputFiles.put(LDBUA_FILE_LABEL, new DuplexesFile("Largest_Duplexes_Baseline_Unique_Intra.csv", "List of baseline unique intra-oligomer duplexes.", LDBUA_FILE_LABEL, LDBUA_LABEL, "true"));
+        availableOutputFiles.put(LDBUE_FILE_LABEL, new DuplexesFile("Largest_Duplexes_Baseline_Unique_Inter.csv", "List of baseline unique inter-oligomer duplexes.", LDBUE_FILE_LABEL, LDBUE_LABEL, "true"));
+        availableOutputFiles.put(LDDUA_FILE_LABEL, new DuplexesFile("Largest_Duplexes_Delta_Unique_Intra.csv", "List of delta unique intra-oligomer duplexes.", LDDUA_FILE_LABEL, LDDUA_LABEL, "true"));
+        availableOutputFiles.put(LDDUE_FILE_LABEL, new DuplexesFile("Largest_Duplexes_Delta_Unique_Inter.csv", "List of delta unique inter-oligomer duplexes.", LDDUE_FILE_LABEL, LDDUE_LABEL, "true"));
         
     }
     
@@ -844,11 +876,11 @@ public class DevPro {
         @Override
         public void printLine(PrintStream PS, String value){
             PS.println();
-            PS.print(label+" (indexO1 indexO1B1 indexO2 indexO2B1 base-pairs):");
+            PS.print(label+" (base-pairs indexO1 indexO1B1 indexO2 indexO2B1):");
             String[] splitStrings = value.split(System.lineSeparator());
             Map<Integer,Integer> sortedValues = new TreeMap<>();
             for(String v2: splitStrings){
-                if (!v2.equals("indexO1 indexO1B1 indexO2 indexO2B1 base-pairs")){
+                if (!v2.equals("base-pairs indexO1 indexO1B1 indexO2 indexO2B1")){
                 PS.print(" ("+v2+")");
                 }
             }
@@ -1002,26 +1034,25 @@ public class DevPro {
         public void printFile(PrintStream PS, Report report){
             String[] oligomerNames = report.network.getOligomerNames();
             String[] oligomerSequences = report.network.getOligomerSequences();
-            int[] iArray = new int[] {1,2,3,4};
             //PS.print("indexO1,indexO1B1,indexO2,indexO2B1,base-pairs");
             PS.print("Duplex size(base-pairs),Oligomer 1 name,Oligomer 1 sequence,Index of oligomer 1 first base,Oligomer 2 name,Oligomer 2 sequence,Index of oligomer 2 first base");
             String[] splitLines = report.requestedProperties.get(neededProperty).split(System.lineSeparator());
             for(String line: splitLines){
-                if (!line.equals("indexO1 indexO1B1 indexO2 indexO2B1 base-pairs")){
+                if (!line.equals("base-pairs indexO1 indexO1B1 indexO2 indexO2B1")){
                     String[] splitSpaces = line.split(" ");
-                    int O1 = Integer.parseInt(splitSpaces[0]);
-                    int O1B1 = Integer.parseInt(splitSpaces[1]);
-                    int O2 = Integer.parseInt(splitSpaces[2]);
-                    int O2B1 = Integer.parseInt(splitSpaces[3]);
-                    int length = Integer.parseInt(splitSpaces[4]);
+                    int length = Integer.parseInt(splitSpaces[0]);
+                    int O1 = Integer.parseInt(splitSpaces[1]);
+                    int O1B1 = Integer.parseInt(splitSpaces[2]);
+                    int O2 = Integer.parseInt(splitSpaces[3]);
+                    int O2B1 = Integer.parseInt(splitSpaces[4]);
                     
                     PS.println();
                     PS.print(length+",");
                     PS.print(oligomerNames[O1]+",");
-                    PS.print(oligomerSequences[O1].subSequence(O1B1,O1B1+length)+",");
+                    PS.print(oligomerSequences[O1].substring(O1B1,O1B1+length)+",");
                     PS.print(O1B1+",");
                     PS.print(oligomerNames[O2]+",");
-                    PS.print(oligomerSequences[O2].subSequence(O2B1,O2B1+length)+",");
+                    PS.print(oligomerSequences[O2].substring(O2B1,O2B1+length)+",");
                     PS.print(O2B1);
                 }
             }

@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
@@ -40,7 +39,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.IntStream;
 
 /**
@@ -55,6 +53,7 @@ public class Analyzer{
     public final static String INTRA_SB_LABEL = "intraSB";
     public final static String INTRA_SLC_LABEL = "intraSLC";
     public final static String SWX_LABEL = "scoringWeightX";
+    public final static String NUMBER_LARGEST_DUPLEXES_LABEL = "numberLargestDuplexes";
     
     // property labels
     public final static String BASELINE_N_LABEL = "baselineN";
@@ -86,13 +85,22 @@ public class Analyzer{
     final static String DAUE_LABEL = "Duplexes_All_Unique_Inter"; // List of all unique intra-oligomer duplexes.
     final static String DBUA_LABEL = "Duplexes_Baseline_Unique_Intra"; // List of baseline unique intra-oligomer duplexes.
     final static String DBUE_LABEL = "Duplexes_Baseline_Unique_Inter"; // List of baseline unique intra-oligomer duplexes.
+    final static String DDUA_LABEL = "Duplexes_Delta_Unique_Intra"; // List of baseline unique intra-oligomer duplexes.
+    final static String DDUE_LABEL = "Duplexes_Delta_Unique_Inter"; // List of baseline unique intra-oligomer duplexes.
     
+    final static String LDAUA_LABEL = "Largest_Duplexes_All_Unique_Intra"; // List of largest unique intra-oligomer duplexes.
+    final static String LDAUE_LABEL = "Largest_Duplexes_All_Unique_Inter"; // List of largest unique intra-oligomer duplexes.
+    final static String LDBUA_LABEL = "Largest_Duplexes_Baseline_Unique_Intra"; // List of largest baseline unique intra-oligomer duplexes.
+    final static String LDBUE_LABEL = "Largest_Duplexes_Baseline_Unique_Inter"; // List of largest baseline unique intra-oligomer duplexes.
+    final static String LDDUA_LABEL = "Largest_Duplexes_Delta_Unique_Intra"; // List of largest baseline unique intra-oligomer duplexes.
+    final static String LDDUE_LABEL = "Largest_Duplexes_Delta_Unique_Inter"; // List of largest baseline unique intra-oligomer duplexes.
     
     final static Map<String,IntegerParameter> availableParameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER); {
         availableParameters.put(INTER_SB_LABEL, new IntegerParameter("Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex.", INTER_SB_LABEL,0,Integer.MAX_VALUE));
         availableParameters.put(INTER_SLC_LABEL, new IntegerParameter("Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores.", INTER_SLC_LABEL,1,Integer.MAX_VALUE));
         availableParameters.put(INTRA_SB_LABEL, new IntegerParameter("Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex.", INTRA_SB_LABEL,0,Integer.MAX_VALUE));
         availableParameters.put(INTRA_SLC_LABEL, new IntegerParameter("Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores.", INTRA_SLC_LABEL,1,Integer.MAX_VALUE));
+        availableParameters.put(NUMBER_LARGEST_DUPLEXES_LABEL, new IntegerParameter("Maximum number of duplexes to include when listing largest-duplexes.", NUMBER_LARGEST_DUPLEXES_LABEL,1,Integer.MAX_VALUE));
         availableParameters.put(SWX_LABEL, new IntegerParameter("W will be calculated as O times this value plus N.", SWX_LABEL,0,Integer.MAX_VALUE));
     }
     
@@ -128,6 +136,15 @@ public class Analyzer{
         availableProperties.put(DAUE_LABEL, new Property("List of all inter-oligomer duplexes.", DAUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DAUE_LABEL}));
         availableProperties.put(DBUA_LABEL, new Property("List of baseline intra-oligomer duplexes.", DBUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DBUA_LABEL}));
         availableProperties.put(DBUE_LABEL, new Property("List of baseline inter-oligomer duplexes.", DBUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DBUE_LABEL}));
+        availableProperties.put(DDUA_LABEL, new Property("List of unnecessary intra-oligomer duplexes.", DDUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DDUA_LABEL}));
+        availableProperties.put(DDUE_LABEL, new Property("List of unnecessary inter-oligomer duplexes.", DDUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DDUE_LABEL}));
+    
+        availableProperties.put(LDAUA_LABEL, new Property("List of the largest intra-oligomer duplexes.", LDAUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDAUA_LABEL}));
+        availableProperties.put(LDAUE_LABEL, new Property("List of the largest inter-oligomer duplexes.", LDAUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDAUE_LABEL}));
+        availableProperties.put(LDBUA_LABEL, new Property("List of the largest baseline intra-oligomer duplexes.", LDBUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDBUA_LABEL}));
+        availableProperties.put(LDBUE_LABEL, new Property("List of the largest baseline inter-oligomer duplexes.", LDBUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDBUE_LABEL}));
+        availableProperties.put(LDDUA_LABEL, new Property("List of the largest unnecessary intra-oligomer duplexes.", LDDUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDDUA_LABEL}));
+        availableProperties.put(LDDUE_LABEL, new Property("List of the largest unnecessary inter-oligomer duplexes.", LDDUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDDUE_LABEL}));        
     }
 
     final int MAXTHREADS;
@@ -415,8 +432,61 @@ public class Analyzer{
         //DBUE
         Duplexes dbue = null;
         if (neededProperties.contains(DBUE_LABEL)){
-            dbue = as.getBaselineInterDuplexes(r.network,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
+            dbue = as.getBaselineInterDuplexes(r.network,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
             calculatedPropertyValues.put(DBUE_LABEL, dbue.toString());
+        }
+        
+        //DDUA
+        Duplexes ddua = null;
+        if (neededProperties.contains(DDUA_LABEL)){
+            ddua = as.getDeltaIntraDuplexes(r.network,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
+            calculatedPropertyValues.put(DDUA_LABEL, ddua.toString());
+        }
+        
+        //DDUE
+        Duplexes ddue = null;
+        if (neededProperties.contains(DDUE_LABEL)){
+            ddue = as.getDeltaInterDuplexes(r.network,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
+            calculatedPropertyValues.put(DDUE_LABEL, ddue.toString());
+        }
+        
+        //LDAUA
+        LargestDuplexes ldaua = null;
+        if (neededProperties.contains(LDAUA_LABEL)){
+            ldaua = as.getLargestIntraDuplexes(r.network, Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
+            calculatedPropertyValues.put(LDAUA_LABEL, ldaua.toString());
+        }
+        //LDAUE
+        LargestDuplexes ldaue = null;
+        if (neededProperties.contains(LDAUE_LABEL)){
+            ldaue = as.getLargestInterDuplexes(r.network, Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
+            calculatedPropertyValues.put(LDAUE_LABEL, ldaue.toString());
+        }
+        
+        //LDBUA
+        LargestDuplexes ldbua = null;
+        if (neededProperties.contains(LDBUA_LABEL)){
+            ldbua = as.getLargestBaselineIntraDuplexes(r.network, Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
+            calculatedPropertyValues.put(LDBUA_LABEL, ldbua.toString());
+        }
+        //LDBUE
+        LargestDuplexes ldbue = null;
+        if (neededProperties.contains(LDBUE_LABEL)){
+            ldbue = as.getLargestBaselineInterDuplexes(r.network, Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
+            calculatedPropertyValues.put(LDBUE_LABEL, ldbue.toString());
+        }
+        
+        //LDDUA
+        LargestDuplexes lddua = null;
+        if (neededProperties.contains(LDDUA_LABEL)){
+            lddua = as.getLargestDeltaIntraDuplexes(r.network, Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
+            calculatedPropertyValues.put(LDDUA_LABEL, lddua.toString());
+        }
+        //LDBUE
+        LargestDuplexes lddue = null;
+        if (neededProperties.contains(LDDUE_LABEL)){
+            lddue = as.getLargestDeltaInterDuplexes(r.network, Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
+            calculatedPropertyValues.put(LDDUE_LABEL, lddue.toString());
         }
         
         Map<String,String> requestedPropertyValues = new HashMap<>();
@@ -787,6 +857,168 @@ public class Analyzer{
             return duplexes;
         }
         
+        Duplexes getDeltaInterDuplexes(IDomainBasedEncodedNetwork network, int interSLC){
+            Combination[] combos = getCombos(AnalysisSupervisor.this, network);
+            
+            Map<String,int[]> efd = encode(network.getFixedDomainNames(), network.getFixedDomainSequences()); // encoded fixed domains
+            Map<String,int[]> uevd = getUniquelyEncodedDomains(network.getVariableDomainNames(), network.getVariableDomainSequences()); // uniequely encoded initial variable domains
+            Map<String,int[]> ueo = assembleEncodedOligomers(efd, uevd, network.getOligomerNames(), network.getOligomerDomains());
+            int[][] baselineEncodedOligomers = new int[ueo.size()][];
+            for(Map.Entry<String,Integer> entry: network.getOligomerIndices().entrySet()){
+                baselineEncodedOligomers[entry.getValue()] = ueo.get(entry.getKey());
+            }
+            
+            int[][] encodedOligomers = network.getOligomerSequencesEncoded();
+            
+            int threadsPerNetwork = maxThreadsPerNetwork;
+            int comboPerThread = (combos.length+threadsPerNetwork-1)/threadsPerNetwork;
+
+            ArrayList<Integer> lastIndexes = new ArrayList<>();
+            for(int i=0; (i < threadsPerNetwork ) && (i*comboPerThread < combos.length) ; i++){
+                int firstIndex = i*comboPerThread;
+                Integer lastIndex = Math.min(firstIndex+comboPerThread, combos.length);
+                lastIndexes.add(lastIndex);
+            }
+            Integer[] lastIndexesArray = lastIndexes.toArray(x->new Integer[x]);
+            int[] indexList = IntStream.range(1,lastIndexesArray.length).toArray();
+
+            // start calculation of new partial
+            Future<Duplexes>[] futures = new Future[lastIndexesArray.length];
+            futures[0] = es.submit(new DeltaInterDuplexesRequest(baselineEncodedOligomers, encodedOligomers, AnalysisSupervisor.this, combos, 0, lastIndexesArray[0], interSLC));
+            for(int i:indexList){
+                int firstIndex = lastIndexesArray[i-1];
+                int lastIndex = lastIndexesArray[i];
+                futures[i] = es.submit(new DeltaInterDuplexesRequest(baselineEncodedOligomers, encodedOligomers, AnalysisSupervisor.this, combos, firstIndex, lastIndex, interSLC));
+            }
+
+            // Collect duplexes.
+            Duplexes ret = new Duplexes();
+            for (int i = 0; i < lastIndexesArray.length; i++ ){
+                try{
+                    Duplexes duplexes = futures[i].get();
+                    ret = new Duplexes(ret,duplexes);
+                } catch (Exception e) {System.err.println(e.getMessage());}
+            }
+            
+            return ret;
+        }
+        
+        Duplexes getDeltaIntraDuplexes(IDomainBasedEncodedNetwork network, int intraSLC){
+            Map<String,int[]> efd = encode(network.getFixedDomainNames(), network.getFixedDomainSequences()); // encoded fixed domains
+            Map<String,int[]> uevd = getUniquelyEncodedDomains(network.getVariableDomainNames(), network.getVariableDomainSequences()); // uniequely encoded initial variable domains
+            Map<String,int[]> ueo = assembleEncodedOligomers(efd, uevd, network.getOligomerNames(), network.getOligomerDomains());
+            int[][] baselineEncodedOligomers = new int[ueo.size()][];
+            for(Map.Entry<String,Integer> entry: network.getOligomerIndices().entrySet()){
+                baselineEncodedOligomers[entry.getValue()] = ueo.get(entry.getKey());
+            }
+            
+            int[][] encodedOligomers = network.getOligomerSequencesEncoded();
+            int maxLength = Arrays.stream(encodedOligomers).mapToInt(oligomer -> oligomer.length).max().getAsInt();
+            //int[] lengthCounts = new int[maxLength+1];
+            Duplexes duplexes = new Duplexes();
+            //Map<Integer,Integer> lengthCounts = new HashMap<>();
+            //for each alignment
+
+            int S1length;
+            int b1Max;
+            int baselineStructureLength;
+            int encodedStructureLength;
+            int b1;
+            int lastB1=0;
+            int b2;
+            int lastB2=0;
+            int length;
+            // for each oligomer
+            for(int i : IntStream.range(0,encodedOligomers.length).toArray()){
+                S1length = encodedOligomers[i].length;
+                b1Max = S1length-1;
+
+                for (int j : IntStream.range(0,S1length).toArray()){
+                    baselineStructureLength = 0;
+                    encodedStructureLength = 0;
+                    b1 = (S1length - (j)/2) % S1length; // index of base on the top strand;
+                    b2 = (b1Max -((j+1)/2)) ;// index of base on the bottom strand;
+
+                    length = S1length/2;
+                    if(S1length % 2 == 0 && j%2 == 1)
+                    {
+                        length = length -1;
+                    }
+
+//                    if(encodedOligomers[i][b1] + encodedOligomers[i][b2] ==0){
+//                        encodedStructureLength = 1;
+//                    }
+                    
+//                    if(baselineEncodedOligomers[i][b1] + baselineEncodedOligomers[i][b2] ==0){
+//                        baselineStructureLength = 1;
+//                    }
+
+                    //For every base-pair in the reference position
+                    for ( int k =0; k < length; k++)
+                    {
+                        //compare current base-pair. 
+                        if (encodedOligomers[i][b1]+encodedOligomers[i][b2]==0){
+                            encodedStructureLength++;
+                            if (baselineEncodedOligomers[i][b1]+baselineEncodedOligomers[i][b2]==0){
+                                baselineStructureLength++;
+                            }
+                        } else {
+                            if ( encodedStructureLength >= intraSLC){
+                                if(encodedStructureLength > baselineStructureLength){
+                                    duplexes.addDuplex(i,lastB1-encodedStructureLength+1, i, lastB2,encodedStructureLength);
+                                }
+                            }
+                            encodedStructureLength = 0;
+                            baselineStructureLength = 0;
+                        }
+                        
+                        //itterate after.
+                        if( b1 == b1Max){
+                            if (encodedStructureLength >= intraSLC){
+                                if(encodedStructureLength > baselineStructureLength){
+                                    duplexes.addDuplex(i,b1-encodedStructureLength+1, i, b2,encodedStructureLength);
+                                }
+                            }
+                            lastB1 = b1;
+                            b1 = 0;
+                            encodedStructureLength = 0;
+                            baselineStructureLength = 0;
+                        } else {
+                            lastB1 = b1;
+                            b1++;
+                        }
+
+                        if( b2 == 0){
+                                if (encodedStructureLength >= intraSLC){
+                                    if(encodedStructureLength > baselineStructureLength){
+                                        duplexes.addDuplex(i,b1-encodedStructureLength+1, i, b2,encodedStructureLength);
+                                    }
+                                }
+                                lastB2 = b2;
+                                b2 = b1Max;
+                                encodedStructureLength = 0;
+                                baselineStructureLength = 0;
+                        } else {
+                            lastB2 = b2;
+                            b2--;
+                        }
+                    }
+
+                    //if the loop ended with an active structure, record it.
+                    if (encodedStructureLength >= intraSLC)
+                    {
+                        if (encodedStructureLength >= intraSLC){
+                            if(encodedStructureLength > baselineStructureLength){
+                                duplexes.addDuplex(i,lastB1-encodedStructureLength+1, i, lastB2,encodedStructureLength);
+                            }
+                        }
+                    };
+                }
+            }
+            
+            return duplexes;
+        }
+        
         Map<Integer,Integer> getInterDuplexCount(IDomainBasedEncodedNetwork network, int interSLC){
             Combination[] combos = getCombos(AnalysisSupervisor.this, network);
             int[][] encodedOligomers = network.getOligomerSequencesEncoded();
@@ -986,11 +1218,146 @@ public class Analyzer{
             int b1Max;
             int structureLength;
             int b1;
-            int b1Last;
+            int lastB1=0;
             int b2;
-            int b2Last;
+            int lastB2=0;
             int length;
-            Integer singleCount = 1;
+            // for each oligomer
+            for(int i : IntStream.range(0,encodedOligomers.length).toArray()){
+                S1 = encodedOligomers[i];
+                S1length = S1.length;
+                b1Max = S1length-1;
+
+                for (int j : IntStream.range(0,S1length).toArray()){
+                    structureLength = 0;
+                    b1 = (S1length - (j)/2) % S1length; // index of base on the top strand;
+                    b2 = (b1Max -((j+1)/2)) ;// index of base on the bottom strand;
+
+                    length = S1length/2;
+                    if(S1length % 2 == 0 && j%2 == 1)
+                    {
+                        length = length -1;
+                    }
+                    
+                    for ( int k =0; k < length; k++)
+                    {
+                        //compare current base-pair. 
+                        if (encodedOligomers[i][b1]+encodedOligomers[i][b2]==0){
+                            structureLength++;
+                        } else {
+                            if ( structureLength >= intraSLC){
+                                duplexes.addDuplex(i,lastB1-structureLength+1, i, lastB2,structureLength);
+                            }
+                            structureLength = 0;
+                        }
+                        
+                        //itterate after.
+                        if( b1 == b1Max){
+                            if (structureLength >= intraSLC){
+                                    duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
+                            }
+                            lastB1 = b1;
+                            b1 = 0;
+                            structureLength = 0;
+                        } else {
+                            lastB1 = b1;
+                            b1++;
+                        }
+
+                        if( b2 == 0){ 
+                            if (structureLength >= intraSLC){
+                                duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
+                            }
+                            lastB2 = b2;
+                            b2 = b1Max;
+                            structureLength = 0;
+                        } else {
+                            lastB2 = b2;
+                            b2--;
+                        }
+                    }
+
+                    //if the loop ended with an active structure, record it.
+                    if (structureLength >= intraSLC)
+                    {
+                        if (structureLength >= intraSLC){
+                            duplexes.addDuplex(i,lastB1-structureLength+1, i, lastB2,structureLength);
+                        }
+                    };
+                }
+            }
+            
+            return duplexes;
+        }
+        
+        LargestDuplexes getLargestBaselineInterDuplexes(IDomainBasedEncodedNetwork network, int interSLC, int numberDuplexes){
+            Combination[] combos = getCombos(AnalysisSupervisor.this, network);
+            Map<String,int[]> efd = encode(network.getFixedDomainNames(), network.getFixedDomainSequences()); // encoded fixed domains
+            Map<String,int[]> uevd = getUniquelyEncodedDomains(network.getVariableDomainNames(), network.getVariableDomainSequences()); // uniequely encoded initial variable domains
+            Map<String,int[]> ueo = assembleEncodedOligomers(efd, uevd, network.getOligomerNames(), network.getOligomerDomains());
+            int[][] baselineEncodedOligomers = new int[ueo.size()][];
+            for(Map.Entry<String,Integer> entry: network.getOligomerIndices().entrySet()){
+                baselineEncodedOligomers[entry.getValue()] = ueo.get(entry.getKey());
+            }
+            
+            int threadsPerNetwork = maxThreadsPerNetwork;
+            int comboPerThread = (combos.length+threadsPerNetwork-1)/threadsPerNetwork;
+
+            ArrayList<Integer> lastIndexes = new ArrayList<>();
+            for(int i=0; (i < threadsPerNetwork ) && (i*comboPerThread < combos.length) ; i++){
+                int firstIndex = i*comboPerThread;
+                Integer lastIndex = Math.min(firstIndex+comboPerThread, combos.length);
+                lastIndexes.add(lastIndex);
+            }
+            Integer[] lastIndexesArray = lastIndexes.toArray(x->new Integer[x]);
+            int[] indexList = IntStream.range(1,lastIndexesArray.length).toArray();
+
+            // start calculation of new partial
+            Future<LargestDuplexes>[] futures = new Future[lastIndexesArray.length];
+            futures[0] = es.submit(new LargestInterDuplexesRequest(baselineEncodedOligomers, AnalysisSupervisor.this, combos, 0, lastIndexesArray[0], interSLC, numberDuplexes));
+            for(int i:indexList){
+                int firstIndex = lastIndexesArray[i-1];
+                int lastIndex = lastIndexesArray[i];
+                futures[i] = es.submit(new LargestInterDuplexesRequest(baselineEncodedOligomers, AnalysisSupervisor.this, combos, firstIndex, lastIndex, interSLC, numberDuplexes));
+            }
+
+            // Collect duplexes.
+            LargestDuplexes ret = new LargestDuplexes(numberDuplexes);
+            for (int i = 0; i < lastIndexesArray.length; i++ ){
+                try{
+                    LargestDuplexes duplexes = futures[i].get();
+                    ret = new LargestDuplexes(ret,duplexes);
+                } catch (Exception e) {System.err.println(e.getMessage());}
+            }
+            
+            return ret;
+        }
+        
+        LargestDuplexes getLargestBaselineIntraDuplexes(IDomainBasedEncodedNetwork network, int intraSLC, int numberDuplexes){
+            Map<String,int[]> efd = encode(network.getFixedDomainNames(), network.getFixedDomainSequences()); // encoded fixed domains
+            Map<String,int[]> uevd = getUniquelyEncodedDomains(network.getVariableDomainNames(), network.getVariableDomainSequences()); // uniequely encoded initial variable domains
+            Map<String,int[]> ueo = assembleEncodedOligomers(efd, uevd, network.getOligomerNames(), network.getOligomerDomains());
+            int[][] baselineEncodedOligomers = new int[ueo.size()][];
+            for(Map.Entry<String,Integer> entry: network.getOligomerIndices().entrySet()){
+                baselineEncodedOligomers[entry.getValue()] = ueo.get(entry.getKey());
+            }
+            int[][] encodedOligomers = baselineEncodedOligomers;
+            
+            //int[] lengthCounts = new int[maxLength+1];
+            LargestDuplexes duplexes = new LargestDuplexes(numberDuplexes);
+            //Map<Integer,Integer> lengthCounts = new HashMap<>();
+            //for each alignment
+
+            int[] encodedOligomer;
+            int[] S1;
+            int S1length;
+            int b1Max;
+            int structureLength;
+            int b1;
+            int lastB1 = 0;
+            int b2;
+            int lastB2 = 0;
+            int length;
             // for each oligomer
             for(int i : IntStream.range(0,encodedOligomers.length).toArray()){
                 encodedOligomer = encodedOligomers[i];
@@ -1019,33 +1386,33 @@ public class Analyzer{
                     {
                         if( b1 == b1Max) 
                         {
-                            if (structureLength >= intraSLC)
-                            {
-                                duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
-                                //lengthCounts[structureLength]++;
-                                //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
-                            }
-                            b1Last = b1;
-                            b1 = 0;
-                            structureLength = 0;
+                                if (structureLength >= intraSLC)
+                                {
+                                    duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
+                                    //lengthCounts[structureLength]++;
+                                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                                }
+                                lastB1=b1;
+                                b1 = 0;
+                                structureLength = 0;
                         } else {
-                            b1Last = b1;
+                            lastB1=b1;
                             b1++;
                         }
 
                         if( b2 == 0) 
                         {
-                            if (structureLength >= intraSLC)
-                            {
-                                duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
-                                //lengthCounts[structureLength]++;
-                                //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
-                            }
-                            b2Last = b2;
-                            b2 = b1Max;
-                            structureLength = 0;
+                                if (structureLength >= intraSLC)
+                                {
+                                    duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
+                                    //lengthCounts[structureLength]++;
+                                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                                }
+                                lastB2 = b2;
+                                b2 = b1Max;
+                                structureLength = 0;
                         } else {
-                            b2Last = b2;
+                            lastB2=b2;
                             b2--;
                         }
 
@@ -1057,7 +1424,7 @@ public class Analyzer{
                         {
                             if (structureLength >= intraSLC)
                             {
-                                duplexes.addDuplex(i,b1Last-structureLength+1, i, b2Last,structureLength);
+                                duplexes.addDuplex(i,lastB1-structureLength+1, i, lastB2,structureLength);
                                 //lengthCounts[structureLength]++;
                                 //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
                             }
@@ -1068,7 +1435,7 @@ public class Analyzer{
                     //if the loop ended with an active structure, record it.
                     if (structureLength >= intraSLC)
                     {
-                        duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
+                        duplexes.addDuplex(i,lastB1-structureLength+1, i, lastB2,structureLength);
                         //lengthCounts[structureLength]++;
                         //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
                     };
@@ -1145,9 +1512,10 @@ public class Analyzer{
             int baselineStructureLength;
             int encodedStructureLength;
             int b1;
+            int lastB1=0;
             int b2;
+            int lastB2=0;
             int length;
-            Integer singleCount = 1;
             // for each oligomer
             for(int i : IntStream.range(0,encodedOligomers.length).toArray()){
                 S1length = encodedOligomers[i].length;
@@ -1165,13 +1533,13 @@ public class Analyzer{
                         length = length -1;
                     }
 
-                    if(encodedOligomers[i][b1] + encodedOligomers[i][b2] ==0){
-                        encodedStructureLength = 1;
-                    }
+//                    if(encodedOligomers[i][b1] + encodedOligomers[i][b2] ==0){
+//                        encodedStructureLength = 1;
+//                    }
                     
-                    if(baselineEncodedOligomers[i][b1] + baselineEncodedOligomers[i][b2] ==0){
-                        baselineStructureLength = 1;
-                    }
+//                    if(baselineEncodedOligomers[i][b1] + baselineEncodedOligomers[i][b2] ==0){
+//                        baselineStructureLength = 1;
+//                    }
 
                     //For every base-pair in the reference position
                     for ( int k =0; k < length; k++)
@@ -1185,7 +1553,7 @@ public class Analyzer{
                         } else {
                             if ( encodedStructureLength >= intraSLC){
                                 if(encodedStructureLength > baselineStructureLength){
-                                    duplexes.addDuplex(i,b1-encodedStructureLength+1, i, b2,encodedStructureLength);
+                                    duplexes.addDuplex(i,lastB1-encodedStructureLength+1, i, lastB2,encodedStructureLength);
                                 }
                             }
                             encodedStructureLength = 0;
@@ -1199,10 +1567,14 @@ public class Analyzer{
                                     duplexes.addDuplex(i,b1-encodedStructureLength+1, i, b2,encodedStructureLength);
                                 }
                             }
+                            lastB1 = b1;
                             b1 = 0;
                             encodedStructureLength = 0;
                             baselineStructureLength = 0;
-                        } else {b1++;}
+                        } else {
+                            lastB1 = b1;
+                            b1++;
+                        }
 
                         if( b2 == 0){
                                 if (encodedStructureLength >= intraSLC){
@@ -1210,10 +1582,14 @@ public class Analyzer{
                                         duplexes.addDuplex(i,b1-encodedStructureLength+1, i, b2,encodedStructureLength);
                                     }
                                 }
+                                lastB2 = b2;
                                 b2 = b1Max;
                                 encodedStructureLength = 0;
                                 baselineStructureLength = 0;
-                        } else {b2--;}
+                        } else {
+                            lastB2 = b2;
+                            b2--;
+                        }
                     }
 
                     //if the loop ended with an active structure, record it.
@@ -1221,7 +1597,7 @@ public class Analyzer{
                     {
                         if (encodedStructureLength >= intraSLC){
                             if(encodedStructureLength > baselineStructureLength){
-                                duplexes.addDuplex(i,b1-1-encodedStructureLength+1, i, b2+1,encodedStructureLength);
+                                duplexes.addDuplex(i,lastB1-encodedStructureLength+1, i, lastB2,encodedStructureLength);
                             }
                         }
                     };
@@ -1282,9 +1658,10 @@ public class Analyzer{
             int b1Max;
             int structureLength;
             int b1;
+            int lastB1 = 0;
             int b2;
+            int lastB2 = 0;
             int length;
-            Integer singleCount = 1;
             // for each oligomer
             for(int i : IntStream.range(0,encodedOligomers.length).toArray()){
                 encodedOligomer = encodedOligomers[i];
@@ -1319,9 +1696,13 @@ public class Analyzer{
                                     //lengthCounts[structureLength]++;
                                     //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
                                 }
+                                lastB1=b1;
                                 b1 = 0;
                                 structureLength = 0;
-                        } else {b1++;}
+                        } else {
+                            lastB1=b1;
+                            b1++;
+                        }
 
                         if( b2 == 0) 
                         {
@@ -1331,9 +1712,13 @@ public class Analyzer{
                                     //lengthCounts[structureLength]++;
                                     //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
                                 }
+                                lastB2 = b2;
                                 b2 = b1Max;
                                 structureLength = 0;
-                        } else {b2--;}
+                        } else {
+                            lastB2=b2;
+                            b2--;
+                        }
 
                         if(S1[b1]+S1[b2]==0)
                         {
@@ -1343,7 +1728,7 @@ public class Analyzer{
                         {
                             if (structureLength >= intraSLC)
                             {
-                                duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
+                                duplexes.addDuplex(i,lastB1-structureLength+1, i, lastB2,structureLength);
                                 //lengthCounts[structureLength]++;
                                 //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
                             }
@@ -1384,24 +1769,6 @@ public class Analyzer{
                 retScore = retScore.add(lengthScore.multiply(BigInteger.valueOf(counts)));
             }
             return retScore;
-        }
-        
-        static private class Worker implements Runnable{
-            LinkedBlockingQueue<Runnable> queue;
-            Worker(LinkedBlockingQueue<Runnable> queue){
-                this.queue = queue;
-            }
-            public void run(){
-                while (!Thread.currentThread().isInterrupted()){
-                    try{
-                        Runnable r = queue.take();
-                        synchronized (r) {
-                            r.run();
-                            r.notify();
-                        }
-                    } catch (Exception e) {System.err.println(e);}
-                }
-            }
         }
         
         static private class CountInterDuplexRequest implements Callable<int[]>{
@@ -1468,6 +1835,92 @@ public class Analyzer{
             }
         }
         
+        static private class DeltaInterDuplexesRequest implements Callable<Duplexes>{
+            final Combination[] combinations;
+            final int firstIndex;
+            final int lastIndex;
+            final int[][] baselineEncodedOligomers;
+            final int[][] encodedOligomers;
+            final AnalysisSupervisor as;
+            final int interSLC;
+            //Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
+            
+            DeltaInterDuplexesRequest(int[][] baselineEncodedOligomers, int[][] encodedOligomers, AnalysisSupervisor analysisSupervisor, Combination[] combinations, int firstIndex, int lastIndex, int interSLC){
+                this.baselineEncodedOligomers = baselineEncodedOligomers;
+                this.combinations = combinations;
+                this.firstIndex = firstIndex;
+                this.lastIndex = lastIndex;
+                this.encodedOligomers = encodedOligomers;
+                this.as = analysisSupervisor;
+                this.interSLC = interSLC;
+            }
+            
+            public Duplexes call(){
+                int maxLength =0;
+                for(int i =firstIndex; i < lastIndex; i++){
+                    if (encodedOligomers[combinations[i].indexO1].length > maxLength){
+                        maxLength = encodedOligomers[combinations[i].indexO1].length;
+                    }
+                }
+                //int[] lengthCounts = new int[maxLength+1];
+                Duplexes duplexes = new Duplexes();
+
+                int indexS1;
+                int indexS2;
+                int baselineComparison;
+                int encodedComparison;
+                int baselineStructureLength;
+                int encodedStructureLength;
+                BasePair[][] allBP = null;
+                BasePair lastBP = null;
+                Combination currentCombo;
+
+                // for each oligomer combination
+                for(int i =firstIndex; i < lastIndex; i++){
+                    currentCombo = combinations[i];
+                    indexS1 = currentCombo.indexO1;
+                    indexS2 = currentCombo.indexO2;
+                    allBP = currentCombo.allBP;
+                    
+                    // for each stretch of base pairs.
+                    for (BasePair[] bps : allBP){
+                        baselineStructureLength = 0;
+                        encodedStructureLength = 0;
+                        // for each base-pair in the stretch.
+                        for(BasePair bp : bps){
+                            baselineComparison = baselineEncodedOligomers[indexS1][bp.index1]+baselineEncodedOligomers[indexS2][bp.index2];
+                            encodedComparison = encodedOligomers[indexS1][bp.index1]+encodedOligomers[indexS2][bp.index2];
+                            if(encodedComparison ==0){
+                                encodedStructureLength++;
+                                if(baselineComparison ==0){
+                                    baselineStructureLength++;
+                                } else {
+                                    baselineStructureLength = 0;
+                                }
+                            } else {
+                                if (encodedStructureLength >= interSLC){
+                                    if (encodedStructureLength != baselineStructureLength){
+                                        duplexes.addDuplex(indexS1,lastBP.index1-encodedStructureLength+1, indexS2, lastBP.index2,encodedStructureLength);
+                                    }
+                                    //lengthCounts[structureLength]++;
+                                }
+                                encodedStructureLength = 0;
+                                baselineStructureLength = 0;
+                            }
+                            lastBP = bp;
+                        }
+                        if (encodedStructureLength >= interSLC){
+                            if (encodedStructureLength != baselineStructureLength){
+                                duplexes.addDuplex(indexS1,lastBP.index1-encodedStructureLength+1, indexS2, lastBP.index2,encodedStructureLength);
+                            }
+                            //lengthCounts[structureLength]++;
+                        }
+                    }
+                }
+                return duplexes;
+            }
+        }
+        
         static private class InterDuplexesRequest implements Callable<Duplexes>{
             final Combination[] combinations;
             final int firstIndex;
@@ -1499,7 +1952,7 @@ public class Analyzer{
                 int indexS1;
                 int indexS2;
                 int structureLength;
-                BasePair[][] allBP = new BasePair[0][];
+                BasePair[][] allBP = null;
                 BasePair lastBP = null;
                 Combination currentCombo;
 
@@ -1528,74 +1981,6 @@ public class Analyzer{
                         }
                         if (structureLength >= interSLC){
                             duplexes.addDuplex(indexS1,lastBP.index1-structureLength+1, indexS2, lastBP.index2,structureLength);
-                            //lengthCounts[structureLength]++;
-                        }
-                    }
-                }
-                return duplexes;
-            }
-        }
-        
-        static private class LargestInterDuplexesRequest implements Callable<LargestDuplexes>{
-            final Combination[] combinations;
-            final int firstIndex;
-            final int lastIndex;
-            final int[][] encodedOligomers;
-            final AnalysisSupervisor as;
-            final int interSLC;
-            final int numberDuplexes;
-            //Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
-            
-            LargestInterDuplexesRequest(int[][] encodedOligomers, AnalysisSupervisor analysisSupervisor, Combination[] combinations, int firstIndex, int lastIndex, int interSLC, int numberDuplexes){
-                this.combinations = combinations;
-                this.firstIndex = firstIndex;
-                this.lastIndex = lastIndex;
-                this.encodedOligomers = encodedOligomers;
-                this.as = analysisSupervisor;
-                this.interSLC = interSLC;
-                this.numberDuplexes = numberDuplexes;
-            }
-            
-            public LargestDuplexes call(){
-                int maxLength =0;
-                for(int i =firstIndex; i < lastIndex; i++){
-                    if (encodedOligomers[combinations[i].indexO1].length > maxLength){
-                        maxLength = encodedOligomers[combinations[i].indexO1].length;
-                    }
-                }
-                //int[] lengthCounts = new int[maxLength+1];
-                LargestDuplexes duplexes = new LargestDuplexes(numberDuplexes);
-
-                int indexS1;
-                int indexS2;
-                int structureLength;
-                BasePair[][] allBP = new BasePair[0][];
-                Combination currentCombo;
-
-                // for each oligomer combination
-                for(int i =firstIndex; i < lastIndex; i++){
-                    currentCombo = combinations[i];
-                    indexS1 = currentCombo.indexO1;
-                    indexS2 = currentCombo.indexO2;
-                    allBP = currentCombo.allBP;
-                    
-                    // for each stretch of base pairs.
-                    for (BasePair[] bps : allBP){
-                        structureLength=0;
-                        // for each base-pair in the stretch.
-                        for(BasePair bp : bps){
-                            if(encodedOligomers[indexS1][bp.index1]+encodedOligomers[indexS2][bp.index2] == 0){
-                                structureLength++;
-                            } else {
-                                if (structureLength >= interSLC){
-                                    duplexes.addDuplex(indexS1,bp.index1-structureLength+1, indexS2, bp.index2,structureLength);
-                                    //lengthCounts[structureLength]++;
-                                }
-                                structureLength = 0;
-                            }
-                        }
-                        if (structureLength >= interSLC){
-                            duplexes.addDuplex(indexS1,bps[bps.length-1].index1-structureLength+1, indexS2, bps[bps.length-1].index2,structureLength);
                             //lengthCounts[structureLength]++;
                         }
                     }
@@ -1643,6 +2028,7 @@ public class Analyzer{
                 int baselineStructureLength;
                 int encodedStructureLength;
                 BasePair[][] allBP = null;
+                BasePair lastBP = null;
                 Combination currentCombo;
 
                 // for each oligomer combination
@@ -1670,18 +2056,83 @@ public class Analyzer{
                             } else {
                                 if (encodedStructureLength >= interSLC){
                                     if (encodedStructureLength != baselineStructureLength){
-                                        duplexes.addDuplex(indexS1,bp.index1-encodedStructureLength+1, indexS2, bp.index2,encodedStructureLength);
+                                        duplexes.addDuplex(indexS1,lastBP.index1-encodedStructureLength+1, indexS2, lastBP.index2,encodedStructureLength);
                                     }
                                     //lengthCounts[structureLength]++;
                                 }
                                 encodedStructureLength = 0;
                                 baselineStructureLength = 0;
                             }
+                            lastBP = bp;
                         }
                         if (encodedStructureLength >= interSLC){
                             if (encodedStructureLength != baselineStructureLength){
-                                duplexes.addDuplex(indexS1,bps[bps.length-1].index1-encodedStructureLength+1, indexS2, bps[bps.length-1].index2,encodedStructureLength);
+                                duplexes.addDuplex(indexS1,lastBP.index1-encodedStructureLength+1, indexS2, lastBP.index2,encodedStructureLength);
                             }
+                            //lengthCounts[structureLength]++;
+                        }
+                    }
+                }
+                return duplexes;
+            }
+        }
+        
+        static private class LargestInterDuplexesRequest implements Callable<LargestDuplexes>{
+            final Combination[] combinations;
+            final int firstIndex;
+            final int lastIndex;
+            final int[][] encodedOligomers;
+            final AnalysisSupervisor as;
+            final int interSLC;
+            final int numberDuplexes;
+            //Map<Integer,AtomicInteger> lengthCounts = new HashMap<>();
+            
+            LargestInterDuplexesRequest(int[][] encodedOligomers, AnalysisSupervisor analysisSupervisor, Combination[] combinations, int firstIndex, int lastIndex, int interSLC, int numberDuplexes){
+                this.combinations = combinations;
+                this.firstIndex = firstIndex;
+                this.lastIndex = lastIndex;
+                this.encodedOligomers = encodedOligomers;
+                this.as = analysisSupervisor;
+                this.interSLC = interSLC;
+                this.numberDuplexes = numberDuplexes;
+            }
+            
+            public LargestDuplexes call(){
+                //int[] lengthCounts = new int[maxLength+1];
+                LargestDuplexes duplexes = new LargestDuplexes(numberDuplexes);
+
+                int indexS1;
+                int indexS2;
+                int structureLength;
+                BasePair[][] allBP = null;
+                BasePair lastBP = null;
+                Combination currentCombo;
+
+                // for each oligomer combination
+                for(int i =firstIndex; i < lastIndex; i++){
+                    currentCombo = combinations[i];
+                    indexS1 = currentCombo.indexO1;
+                    indexS2 = currentCombo.indexO2;
+                    allBP = currentCombo.allBP;
+                    
+                    // for each stretch of base pairs.
+                    for (BasePair[] bps : allBP){
+                        structureLength=0;
+                        // for each base-pair in the stretch.
+                        for(BasePair bp : bps){
+                            if(encodedOligomers[indexS1][bp.index1]+encodedOligomers[indexS2][bp.index2] == 0){
+                                structureLength++;
+                            } else {
+                                if (structureLength >= interSLC){
+                                    duplexes.addDuplex(indexS1,lastBP.index1-structureLength+1, indexS2, lastBP.index2,structureLength);
+                                    //lengthCounts[structureLength]++;
+                                }
+                                structureLength = 0;
+                            }
+                            lastBP = bp;
+                        }
+                        if (structureLength >= interSLC){
+                            duplexes.addDuplex(indexS1,lastBP.index1-structureLength+1, indexS2, lastBP.index2,structureLength);
                             //lengthCounts[structureLength]++;
                         }
                     }
@@ -2038,22 +2489,21 @@ public class Analyzer{
         @Override
         public String toString(){
             StringBuilder valueString = new StringBuilder();
-            valueString.append("indexO1 indexO1B1 indexO2 indexO2B1 base-pairs");
+            valueString.append("base-pairs indexO1 indexO1B1 indexO2 indexO2B1");
             
             Iterator<Integer> i0 = lengths.iterator();
             Iterator<Integer> i1 = indexesO1.iterator();
-            Iterator<Integer> i2 = indexesO2.iterator();
-            Iterator<Integer> i3 = indexesO1B1.iterator();
+            Iterator<Integer> i2 = indexesO1B1.iterator();
+            Iterator<Integer> i3 = indexesO2.iterator();
             Iterator<Integer> i4 = indexesO2B1.iterator();
             
-            int skips = 1;
             while (i0.hasNext()){
                 Integer length = i0.next();
                 Integer indexO1 = i1.next();
-                Integer indexO2 = i2.next();
-                Integer indexO1B1 = i3.next();
+                Integer indexO1B1 = i2.next();
+                Integer indexO2 = i3.next();
                 Integer indexO2B1 = i4.next();
-                valueString.append(System.lineSeparator()+indexO1+" "+indexO1B1+" "+indexO2+" "+indexO2B1+" "+length);
+                valueString.append(System.lineSeparator()+length+" "+indexO1+" "+indexO1B1+" "+indexO2+" "+indexO2B1);
             }
             return valueString.toString();
         }
@@ -2087,8 +2537,14 @@ public class Analyzer{
             this.indexesO2B1 = new LinkedList<>(d1.indexesO2B1);
             this.lengths = new LinkedList<>(d1.lengths);
             // add each member of d2.
-            for(int i=0; i < d2.lengths.size(); i++){
-                this.addDuplex(d2.indexesO1.get(i), d2.indexesO1B1.get(i),d2.indexesO2.get(i), d2.indexesO2B1.get(i),d2.lengths.get(i));
+            Iterator<Integer> i0 = d2.indexesO1.iterator();
+            Iterator<Integer> i1 = d2.indexesO1B1.iterator();
+            Iterator<Integer> i2 = d2.indexesO2.iterator();
+            Iterator<Integer> i3 = d2.indexesO2B1.iterator();
+            Iterator<Integer> i4 = d2.lengths.iterator();
+            
+            while (i0.hasNext()){
+                this.addDuplex(i0.next(), i1.next(),i2.next(), i3.next(),i4.next());
             }
         }
         
@@ -2103,16 +2559,16 @@ public class Analyzer{
                         break;
                     }
                 }
-                indexesO1.add(indexO1,firstLesserIndex);
-                indexesO2.add(indexO2,firstLesserIndex);
-                indexesO2B1.add(indexO2B1, firstLesserIndex);
-                indexesO1B1.add(indexO1B1, firstLesserIndex);
-                lengths.add(length, firstLesserIndex);
+                indexesO1.add(firstLesserIndex, indexO1);
+                indexesO1B1.add(firstLesserIndex,indexO1B1);
+                indexesO2.add(firstLesserIndex,indexO2);
+                indexesO2B1.add(firstLesserIndex,indexO2B1);
+                lengths.add(firstLesserIndex,length);
                     
                 if (lengths.size() > capacity){
                     indexesO1.removeLast();
-                    indexesO2.removeLast();
                     indexesO1B1.removeLast();
+                    indexesO2.removeLast();
                     indexesO2B1.removeLast();
                     lengths.removeLast();
                     minLength = lengths.getLast();
@@ -2125,21 +2581,21 @@ public class Analyzer{
         @Override
         public String toString(){
             StringBuilder valueString = new StringBuilder();
-            valueString.append("indexO1 indexO1B1 indexO2 indexO2B1 base-pairs");
+            valueString.append("base-pairs indexO1 indexO1B1 indexO2 indexO2B1");
             
             Iterator<Integer> i0 = lengths.iterator();
             Iterator<Integer> i1 = indexesO1.iterator();
-            Iterator<Integer> i2 = indexesO2.iterator();
-            Iterator<Integer> i3 = indexesO1B1.iterator();
+            Iterator<Integer> i2 = indexesO1B1.iterator();
+            Iterator<Integer> i3 = indexesO2.iterator();
             Iterator<Integer> i4 = indexesO2B1.iterator();
             
             while (i0.hasNext()){
                 Integer length = i0.next();
                 Integer indexO1 = i1.next();
-                Integer indexO2 = i2.next();
-                Integer indexO1B1 = i3.next();
+                Integer indexO1B1 = i2.next();
+                Integer indexO2 = i3.next();
                 Integer indexO2B1 = i4.next();
-                valueString.append(System.lineSeparator()+indexO1+" "+indexO1B1+" "+indexO2+" "+indexO2B1+" "+length);
+                valueString.append(System.lineSeparator()+length+" "+indexO1+" "+indexO1B1+" "+indexO2+" "+indexO2B1);
             }
             return valueString.toString();
         }
