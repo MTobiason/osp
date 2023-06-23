@@ -771,10 +771,7 @@ public class Analyzer{
                 baselineEncodedOligomers[entry.getValue()] = ueo.get(entry.getKey());
             }
             
-            //int[] lengthCounts = new int[maxLength+1];
             Duplexes duplexes = new Duplexes();
-            //Map<Integer,Integer> lengthCounts = new HashMap<>();
-            //for each alignment
 
             int S1length;
             int b1Max;
@@ -784,7 +781,6 @@ public class Analyzer{
             int b2;
             int lastB2=0;
             int length;
-            Integer singleCount = 1;
             // for each oligomer
             for(int i : IntStream.range(0,baselineEncodedOligomers.length).toArray()){
                 S1length = baselineEncodedOligomers[i].length;
@@ -800,10 +796,6 @@ public class Analyzer{
                     {
                         length = length -1;
                     }
-
-//                    if(baselineEncodedOligomers[i][b1] + baselineEncodedOligomers[i][b2] ==0){
-//                        encodedStructureLength = 1;
-//                    }
 
                     //For every base-pair in the reference position
                     for ( int k =0; k < length; k++)
@@ -847,9 +839,7 @@ public class Analyzer{
                     //if the loop ended with an active structure, record it.
                     if (encodedStructureLength >= intraSLC)
                     {
-                        if (encodedStructureLength >= intraSLC){
-                            duplexes.addDuplex(i,lastB1-encodedStructureLength+1, i, lastB2,encodedStructureLength);
-                        }
+                        duplexes.addDuplex(i,lastB1-encodedStructureLength+1, i, lastB2,encodedStructureLength);
                     };
                 }
             }
@@ -1343,30 +1333,23 @@ public class Analyzer{
             }
             int[][] encodedOligomers = baselineEncodedOligomers;
             
-            //int[] lengthCounts = new int[maxLength+1];
             LargestDuplexes duplexes = new LargestDuplexes(numberDuplexes);
-            //Map<Integer,Integer> lengthCounts = new HashMap<>();
-            //for each alignment
 
-            int[] encodedOligomer;
-            int[] S1;
             int S1length;
             int b1Max;
-            int structureLength;
+            int encodedStructureLength;
             int b1;
-            int lastB1 = 0;
+            int lastB1=0;
             int b2;
-            int lastB2 = 0;
+            int lastB2=0;
             int length;
             // for each oligomer
-            for(int i : IntStream.range(0,encodedOligomers.length).toArray()){
-                encodedOligomer = encodedOligomers[i];
-                S1 = encodedOligomer;
-                S1length = S1.length;
+            for(int i : IntStream.range(0,baselineEncodedOligomers.length).toArray()){
+                S1length = baselineEncodedOligomers[i].length;
                 b1Max = S1length-1;
 
                 for (int j : IntStream.range(0,S1length).toArray()){
-                    structureLength = 0;
+                    encodedStructureLength = 0;
                     b1 = (S1length - (j)/2) % S1length; // index of base on the top strand;
                     b2 = (b1Max -((j+1)/2)) ;// index of base on the bottom strand;
 
@@ -1376,68 +1359,49 @@ public class Analyzer{
                         length = length -1;
                     }
 
-                    if(S1[b1] + S1[b2] ==0)
-                    {
-                        structureLength = 1;
-                    }
-
                     //For every base-pair in the reference position
-                    for ( int k =1; k < length; k++)
+                    for ( int k =0; k < length; k++)
                     {
-                        if( b1 == b1Max) 
-                        {
-                                if (structureLength >= intraSLC)
-                                {
-                                    duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
-                                    //lengthCounts[structureLength]++;
-                                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
-                                }
-                                lastB1=b1;
-                                b1 = 0;
-                                structureLength = 0;
+                        //compare current base-pair. 
+                        if (baselineEncodedOligomers[i][b1]+baselineEncodedOligomers[i][b2]==0){
+                            encodedStructureLength++;
                         } else {
-                            lastB1=b1;
+                            if ( encodedStructureLength >= intraSLC){
+                                duplexes.addDuplex(i,lastB1-encodedStructureLength+1, i, lastB2,encodedStructureLength);
+                            }
+                            encodedStructureLength = 0;
+                        }
+                        
+                        //itterate after.
+                        if( b1 == b1Max){
+                            if (encodedStructureLength >= intraSLC){
+                                    duplexes.addDuplex(i,b1-encodedStructureLength+1, i, b2,encodedStructureLength);
+                            }
+                            lastB1 = b1;
+                            b1 = 0;
+                            encodedStructureLength = 0;
+                        } else {
+                            lastB1 = b1;
                             b1++;
                         }
 
-                        if( b2 == 0) 
-                        {
-                                if (structureLength >= intraSLC)
-                                {
-                                    duplexes.addDuplex(i,b1-structureLength+1, i, b2,structureLength);
-                                    //lengthCounts[structureLength]++;
-                                    //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
-                                }
-                                lastB2 = b2;
-                                b2 = b1Max;
-                                structureLength = 0;
-                        } else {
-                            lastB2=b2;
-                            b2--;
-                        }
-
-                        if(S1[b1]+S1[b2]==0)
-                        {
-                                structureLength++;
-                        }
-                        else
-                        {
-                            if (structureLength >= intraSLC)
-                            {
-                                duplexes.addDuplex(i,lastB1-structureLength+1, i, lastB2,structureLength);
-                                //lengthCounts[structureLength]++;
-                                //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                        if( b2 == 0){ 
+                            if (encodedStructureLength >= intraSLC){
+                                duplexes.addDuplex(i,b1-encodedStructureLength+1, i, b2,encodedStructureLength);
                             }
-                            structureLength =0;
+                            lastB2 = b2;
+                            b2 = b1Max;
+                            encodedStructureLength = 0;
+                        } else {
+                            lastB2 = b2;
+                            b2--;
                         }
                     }
 
                     //if the loop ended with an active structure, record it.
-                    if (structureLength >= intraSLC)
+                    if (encodedStructureLength >= intraSLC)
                     {
-                        duplexes.addDuplex(i,lastB1-structureLength+1, i, lastB2,structureLength);
-                        //lengthCounts[structureLength]++;
-                        //lengthCounts.merge(structureLength,singleCount,(x,y)->x+y);
+                        duplexes.addDuplex(i,lastB1-encodedStructureLength+1, i, lastB2,encodedStructureLength);
                     };
                 }
             }
@@ -2367,12 +2331,15 @@ public class Analyzer{
             int length = entry.getKey();
             int count = entry.getValue();
             int newValue = ret.getOrDefault(length,0)-count;
-            if ((newValue == 0) && (length == SLC)){
-                ret.remove(length);
+            if (newValue == 0){
+                if (length != SLC){
+                    ret.remove(length);
+                } else {
+                    ret.put(length,newValue);
+                }
             } else {
                 ret.put(length, newValue);
             }
-            
         }
         return ret;
     }

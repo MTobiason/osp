@@ -702,14 +702,24 @@ public class FactoryDomainBasedEncodedNetwork {
                 if (domainName.startsWith("c.")){
                     String compName = domainName.substring(2);
                     Integer compIndex = fixedDomainIndices.get(compName);
-                    int domainLength;
+                    boolean isVariable = false;
+                    int domainLength = 0;
                     if (compIndex != null) {
+                        isVariable = false;
                         domainLength = fixedDomainLengths[compIndex];
                     } else {
                         compIndex = variableDomainIndices.get(compName);
+                        if (compIndex != null) {
+                            isVariable = true;
+                            domainLength = variableDomainLengths[compIndex];
+                        } 
                     }
-                    if (compIndex != null) {
-                        domainLength = variableDomainLengths[compIndex];
+                    if (compIndex == null) {
+                        System.out.println("Failed to find domain "+ domainName);
+                        System.exit(0);
+                        domainLength = 0;
+                    }
+                    if (isVariable){
                         Map<Integer,int[]> oligomerToLocations = retDCTOM.get(compIndex);
                         int[] startIndexes = oligomerToLocations.get(i);
                         if (startIndexes == null){
@@ -720,11 +730,8 @@ public class FactoryDomainBasedEncodedNetwork {
                             startIndexes[startIndexes.length]=currentBase;
                         }
                         oligomerToLocations.put(i,startIndexes);
-                    } else {
-                        System.out.println("Failed to find domain "+ domainName);
-                        System.exit(0);
-                        domainLength = 0;
                     }
+                    
                     currentBase += domainLength;
                 } else {
                     Integer domainIndex = variableDomainIndices.get(domainName);
@@ -815,13 +822,13 @@ public class FactoryDomainBasedEncodedNetwork {
                         domainLength = fixedDomainLengths[compIndex];
                     } else {
                         compIndex = variableDomainIndices.get(compName);
-                    }
-                    if (compIndex != null) {
-                        domainLength = variableDomainLengths[compIndex];
-                    } else {
-                        System.out.println("Failed to find domain "+ domainName);
-                        System.exit(0);
-                        domainLength = 0;
+                        if (compIndex != null) {
+                            domainLength = variableDomainLengths[compIndex];
+                        } else {
+                            System.out.println("Failed to find domain "+ domainName);
+                            System.exit(0);
+                            domainLength = 0;
+                        }
                     }
                     currentBase += domainLength;
                 } else {

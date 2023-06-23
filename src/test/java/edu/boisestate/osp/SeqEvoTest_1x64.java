@@ -48,7 +48,8 @@ public class SeqEvoTest_1x64 {
         }
         
         SeqEvo s = new SeqEvo(parameters);
-        SeqEvo.Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
+        SeqEvo.Request req = new SeqEvo.Request(fixedDomains, variableDomains, oligomerDomains,System.out);
+        SeqEvo.Report rep = s.run(req);
         System.exit(0);
     }
     

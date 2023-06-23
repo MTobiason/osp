@@ -80,8 +80,9 @@ public class SeqEvoTest_Duplex_Scaling {
         addDuplexOligomerDomains(oligomerDomains,numberDuplexes);
         
         SeqEvo s = new SeqEvo(parameters);
-        Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
-        return r.totalTimeSeconds;
+        SeqEvo.Request req = new SeqEvo.Request(fixedDomains, variableDomains, oligomerDomains,System.out);
+        SeqEvo.Report rep = s.run(req);
+        return rep.totalTimeSeconds;
     }
     
     private static void addDuplexOligomerDomains(Map<String,String[]> oligomerDomains, int numberDuplexes){

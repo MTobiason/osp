@@ -24,6 +24,7 @@
 package edu.boisestate.osp;
 
 import java.io.FileWriter;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 /**
@@ -211,7 +213,9 @@ public class SeqEvo {
         
         SeqEvo s = new SeqEvo(parameters);
         
-        Report report = s.run(fixedDomains,initialVariableDomains,oligomerDomains);
+        Request request = new Request(fixedDomains,initialVariableDomains,oligomerDomains,System.out);
+        
+        Report report = s.run(request);
         
         report.exportToFile(usedParameters,ORFP,OVDFP,OOSFP,OSTFP,OLSTFP);
         
@@ -224,7 +228,28 @@ public class SeqEvo {
         System.exit(0);
     }
     
-    public Report run(Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains){
+public static class Request{
+        Map<String,String> fixedDomains;
+        Map<String,String> initialVariableDomains;
+        Map<String,String[]> oligomerDomains;
+        PrintStream streamForUpdates;
+        
+        Request(Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains, PrintStream streamForUpdates){
+            this.fixedDomains = fixedDomains;
+            this.initialVariableDomains= initialVariableDomains;
+            this.oligomerDomains = oligomerDomains;
+            this.streamForUpdates = streamForUpdates;
+        }
+        
+        Request(Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains){
+            this.fixedDomains = fixedDomains;
+            this.initialVariableDomains= initialVariableDomains;
+            this.oligomerDomains = oligomerDomains;
+            this.streamForUpdates = null;
+        }
+    }
+    
+    public Report run(Request request){
         final String startTimeString = new Date().toString();
         double startTime = System.currentTimeMillis(); // start timer for optimization runtime.
         
@@ -232,10 +257,10 @@ public class SeqEvo {
         final ICoder coder = new Coder();
         
         // factory stuff
-        final FactoryDomainBasedEncodedNetwork factory = new FactoryDomainBasedEncodedNetwork(coder, fixedDomains, oligomerDomains, initialVariableDomains);
+        final FactoryDomainBasedEncodedNetwork factory = new FactoryDomainBasedEncodedNetwork(coder, request.fixedDomains, request.oligomerDomains, request.initialVariableDomains);
         
         // Scoring stuff
-        final IScorer scorer = new DeltaWScorer(fixedDomains, oligomerDomains, initialVariableDomains, INTRASB, INTRASLC, INTERSB, INTERSLC, SWX, NUMBERTHREADS, 4);
+        final IScorer scorer = new DeltaWScorer(request.fixedDomains, request.oligomerDomains, request.initialVariableDomains, INTRASB, INTRASLC, INTERSB, INTERSLC, SWX, NUMBERTHREADS, 4);
         String scoreLabel = scorer.getScoreLabel();
         String scoreUnits = scorer.getScoreUnits();
         
@@ -245,7 +270,7 @@ public class SeqEvo {
         // Work supervisor
         final MutationSupervisor mutationSupervisor = new MutationSupervisor(NUMBERTHREADS,factory,scorer,validator);
         
-        IDomainBasedEncodedNetwork gen0 = factory.getNewNetwork(initialVariableDomains);
+        IDomainBasedEncodedNetwork gen0 = factory.getNewNetwork(request.initialVariableDomains);
         if (!validator.isValidNetwork(gen0)) {
             System.out.println("Initial network invalid. Replacing with random sequences.");
             gen0 = factory.getType1Mutation(gen0,validator);
@@ -260,8 +285,8 @@ public class SeqEvo {
         double optStartTime = System.currentTimeMillis(); // start timer for optimization runtime.
         
         // optimize
-        Type1Cycle c1 = new Type1Cycle(scoredGen0, mutationSupervisor, scorer, NL, CPL, NMPC, GPC, NDPG);
-        Type1CycleReport report = c1.call();
+        OptimizationSupervisor os = new OptimizationSupervisor( mutationSupervisor, scorer, NL, CPL, NMPC, GPC, NDPG, request.streamForUpdates);
+        OptimizationSupervisor.OptimizerReport report = os.optimize(scoredGen0);
         
         IDomainBasedEncodedScoredNetwork finalGen = report.fittest;
         String[][] lineageFittestScores = report.lineageFittestScores;
@@ -683,46 +708,50 @@ public class SeqEvo {
         }
     }
     
-    
-    static private class Type1Cycle implements Callable{
+    static private class OptimizationSupervisor{
+        final ExecutorService es;
         final MutationSupervisor mutationSupervisor;
         final IScorer scorer;
+        final PrintStream out;
         
-        final IDomainBasedEncodedScoredNetwork initialNetwork;
+        final int cyclesPerUpdate;
+        final int totalCycles;
+        
         final int NL;
         final int CPL;
         final int NMPC;
         final int GPC;
         final int NDPG;
         
-        Type2Cycle[] subCycles;
-        
-        Type1Cycle (IDomainBasedEncodedScoredNetwork initialNetwork, MutationSupervisor mutationSupervisor, IScorer scorer, int NL, int CPL,int NMPC,int GPC,int NDPG){
-            this.initialNetwork = initialNetwork;
+        OptimizationSupervisor ( MutationSupervisor mutationSupervisor, IScorer scorer, int NL, int CPL,int NMPC,int GPC,int NDPG, PrintStream streamForUpdates){
+            this.es = Executors.newCachedThreadPool();
             this.mutationSupervisor=mutationSupervisor;
             this.scorer = scorer;
+            this.out = streamForUpdates;
             this.NL = NL;
             this.CPL = CPL;
             this.NMPC = NMPC;
             this.GPC = GPC;
             this.NDPG = NDPG;
+            this.totalCycles = CPL*NL;
+            this.cyclesPerUpdate = Math.max(this.totalCycles/100,1);
         }
         
-        @Override
-        public Type1CycleReport call(){
-            final ExecutorService es = Executors.newCachedThreadPool();
+        public OptimizerReport optimize(IDomainBasedEncodedScoredNetwork initialNetwork){
+            final AtomicInteger completedCycles = new AtomicInteger(0);
+            double startTime = System.currentTimeMillis();
             final String[][] fittestScores = new String[NL][];
-            subCycles = new Type2Cycle[NL];
-            subCycles[0] = new Type2Cycle(initialNetwork,mutationSupervisor,es,scorer,CPL,NMPC,GPC,NDPG);
+            Cycle2Request[] subCycleRequests = new Cycle2Request[NL];
+            subCycleRequests[0] = new Cycle2Request(initialNetwork,completedCycles,startTime);
             Future<Type2CycleReport>[] futures = new Future[NL];
-            futures[0] = es.submit(subCycles[0]);
+            futures[0] = es.submit(subCycleRequests[0]);
             
             //generate mutated networks.
             IDomainBasedEncodedScoredNetwork[] newLineageMothers = mutationSupervisor.getType1Mutation(initialNetwork,NL-1);
             
             for(int i = 1; i < NL; i++){
-                subCycles[i] = new Type2Cycle(newLineageMothers[i-1],mutationSupervisor,es,scorer,CPL,NMPC,GPC,NDPG);
-                futures[i] = es.submit(subCycles[i]);
+                subCycleRequests[i] = new Cycle2Request(newLineageMothers[i-1],completedCycles,startTime);
+                futures[i] = es.submit(subCycleRequests[i]);
             }
             
             Type2CycleReport[] reports = new Type2CycleReport[NL];
@@ -754,165 +783,157 @@ public class SeqEvo {
             
             es.shutdownNow();
             
-            Type1CycleReport ret = new Type1CycleReport(fittest,fittestScores,fittestLineageMothers);
+            OptimizerReport ret = new OptimizerReport(fittest,fittestScores,fittestLineageMothers);
             return ret;
         }
-    }
-    static public class Type1CycleReport{
-        IDomainBasedEncodedScoredNetwork fittest;
-        IDomainBasedEncodedScoredNetwork[] fittestLineageMothers;
-        String[][] lineageFittestScores;
-        Type1CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[][] lineageFittestScores, IDomainBasedEncodedScoredNetwork[] fittestLineageMothers){
-            this.fittest = fittest;
-            this.lineageFittestScores = lineageFittestScores;
-            this.fittestLineageMothers = fittestLineageMothers;
-        }
-    }
-    
-    static private class Type2Cycle implements Callable{
-        final ExecutorService es;
-        final MutationSupervisor mutationSupervisor;
-        final IScorer scorer;
         
-        final IDomainBasedEncodedScoredNetwork initialNetwork;
-        final int CPL;
-        final int NMPC;
-        final int GPC;
-        final int NDPG;
-        
-        Type2Cycle ( IDomainBasedEncodedScoredNetwork initialNetwork, MutationSupervisor mutationSupervisor, ExecutorService executorService, IScorer scorer, int CPL,int NMPC,int GPC,int NDPG){
-            this.es = executorService;
-            this.initialNetwork = initialNetwork;
-            this.mutationSupervisor=mutationSupervisor;
-            this.scorer = scorer;
-            this.CPL = CPL;
-            this.NMPC = NMPC;
-            this.GPC = GPC;
-            this.NDPG = NDPG;
-        }
-        
-        @Override
-        public Type2CycleReport call(){
-            ArrayList<String> fittestScores = new ArrayList<>();
-            int cycleIndex=0;
-            IDomainBasedEncodedScoredNetwork currentFittest = initialNetwork;
-            IDomainBasedEncodedScoredNetwork[] subCycleMothers = new IDomainBasedEncodedScoredNetwork[NMPC+1];
-            Type3Cycle[] subCycles = new Type3Cycle[NMPC+1];
-            subCycles[0] = new Type3Cycle(initialNetwork,mutationSupervisor,es,scorer,GPC,NDPG);
-            for(int i = 0; i < NMPC; i++){
-                subCycles[i+1] = new Type3Cycle(initialNetwork,mutationSupervisor,es,scorer,GPC,NDPG);
+        static public class OptimizerReport{
+            IDomainBasedEncodedScoredNetwork fittest;
+            IDomainBasedEncodedScoredNetwork[] fittestLineageMothers;
+            String[][] lineageFittestScores;
+            OptimizerReport(IDomainBasedEncodedScoredNetwork fittest, String[][] lineageFittestScores, IDomainBasedEncodedScoredNetwork[] fittestLineageMothers){
+                this.fittest = fittest;
+                this.lineageFittestScores = lineageFittestScores;
+                this.fittestLineageMothers = fittestLineageMothers;
             }
-            Future<Type3CycleReport>[] futures = new Future[NMPC+1];
-            IDomainBasedEncodedScoredNetwork[] subCycleFittest = new IDomainBasedEncodedScoredNetwork[NMPC+1];
-            String[] fittestSubScores;
-            int fittestIndex;
-            
-            do{
-                IDomainBasedEncodedScoredNetwork[] newCycleMothers = mutationSupervisor.getType2Mutation(currentFittest,NMPC);
-                
-                subCycleMothers[0] = currentFittest;
-                for(int i = 1; i < NMPC+1; i++){
-                    subCycleMothers[i] = newCycleMothers[i-1];
-                }
+        }
+        private class Cycle2Request implements Callable<Type2CycleReport>{
+            final IDomainBasedEncodedScoredNetwork initialNetwork;
+            final double startTime;
+            final AtomicInteger completedCycles;
 
-                for(int i = 0; i < NMPC+1; i++){
-                    subCycles[i].updateState(subCycleMothers[i]);
-                    futures[i] = es.submit(subCycles[i]);
-                }
-                
-                try{
-                    for(int i=0; i < NMPC+1; i++){
-                        subCycleFittest[i] = futures[i].get().fittest;
-                    }
-                } catch (Exception e){System.out.println(e.getMessage());}
-                
-                fittestIndex =0;
-                for(int i =0; i < NMPC+1;i++){
-                    if (scorer.compareFitness(subCycleFittest[i], subCycleFittest[fittestIndex])>=0){
-                        fittestIndex = i;
-                    }
-                }
-                
-                currentFittest = subCycleFittest[fittestIndex];
-                try{
-                    fittestScores.add(subCycleMothers[fittestIndex].getScore());
-                    fittestSubScores = futures[fittestIndex].get().fittestScores;
-                    for(String score: fittestSubScores){
-                        fittestScores.add(score);
-                    }
-                } catch (Exception e){System.out.println(e.getMessage());}
-                
-                cycleIndex++;
-            } while (cycleIndex < CPL);
-            
-            Type2CycleReport ret = new Type2CycleReport(currentFittest, fittestScores.toArray(new String[0]));
-            return ret;
-        }
-        
-    }
-    
-    static public class Type2CycleReport{
-        IDomainBasedEncodedScoredNetwork fittest;
-        String[] fittestScores;
-        Type2CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[] fittestScores){
-            this.fittest = fittest;
-            this.fittestScores = fittestScores;
-        }
-    }
-    
-    static private class Type3Cycle implements Callable{
-        final ExecutorService es;
-        final MutationSupervisor mutationSupervisor;
-        final IScorer scorer;
-        
-        IDomainBasedEncodedScoredNetwork initialNetwork;
-        final int GPC;
-        final int NDPG;
-        
-        Type3Cycle ( IDomainBasedEncodedScoredNetwork initialNetwork, MutationSupervisor mutationSupervisor, ExecutorService executorService, IScorer scorer, int GPC,int NDPG){
-            this.es = executorService;
-            this.initialNetwork = initialNetwork;
-            this.mutationSupervisor=mutationSupervisor;
-            this.scorer = scorer;
-            this.GPC = GPC;
-            this.NDPG = NDPG;
-        }
-        
-        public void updateState(IDomainBasedEncodedScoredNetwork initialNetwork){
-            this.initialNetwork = initialNetwork;
-        }
-        
-        @Override
-        public Type3CycleReport call(){
-            String[] fittestScores = new String[GPC];
-            int generationIndex = 0;
-            IDomainBasedEncodedScoredNetwork currentFittest = initialNetwork;
-            
-            do{
-                IDomainBasedEncodedScoredNetwork[] newDaughters = mutationSupervisor.getType3Mutation(currentFittest,NDPG);
+            Cycle2Request ( IDomainBasedEncodedScoredNetwork initialNetwork, AtomicInteger completedCycles, double startTime){
+                this.initialNetwork = initialNetwork;
+                this.startTime = startTime;
+                this.completedCycles = completedCycles;
+            }
 
-                for(int i =0; i < NDPG;i++){
-                    if (scorer.compareFitness(newDaughters[i], currentFittest)>=0){
-                        currentFittest = newDaughters[i];
-                    }
+            @Override
+            public Type2CycleReport call(){
+                ArrayList<String> fittestScores = new ArrayList<>();
+                int cycleIndex=0;
+                IDomainBasedEncodedScoredNetwork currentFittest = initialNetwork;
+                IDomainBasedEncodedScoredNetwork[] subCycleMothers = new IDomainBasedEncodedScoredNetwork[NMPC+1];
+                Type3CycleRequest[] subCycleRequests = new Type3CycleRequest[NMPC+1];
+                subCycleRequests[0] = new Type3CycleRequest(initialNetwork);
+                for(int i = 0; i < NMPC; i++){
+                    subCycleRequests[i+1] = new Type3CycleRequest(initialNetwork);
                 }
-                fittestScores[generationIndex] = currentFittest.getScore();
+                Future<Type3CycleReport>[] futures = new Future[NMPC+1];
+                IDomainBasedEncodedScoredNetwork[] subCycleFittest = new IDomainBasedEncodedScoredNetwork[NMPC+1];
+                String[] fittestSubScores;
+                int fittestIndex;
+
+                do{
+                    IDomainBasedEncodedScoredNetwork[] newCycleMothers = mutationSupervisor.getType2Mutation(currentFittest,NMPC);
+
+                    subCycleMothers[0] = currentFittest;
+                    for(int i = 1; i < NMPC+1; i++){
+                        subCycleMothers[i] = newCycleMothers[i-1];
+                    }
+
+                    for(int i = 0; i < NMPC+1; i++){
+                        subCycleRequests[i].updateState(subCycleMothers[i]);
+                        futures[i] = es.submit(subCycleRequests[i]);
+                    }
+
+                    try{
+                        for(int i=0; i < NMPC+1; i++){
+                            subCycleFittest[i] = futures[i].get().fittest;
+                        }
+                    } catch (Exception e){System.out.println(e.getMessage());}
+
+                    fittestIndex =0;
+                    for(int i =0; i < NMPC+1;i++){
+                        if (scorer.compareFitness(subCycleFittest[i], subCycleFittest[fittestIndex])>=0){
+                            fittestIndex = i;
+                        }
+                    }
+
+                    currentFittest = subCycleFittest[fittestIndex];
+                    try{
+                        fittestScores.add(subCycleMothers[fittestIndex].getScore());
+                        fittestSubScores = futures[fittestIndex].get().fittestScores;
+                        for(String score: fittestSubScores){
+                            fittestScores.add(score);
+                        }
+                    } catch (Exception e){System.out.println(e.getMessage());}
+                    
+                    int finishedCycles = completedCycles.incrementAndGet();
+                    
+                    if (out != null && finishedCycles%cyclesPerUpdate==0){
+                        double elapsedTime = System.currentTimeMillis()-startTime;
+                        double fractionComplete = (((double)finishedCycles)/totalCycles);
+                        int percentComplete = (int) (fractionComplete*100);
+                        double remainingTime = ((elapsedTime/fractionComplete)*(1-fractionComplete));
+                        int h = (int)((remainingTime/1000)/(60*60));
+                        int m = (int)(((remainingTime/1000)/60)%60);
+                        int s = (int)((remainingTime/1000)%60);
+                        out.println(percentComplete + "% completed; " + "Estimated time remaining: "+ h + " h " + m + " m " + s + " s ");
+                    }
+                    cycleIndex++;
+                } while (cycleIndex < CPL);
                 
-                generationIndex++;
-            } while (generationIndex < GPC);
-            
-            Type3CycleReport ret = new Type3CycleReport(currentFittest, fittestScores);
-            return ret;
+                
+
+                Type2CycleReport ret = new Type2CycleReport(currentFittest, fittestScores.toArray(new String[0]));
+                return ret;
+            }
         }
         
-    }
-    
-    static public class Type3CycleReport{
-        IDomainBasedEncodedScoredNetwork fittest;
-        String[] fittestScores;
-        Type3CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[] fittestScores){
-            this.fittest = fittest;
-            this.fittestScores = fittestScores;
+        static public class Type2CycleReport{
+            IDomainBasedEncodedScoredNetwork fittest;
+            String[] fittestScores;
+            Type2CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[] fittestScores){
+                this.fittest = fittest;
+                this.fittestScores = fittestScores;
+            }
+        }
+        
+        private class Type3CycleRequest implements Callable{
+            IDomainBasedEncodedScoredNetwork initialNetwork;
+
+            Type3CycleRequest ( IDomainBasedEncodedScoredNetwork initialNetwork){
+                this.initialNetwork = initialNetwork;
+            }
+
+            public void updateState(IDomainBasedEncodedScoredNetwork initialNetwork){
+                this.initialNetwork = initialNetwork;
+            }
+
+            @Override
+            public Type3CycleReport call(){
+                String[] fittestScores = new String[GPC];
+                int generationIndex = 0;
+                IDomainBasedEncodedScoredNetwork currentFittest = initialNetwork;
+
+                do{
+                    IDomainBasedEncodedScoredNetwork[] newDaughters = mutationSupervisor.getType3Mutation(currentFittest,NDPG);
+
+                    for(int i =0; i < NDPG;i++){
+                        if (scorer.compareFitness(newDaughters[i], currentFittest)>=0){
+                            currentFittest = newDaughters[i];
+                        }
+                    }
+                    fittestScores[generationIndex] = currentFittest.getScore();
+
+                    generationIndex++;
+                } while (generationIndex < GPC);
+
+                Type3CycleReport ret = new Type3CycleReport(currentFittest, fittestScores);
+                return ret;
+            }
+
+        }
+
+        static public class Type3CycleReport{
+            IDomainBasedEncodedScoredNetwork fittest;
+            String[] fittestScores;
+            Type3CycleReport(IDomainBasedEncodedScoredNetwork fittest, String[] fittestScores){
+                this.fittest = fittest;
+                this.fittestScores = fittestScores;
+            }
         }
     }
+    
 }

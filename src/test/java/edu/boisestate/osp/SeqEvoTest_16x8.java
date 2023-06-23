@@ -2,6 +2,7 @@ package edu.boisestate.osp;
 
 import edu.boisestate.osp.SeqEvo;
 import edu.boisestate.osp.SeqEvo.Report;
+import edu.boisestate.osp.SeqEvo.Request;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -94,7 +95,8 @@ public class SeqEvoTest_16x8 {
         }
         
         SeqEvo s = new SeqEvo(parameters);
-        Report r = s.run(fixedDomains, variableDomains, oligomerDomains);
+        Request req = new Request(fixedDomains, variableDomains, oligomerDomains,System.out);
+        Report rep = s.run(req);
         System.exit(0);
     }
     
