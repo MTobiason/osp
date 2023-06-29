@@ -94,8 +94,8 @@ public class SeqEvoTest_16x8 {
             oligomerDomains.put("Duplex-16-Bottom", new String[] {"c.Domain-16"});
         }
         
-        SeqEvo s = new SeqEvo(parameters);
-        Request req = new Request(fixedDomains, variableDomains, oligomerDomains,System.out);
+        SeqEvo s = new SeqEvo();
+        Request req = new Request(parameters, fixedDomains, variableDomains, oligomerDomains,System.out);
         Report rep = s.run(req);
         System.exit(0);
     }

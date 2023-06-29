@@ -1,0 +1,70 @@
+// File format: parameter label <tab> parameter value
+
+// Numerical parameters
+interSB	10	// Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than 2147483647.
+interSLC	1	// Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than 2147483647.
+intraSB	10	// Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than 2147483647.
+intraSLC	1	// Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than 2147483647.
+numberLargestDuplexes	1000	// Maximum number of duplexes to include when listing largest-duplexes. Must be an integer greater than or equal to 1 and less than 2147483647.
+scoringWeightX	10000	// W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than 2147483647.
+
+// Requestable properties
+baselineN	true	// Network Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.
+baselineO	true	// Oligomer Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.
+baselineW	true	// Weighted Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.
+deltaN	true	// Network Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.
+deltaO	true	// Oligomer Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.
+deltaW	true	// Weighted Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.
+N	true	// Network Fitness Score. Must be true or false. A value of true will request this property.
+O	true	// Oligomer Fitness Score. Must be true or false. A value of true will request this property.
+W	true	// Weighted Fitness Score. Must be true or false. A value of true will request this property.
+Intra_Counts	false	// Profile of the length-counts for all intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Intra_Largest_Details	false	// List of the largest intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Intra_Prominent_Counts	false	// Profile of the length-counts for the most prominent intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Intra_Prominent_Details	false	// List of all intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Inter_Counts	false	// Profile of the length-counts for all inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Inter_Largest_Details	false	// List of the largest inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Inter_Prominent_Counts	false	// Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Inter_Prominent_Details	false	// List of all inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Necessary_Intra_Counts	false	// Profile of the length-counts for baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Necessary_Intra_Largest_Details	false	// List of the largest baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Necessary_Intra_Prominent_Counts	false	// Profile of the length-counts for the most prominent baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Necessary_Intra_Prominent_Details	false	// List of baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Necessary_Inter_Counts	false	// Profile of the length-counts for baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Necessary_Inter_Largest_Details	false	// List of the largest baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Necessary_Inter_Prominent_Counts	false	// Profile of the length-counts for the most prominent baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Necessary_Inter_Prominent_Details	false	// List of baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Unnecessary_Intra_Counts	false	// Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Unnecessary_Intra_Largest_Details	false	// List of the largest delta intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Unnecessary_Intra_Prominent_Counts	false	// Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Unnecessary_Intra_Prominent_Details	false	// List of delta intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+Unnecessary_Inter_Counts	false	// Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Unnecessary_Inter_Largest_Details	false	// List of the largest delta inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Unnecessary_Inter_Prominent_Counts	false	// Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+Unnecessary_Intra_Prominent_Details	false	// List of delta inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+
+// Requestable output files
+File_Intra_Counts	false	// Profile of the length-counts for all intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Intra_Largest_Details	false	// List of the largest unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Intra_Prominent_Counts	false	// Profile of the length-counts for the most prominent intra-oligomer duplexes.
+File_Intra_Prominent_Details	false	// List of all prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Intra_Prominent_Counts	test.csv	// Profile of the length-counts for all inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Inter_Largest_Details	false	// List of all unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Inter_Prominent_Counts	false	// Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Inter_Prominent_Details	false	// List of all prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Necessary_Intra_Counts	Necessary_Intra_Counts.csv	// Profile of the length-counts for necessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Necessary_Intra_Largest_Details	false	// List of baseline unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Necessary_Intra_Prominent_Counts	Necessary_Intra_Prominent_Counts.csv	// Profile of the length-counts for the most prominent necessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Necessary_Intra_Prominent_Details	Necessary_Intra_Prominent_Details.csv	// List of necessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Necessary_Intra_Prominent_Counts	Necessary_Inter_Counts.csv	// Profile of the length-counts for necessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Necessary_Inter_Largest_Details	false	// List of baseline unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Necessary_Inter_Prominent_Counts	Necessary_Inter_Prominent_Counts.csv	// Profile of the length-counts for the most prominent necessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Necessary_Inter_Prominent_Details	Necessary_Inter_Prominent_Details.csv	// List of necessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Unnecessary_Intra_Counts	Unnecessary_Intra_Counts.csv	// Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Unnecessary_Intra_Largest_Details	Unnecessary_Intra_Largest_Details.csv	// List of delta unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Unnecessary_Intra_Prominent_Counts	Unnecessary_Intra_Prominent_Counts.csv	// Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Unnecessary_Intra_Prominent_Details	false	// List of unnecessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Unnecessary_Intra_Prominent_Counts	Unnecessary_Inter_Counts.csv	// Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Unnecessary_Inter_Largest_Details	Unnecessary_Inter_Largest_Details.csv	// List of delta unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Unnecessary_Inter_Prominent_Counts	Unnecessary_Inter_Prominent_Counts.csv	// Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+File_Unnecessary_Inter_Prominent_Details	false	// List of unnecessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.

@@ -1549,8 +1549,8 @@ public class SeqEvoTest_Ke_2012_brick {
 
         }
         
-        SeqEvo s = new SeqEvo(parameters);
-        SeqEvo.Request req = new SeqEvo.Request(fixedDomains, variableDomains, oligomerDomains,System.out);
+        SeqEvo s = new SeqEvo();
+        SeqEvo.Request req = new SeqEvo.Request(parameters, fixedDomains, variableDomains, oligomerDomains,System.out);
         SeqEvo.Report rep = s.run(req);
         System.exit(0);
     }

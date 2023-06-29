@@ -23,9 +23,10 @@
  */
 package edu.boisestate.osp;
 
-import java.io.FileWriter;
+import java.io.File;
 import java.io.PrintStream;
-import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,211 +48,159 @@ public class SeqEvo {
     final static String VERSION = "2.0";
     final static int NUMBERTHREADS = Runtime.getRuntime().availableProcessors();
     
-    // parameters stuff
-    final static String PFP_LABEL = "PFP"; //parameters File Path
-    final static String PFP_DEFAULT = "se_in_parameters.txt";
-    final Map<String,String> usedParameters;
-    
-    // input files
-    final static String FDFP_LABEL = "FDFP"; // fixed-domains-file-path
-    final static String FDFP_DEFAULT = "se_in_domains_fixed.txt";
-    final static String VDFP_LABEL = "VDFP"; // variable-domains-file-path
-    final static String VDFP_DEFAULT = "se_in_domains_variable.txt";
-    final static String ODFP_LABEL = "ODFP"; // oligomers-file-path
-    final static String ODFP_DEFAULT = "se_in_oligomer_domains.txt";
-    
-    // output files
-    final static String ORFP_LABEL = "ORFP"; // Output Report File Path
-    final static String ORFP_DEFAULT = "se_out_report.txt";
-    final static String OVDFP_LABEL = "OVDFP"; // Output Variable Domains File Path
-    final static String OVDFP_DEFAULT = "se_out_domains_variable.txt";
-    final static String OOSFP_LABEL = "OOFP"; // Output Oligomer Sequences File Path
-    final static String OOSFP_DEFAULT = "se_out_oligomers.txt"; //
-    final static String OSTFP_LABEL = "OSTFP"; // Output Score Trajectories File Path
-    final static String OSTFP_DEFAULT = "se_out_score_trajectories.csv";
-    final static String OLSTFP_LABEL = "OLSTFP"; // Output Score Trajectories File Path
-    final static String OLSTFP_DEFAULT = "se_out_score_trajectories_log.csv";
-    
-    // mutation parameters
-    final int MAXAA; // Max number of consecutive AA's
-    final static String MAXAA_LABEL = "maxAA";
-    final static String MAXAA_DEFAULT = "6";
-    final int MAXCC; // Max number of consecutive AA's
-    final static String MAXCC_LABEL = "maxCC";
-    final static String MAXCC_DEFAULT = "3";
-    final int MAXGG; // Max number of consecutive AA's
-    final static String MAXGG_LABEL = "maxGG";
-    final static String MAXGG_DEFAULT = "3";
-    final int MAXTT; // Max number of consecutive AA's
-    final static String MAXTT_LABEL = "maxTT";
-    final static String MAXTT_DEFAULT = "6";
-    
-    // optimization parameters
-    final int CPL; // Cycles Per Lineage
-    final static String CPL_LABEL = "CPL";
-    final static String CPL_DEFAULT = "100000";
-    final int GPC; // Generations Per Cycle
-    final static String GPC_LABEL = "GPC";
-    final static String GPC_DEFAULT = "1";
-    final int NDPG; // New Daughters Per Generation
-    final static String NDPG_LABEL = "NDPG";
-    final static String NDPG_DEFAULT = "1";
-    final int NL; // Number of Lineages
-    final static String NL_LABEL = "NL";
-    final static String NL_DEFAULT = "8";
-    final int NMPC; // New Mothers Per Cycle
-    final static String NMPC_LABEL = "NMPC";
-    final static String NMPC_DEFAULT = "2";
-    
     //Scoring parameters
     final String FS = "Wx"; // Fitness Score
     final static String FS_LABEL = "FS"; // Fitness-Score
     final static String FS_DEFAULT = "Wx";
-    final int SWX; // Scoring Weight X
     final static String SWX_LABEL = "scoringWeightX";
     final static String SWX_DEFAULT = "10000";
-    final int INTRASLC;
-    final static String INTRASLC_LABEL = "intraSLC";
-    final static String INTRASLC_DEFAULT = "1";
-    final int INTRASB;
-    final static String INTRASB_LABEL = "intraSB";
-    final static String INTRASB_DEFAULT = "10";
-    final int INTERSLC;
-    final static String INTERSLC_LABEL = "interSLC";
-    final static String INTERSLC_DEFAULT = "1";
-    final int INTERSB;
-    final static String INTERSB_LABEL = "interSB";
-    final static String INTERSB_DEFAULT = "10";
+    final static String INTRA_SLC_LABEL = "intraSLC";
+    final static String INTRA_SLC_DEFAULT = "1";
+    final static String INTRA_SB_LABEL = "intraSB";
+    final static String INTRA_SB_DEFAULT = "10";
+    final static String INTER_SLC_LABEL = "interSLC";
+    final static String INTER_SLC_DEFAULT = "1";
+    final static String INTER_SB_LABEL = "interSB";
+    final static String INTER_SB_DEFAULT = "10";
     
-    public SeqEvo(Map<String,String> parameters){
-        usedParameters = new HashMap<>();
+    // mutation parameters
+    final static String MAX_AA_LABEL = "maxAA";
+    final static String MAX_AA_DEFAULT = "6";
+    final static String MAX_CC_LABEL = "maxCC";
+    final static String MAX_CC_DEFAULT = "3";
+    final static String MAX_GG_LABEL = "maxGG";
+    final static String MAX_GG_DEFAULT = "3";
+    final static String MAX_TT_LABEL = "maxTT";
+    final static String MAX_TT_DEFAULT = "6";
+    
+    // optimization parameters
+    final static String CPL_LABEL = "CPL";
+    final static String CPL_DEFAULT = "100000";
+    final static String GPC_LABEL = "GPC";
+    final static String GPC_DEFAULT = "1";
+    final static String NDPG_LABEL = "NDPG";
+    final static String NDPG_DEFAULT = "1";
+    final static String NL_LABEL = "NL";
+    final static String NL_DEFAULT = "8";
+    final static String NMPC_LABEL = "NMPC";
+    final static String NMPC_DEFAULT = "2";
+    
+    final static ArrayList<IntegerParameter> integerParameters = new ArrayList<>();
+    static {
+        // Scoring parameters
+        integerParameters.add(new IntegerParameter( "Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".", INTER_SB_LABEL, INTER_SB_DEFAULT, 0, Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", INTER_SLC_LABEL, INTER_SLC_DEFAULT, 1, Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".", INTRA_SB_LABEL, INTRA_SB_DEFAULT, 0, Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", INTRA_SLC_LABEL, INTRA_SB_DEFAULT, 1, Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", SWX_LABEL, SWX_DEFAULT, 0, Integer.MAX_VALUE));
+    
+        // Optimization parameters
+        integerParameters.add(new IntegerParameter( "Cycles-Per-Lineage. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", CPL_LABEL, CPL_DEFAULT,1,Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "Generations-Per-Cycle. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", GPC_LABEL, GPC_DEFAULT,1,Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "New-Daughters-Per-Generation. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", NDPG_LABEL, NDPG_DEFAULT,1,Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "New-Mothers-Per-Cycle. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", NMPC_LABEL, NMPC_DEFAULT,1,Integer.MAX_VALUE));
         
-        // scorer stuff
-        this.SWX = Integer.valueOf(parameters.getOrDefault(SWX_LABEL,SWX_DEFAULT));
-        usedParameters.put(SWX_LABEL,String.valueOf(this.SWX));
-        this.INTRASLC = Integer.valueOf(parameters.getOrDefault(INTRASLC_LABEL,INTRASLC_DEFAULT));
-        usedParameters.put(INTRASLC_LABEL,String.valueOf(this.INTRASLC));
-        this.INTRASB = Integer.valueOf(parameters.getOrDefault(INTRASB_LABEL,INTRASB_DEFAULT));
-        usedParameters.put(INTRASB_LABEL,String.valueOf(this.INTRASB));
-        this.INTERSLC = Integer.valueOf(parameters.getOrDefault(INTERSLC_LABEL,INTERSLC_DEFAULT));
-        usedParameters.put(INTERSLC_LABEL,String.valueOf(this.INTERSLC));
-        this.INTERSB = Integer.valueOf(parameters.getOrDefault(INTERSB_LABEL,INTERSB_DEFAULT));
-        usedParameters.put(INTERSB_LABEL,String.valueOf(this.INTERSB));
-        
-        // validator stuff
-        this.MAXAA = Integer.parseInt(parameters.getOrDefault(MAXAA_LABEL, MAXAA_DEFAULT));
-        usedParameters.put(MAXAA_LABEL,String.valueOf(this.MAXAA));
-        this.MAXCC = Integer.parseInt(parameters.getOrDefault(MAXCC_LABEL, MAXCC_DEFAULT));
-        usedParameters.put(MAXCC_LABEL,String.valueOf(this.MAXCC));
-        this.MAXGG = Integer.parseInt(parameters.getOrDefault(MAXGG_LABEL, MAXGG_DEFAULT));
-        usedParameters.put(MAXGG_LABEL,String.valueOf(this.MAXGG));
-        this.MAXTT = Integer.parseInt(parameters.getOrDefault(MAXTT_LABEL, MAXTT_DEFAULT));
-        usedParameters.put(MAXTT_LABEL,String.valueOf(this.MAXTT));
-        
-        // optimization stuff
-        this.CPL = Integer.parseInt(parameters.getOrDefault(CPL_LABEL,CPL_DEFAULT));
-        usedParameters.put(CPL_LABEL,String.valueOf(this.CPL));
-        this.GPC = Integer.parseInt(parameters.getOrDefault(GPC_LABEL,GPC_DEFAULT));
-        usedParameters.put(GPC_LABEL,String.valueOf(this.GPC));
-        this.NDPG = Integer.parseInt(parameters.getOrDefault(NDPG_LABEL,NDPG_DEFAULT));
-        usedParameters.put(NDPG_LABEL,String.valueOf(this.NDPG));
-        this.NMPC = Integer.parseInt(parameters.getOrDefault(NMPC_LABEL,NMPC_DEFAULT));
-        usedParameters.put(NMPC_LABEL,String.valueOf(this.NMPC));
-        this.NL = Integer.parseInt(parameters.getOrDefault(NL_LABEL,NL_DEFAULT));
-        usedParameters.put(NL_LABEL,String.valueOf(this.NL));
-        
+        // Mutation parameters
+        integerParameters.add(new IntegerParameter( "Maximum number of consecutive adenosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_AA_LABEL, MAX_AA_DEFAULT,1,Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "Maximum number of consecutive cytosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_CC_LABEL, MAX_CC_DEFAULT,1,Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "Maximum number of consecutive guanine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_GG_LABEL, MAX_GG_DEFAULT,1,Integer.MAX_VALUE));
+        integerParameters.add(new IntegerParameter( "Maximum number of consecutive thymine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_TT_LABEL, MAX_TT_DEFAULT,1,Integer.MAX_VALUE));
     }
     
-    public static void main(String[] args){
-        Map<String,String> usedParameters = new HashMap<>();
-        String PFP = PFP_DEFAULT;
-        if (args.length > 0)
-        {
-            if (args[0].equals("-h") || args[0].equals("--help")) // Print explanation of acceptable arguments.
-            {
-                    System.out.println("Usage: SeqEvo <Parameter File Path>");
-                    System.out.println("Default Parameter File Path: " + PFP_DEFAULT);
-                    System.exit(0);
-            }
-
-            else{
-                    PFP = args[0]; // accept the next argument as the parameter file
-                    System.out.println("Using Parameter File Path: " + PFP); 
-            }
-        }
-        
-        // Read parameters file.
-        usedParameters.put(PFP_LABEL, PFP);
-        final Map<String,String> parameters = util.importPairFromTxt(PFP);
-        
-        // Read fixed domains file.
-        final String FDFP = parameters.getOrDefault(FDFP_LABEL,FDFP_DEFAULT);
-        usedParameters.put(FDFP_LABEL,FDFP);
-        final Map<String,String> fixedDomains = util.importPairFromTxt(FDFP);
-
-        // Read variable domains file.
-        final String VDFP = parameters.getOrDefault(VDFP_LABEL,VDFP_DEFAULT);
-        usedParameters.put(VDFP_LABEL, VDFP);
-        final Map<String,String> initialVariableDomains = util.importPairFromTxt(VDFP);
-
-        // Read oligomer domains file.
-        final String OFP = parameters.getOrDefault(ODFP_LABEL,ODFP_DEFAULT);
-        usedParameters.put(ODFP_LABEL, OFP);
-        final Map<String,String[]> oligomerDomains = util.importListFromTxt(OFP);
-        
-        // output stuff
-        final String ORFP = parameters.getOrDefault(ORFP_LABEL, ORFP_DEFAULT);
-        usedParameters.put(ORFP_LABEL,ORFP);
-        final String OVDFP = parameters.getOrDefault(OVDFP_LABEL, OVDFP_DEFAULT);
-        usedParameters.put(OVDFP_LABEL,OVDFP);
-        final String OOSFP = parameters.getOrDefault(OOSFP_LABEL, OOSFP_DEFAULT);
-        usedParameters.put(OOSFP_LABEL,OOSFP);
-        final String OSTFP = parameters.getOrDefault(OSTFP_LABEL, OSTFP_DEFAULT);
-        usedParameters.put(OSTFP_LABEL,OSTFP);
-        final String OLSTFP = parameters.getOrDefault(OLSTFP_LABEL, OLSTFP_DEFAULT);
-        usedParameters.put(OLSTFP_LABEL,OLSTFP);
-        
-        SeqEvo s = new SeqEvo(parameters);
-        
-        Request request = new Request(fixedDomains,initialVariableDomains,oligomerDomains,System.out);
-        
-        Report report = s.run(request);
-        
-        report.exportToFile(usedParameters,ORFP,OVDFP,OOSFP,OSTFP,OLSTFP);
-        
-        System.out.println("Initial network "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.initialNetwork.getScore());
-        System.out.println("Fittest network "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.finalNetwork.getScore());
-        
-        System.out.println("Optimization time: "+ report.optimizationTime);
-        System.out.println("Total time: " + report.totalTime);
-        
-        System.exit(0);
+    final static ArrayList<Parameter> availableParameters = new ArrayList<>();
+    static {
+        availableParameters.addAll(integerParameters);
     }
     
-public static class Request{
+    final static Map<String,Parameter> labelToParameterMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER); 
+    static { for (Parameter p : availableParameters) labelToParameterMap.put(p.getLabel(), p);}
+    
+    public SeqEvo(){
+    }
+    
+    public static class Request{
         Map<String,String> fixedDomains;
         Map<String,String> initialVariableDomains;
         Map<String,String[]> oligomerDomains;
+        Map<String,String>  parameters;
         PrintStream streamForUpdates;
         
-        Request(Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains, PrintStream streamForUpdates){
+        Request(Map<String,String> parameters, Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains, PrintStream streamForUpdates){
             this.fixedDomains = fixedDomains;
             this.initialVariableDomains= initialVariableDomains;
             this.oligomerDomains = oligomerDomains;
+            this.parameters = parseParameters(parameters);
             this.streamForUpdates = streamForUpdates;
         }
         
-        Request(Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains){
+        Request(Map<String,String> parameters, Map<String,String> fixedDomains, Map<String,String> initialVariableDomains, Map<String,String[]> oligomerDomains){
             this.fixedDomains = fixedDomains;
             this.initialVariableDomains= initialVariableDomains;
             this.oligomerDomains = oligomerDomains;
             this.streamForUpdates = null;
+        }
+        
+        private Map<String,String> parseParameters(Map<String,String> incomingParam){
+            Map<String,String> retParam = new HashMap<String,String>();
+            // for each incoming parameter.
+            for (Map.Entry<String,String> entry : incomingParam.entrySet()){
+                String label = entry.getKey();
+                String value = entry.getValue();
+                Parameter p = labelToParameterMap.get(label);
+                if (p != null){
+                    if (p.isValid(value)){
+                        retParam.put(label, value);
+                    } else {
+                        System.out.println("Value "+value+" is not valid for parameter "+ label);
+                        System.exit(1);
+                    }
+                }
+            }
+            
+            return retParam;
         }
     }
     
     public Report run(Request request){
         final String startTimeString = new Date().toString();
         double startTime = System.currentTimeMillis(); // start timer for optimization runtime.
+        
+        Map<String,String> parameters = request.parameters;
+        Map<String,String> usedParameters = new HashMap<>();
+        
+        // scorer stuff
+        int SWX = Integer.parseInt(parameters.getOrDefault(SWX_LABEL,SWX_DEFAULT));
+        usedParameters.put(SWX_LABEL,String.valueOf(SWX));
+        int INTRASLC = Integer.parseInt(parameters.getOrDefault(INTRA_SLC_LABEL,INTRA_SLC_DEFAULT));
+        usedParameters.put(INTRA_SLC_LABEL,String.valueOf(INTRASLC));
+        int INTRASB = Integer.parseInt(parameters.getOrDefault(INTRA_SB_LABEL,INTRA_SB_DEFAULT));
+        usedParameters.put(INTRA_SB_LABEL,String.valueOf(INTRASB));
+        int INTERSLC = Integer.parseInt(parameters.getOrDefault(INTER_SLC_LABEL,INTER_SLC_DEFAULT));
+        usedParameters.put(INTER_SLC_LABEL,String.valueOf(INTERSLC));
+        int INTERSB = Integer.parseInt(parameters.getOrDefault(INTER_SB_LABEL,INTER_SB_DEFAULT));
+        usedParameters.put(INTER_SB_LABEL,String.valueOf(INTERSB));
+        
+        // validator stuff
+        int MAXAA = Integer.parseInt(parameters.getOrDefault(MAX_AA_LABEL, MAX_AA_DEFAULT));
+        usedParameters.put(MAX_AA_LABEL,String.valueOf(MAXAA));
+        int MAXCC = Integer.parseInt(parameters.getOrDefault(MAX_CC_LABEL, MAX_CC_DEFAULT));
+        usedParameters.put(MAX_CC_LABEL,String.valueOf(MAXCC));
+        int MAXGG = Integer.parseInt(parameters.getOrDefault(MAX_GG_LABEL, MAX_GG_DEFAULT));
+        usedParameters.put(MAX_GG_LABEL,String.valueOf(MAXGG));
+        int MAXTT = Integer.parseInt(parameters.getOrDefault(MAX_TT_LABEL, MAX_TT_DEFAULT));
+        usedParameters.put(MAX_TT_LABEL,String.valueOf(MAXTT));
+        
+        // optimization stuff
+        int CPL = Integer.parseInt(parameters.getOrDefault(CPL_LABEL,CPL_DEFAULT));
+        usedParameters.put(CPL_LABEL,String.valueOf(CPL));
+        int GPC = Integer.parseInt(parameters.getOrDefault(GPC_LABEL,GPC_DEFAULT));
+        usedParameters.put(GPC_LABEL,String.valueOf(GPC));
+        int NDPG = Integer.parseInt(parameters.getOrDefault(NDPG_LABEL,NDPG_DEFAULT));
+        usedParameters.put(NDPG_LABEL,String.valueOf(NDPG));
+        int NMPC = Integer.parseInt(parameters.getOrDefault(NMPC_LABEL,NMPC_DEFAULT));
+        usedParameters.put(NMPC_LABEL,String.valueOf(NMPC));
+        int NL = Integer.parseInt(parameters.getOrDefault(NL_LABEL,NL_DEFAULT));
+        usedParameters.put(NL_LABEL,String.valueOf(NL));
         
         // coder stuff
         final ICoder coder = new Coder();
@@ -339,213 +288,328 @@ public static class Request{
             this.scoreLabel = scoreLabel;
             this.scoreUnits = scoreUnits;
         }
+    }
+    
+    public static void main(String[] args){
+        SeqEvo s = new SeqEvo();
         
-        private void exportToFile(Map<String,String> otherUsedParameters, String ORFP, String OVDFP, String OOSFP, String OSTFP, String OLSTFP){
-            Map<String,String> allUsedParameters = new HashMap<>(otherUsedParameters);
-            allUsedParameters.putAll(this.usedParameters);
+        ArrayList<Parameter> availableParameters = new ArrayList<>(s.availableParameters);
+        Map<String,String> usedParameters = new HashMap<>();
+        
+        final String PFP_LABEL = "PFP"; //parameters File Path
+        final String PFP_DEFAULT = "se_parameters.txt";
+        final String EXAMPLE_PARAMETERS_FILE_DEFAULT = "se_parameters_example.txt";
 
-            IDomainBasedEncodedScoredNetwork finalNetwork = this.finalNetwork;
+        // input files
+        final String FDFP_LABEL = "IN_FILE_DOMAINS_FIXED"; // fixed-domains-file-path
+        final String FDFP_DEFAULT = "in_domains_fixed.txt";
+        final String VDFP_LABEL = "IN_FILE_DOMAINS_VARIABLE"; // variable-domains-file-path
+        final String VDFP_DEFAULT = "in_domains_variable.txt";
+        final String ODFP_LABEL = "IN_FILE_OLIGOMER_DOMAINS"; // oligomers-file-path
+        final String ODFP_DEFAULT = "in_oligomer_domains.txt";
 
-            try{
-                // Export Report file
-                if (!ORFP.equalsIgnoreCase("False")){
-                    FileWriter FW = new FileWriter( ORFP );
-                    PrintWriter PW = new PrintWriter( FW);
-
-                    PW.println("Report generated by SeqEvo.");
-                    PW.println("Program version: "+this.version);
-                    PW.println("Start time: "+this.startTime);
-                    PW.println("Optimization time: "+this.optimizationTime);
-                    PW.println("Total time: "+this.totalTime);
-
-                    // print used parameters.
-                    PW.println();
-                    PW.println("***************");
-                    PW.println("Used Parameters");
-                    PW.println("***************");
-                    PW.println();
-
-                    Map<String,String> sortedUsedParameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedUsedParameters.putAll(allUsedParameters);
-                    for(Map.Entry<String,String> entry : sortedUsedParameters.entrySet()){
-                        PW.println(entry.getKey()+ " " + entry.getValue());
-                    }
-                    
-                    PW.println();
-                    PW.println("**************");
-                    PW.println("Fitness Scores");
-                    PW.println("**************");
-                    PW.println();
-                    PW.println("Initial network "+this.scoreLabel+" ("+this.scoreUnits+"): " +this.initialNetwork.getScore());
-                    PW.println("Final   network "+this.scoreLabel+" ("+this.scoreUnits+"): " +this.finalNetwork.getScore());
-
-                    // print initial network
-                    PW.println();
-                    PW.println("***************");
-                    PW.println("Initial Network");
-                    PW.println("***************");
-                    PW.println();
-
-                    Map<String,Integer> sortedFixedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedFixedDomains.putAll(this.initialNetwork.getFixedDomainIndices());
-                    PW.println("Fixed Domains:");
-                    PW.println("--------------");
-                    for(Map.Entry<String,Integer> entry : sortedFixedDomains.entrySet()){
-                        PW.println(this.initialNetwork.getFixedDomainNames()[entry.getValue()]+ " " + this.initialNetwork.getFixedDomainSequences()[entry.getValue()]);
-                    }
-
-                    Map<String,Integer> sortedVariableDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedVariableDomains.putAll(this.initialNetwork.getVariableDomainIndices());
-                    PW.println();
-                    PW.println("Variable Domains:");
-                    PW.println("-----------------");
-                    for(Map.Entry<String,Integer> entry : sortedVariableDomains.entrySet()){
-                        PW.println(this.initialNetwork.getVariableDomainNames()[entry.getValue()]+ " " + this.initialNetwork.getVariableDomainSequences()[entry.getValue()]);
-                    }
-
-                    Map<String,Integer> sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedOligomers.putAll(this.initialNetwork.getOligomerIndices());
-                    PW.println();
-                    PW.println("Oligomer Domains:");
-                    PW.println("-------------------");
-                    for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
-                        PW.print(this.initialNetwork.getOligomerNames()[entry.getValue()]);
-                        for(String domain : this.initialNetwork.getOligomerDomains()[entry.getValue()]){
-                            PW.print(" "+ domain);
-                        }
-                        PW.println();
-                    }
-
-                    PW.println();
-                    PW.println("Oligomer Sequences:");
-                    PW.println("-------------------");
-                    for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
-                        PW.println(this.initialNetwork.getOligomerNames()[entry.getValue()]+ " " + this.initialNetwork.getOligomerSequences()[entry.getValue()]);
-                    }
-
-                    PW.println();
-                    PW.println("*************");
-                    PW.println("Final Network");
-                    PW.println("*************");
-                    PW.println();
-
-                    sortedFixedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedFixedDomains.putAll(this.finalNetwork.getFixedDomainIndices());
-                    PW.println("Fixed Domains:");
-                    PW.println("--------------");
-                    for(Map.Entry<String,Integer> entry : sortedFixedDomains.entrySet()){
-                        PW.println(this.finalNetwork.getFixedDomainNames()[entry.getValue()]+ " " + this.finalNetwork.getFixedDomainSequences()[entry.getValue()]);
-                    }
-
-                    sortedVariableDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedVariableDomains.putAll(this.finalNetwork.getVariableDomainIndices());
-                    PW.println();
-                    PW.println("Variable Domains:");
-                    PW.println("-----------------");
-                    for(Map.Entry<String,Integer> entry : sortedVariableDomains.entrySet()){
-                        PW.println(this.finalNetwork.getVariableDomainNames()[entry.getValue()]+ " " + this.finalNetwork.getVariableDomainSequences()[entry.getValue()]);
-                    }
-
-                    sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedOligomers.putAll(this.finalNetwork.getOligomerIndices());
-                    PW.println();
-                    PW.println("Oligomer Domains:");
-                    PW.println("-------------------");
-                    for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
-                        PW.print(this.finalNetwork.getOligomerNames()[entry.getValue()]);
-                        for(String domain : this.finalNetwork.getOligomerDomains()[entry.getValue()]){
-                            PW.print(" "+ domain);
-                        }
-                        PW.println();
-                    }
-
-                    PW.println();
-                    PW.println("Oligomer Sequences:");
-                    PW.println("-------------------");
-                    for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
-                        PW.println(this.finalNetwork.getOligomerNames()[entry.getValue()]+ " " + this.finalNetwork.getOligomerSequences()[entry.getValue()]);
-                    }
-
-                    PW.close();
-                }
-
-                // Export variable domains from final network
-                if (!OVDFP.equalsIgnoreCase("False")){
-                    FileWriter FW = new FileWriter( OVDFP );
-                    PrintWriter PW = new PrintWriter( FW);
-                    
-                    Map<String,Integer> sortedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedDomains.putAll(this.finalNetwork.getVariableDomainIndices());
-
-                    String[] vds = finalNetwork.getVariableDomainSequences();
-                    for(Map.Entry<String,Integer> entry: sortedDomains.entrySet()){
-                        PW.println(entry.getKey()+ " " + vds[entry.getValue()]);
-                    }
-                    PW.close();
-                }
-
-                // Export oligomer sequences from final network
-                if (!OOSFP.equalsIgnoreCase("False")){
-                    FileWriter FW = new FileWriter( OOSFP );
-                    PrintWriter PW = new PrintWriter( FW);
-                    
-                    Map<String,Integer> sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-                    sortedOligomers.putAll(this.finalNetwork.getOligomerIndices());
-                    String[] os = finalNetwork.getOligomerSequences();
-                    for(Map.Entry<String,Integer> entry: sortedOligomers.entrySet()){
-                        PW.println(entry.getKey()+ " " + os[entry.getValue()]);
-                    }
-                    PW.close();
-                }
-                
-                // Export score trajectory.
-
-                if (!OSTFP.equalsIgnoreCase("False")){
-                    FileWriter FW = new FileWriter( OSTFP );
-                    PrintWriter PW = new PrintWriter( FW);
-                    
-                    String[][] scores = this.lineageFittestScores;
-                    int[] lineageIndexes = IntStream.range(0,scores.length).toArray();
-                    PW.print("Generation Number");
-                        for (int j : lineageIndexes){
-                            PW.print(",Lineage "+j+" ("+this.scoreLabel+" - "+this.scoreUnits+")");
-                        }
-                        PW.println();
-                    for(int i : IntStream.range(0,scores[0].length).toArray()){
-                        PW.print(i+1);
-                        for (int j : lineageIndexes){
-                            PW.print(","+scores[j][i]);
-                        }
-                        PW.println();
-                    }
-                    PW.close();
-                }
-                
-                //export log score trajectory
-                if (!OLSTFP.equalsIgnoreCase("False")){
-                    FileWriter FW = new FileWriter( OLSTFP );
-                    PrintWriter PW = new PrintWriter( FW);
-                    
-                    String[][] scores = this.lineageFittestScores;
-                    int[] lineageIndexes = IntStream.range(0,scores.length).toArray();
-                    PW.print("Generation Number");
-                        for (int j : lineageIndexes){
-                            PW.print(",Lineage "+j+" ("+this.scoreLabel+" - "+this.scoreUnits+")");
-                        }
-                        PW.println();
-                    for(int i = 1; i < scores[0].length; i = i*2){
-                        PW.print(i);
-                        for (int j : lineageIndexes){
-                            PW.print(","+scores[j][i-1]);
-                        }
-                        PW.println();
-                    }
-                    PW.close();
-                }
-            } catch (Exception e) {
-                System.out.println("Error while exporting network.");
-                System.out.println(e.getMessage());
+        // output files
+        final String OUTPUT_DIRECTORY_DEFAULT = "SeqEvo-Out" + File.separator;
+        final String OUTPUT_DIRECTORY_LABEL = "OUT_DIRECTORY";
+        final String FILE_REPORT_LABEL = "OUT_FILE_REPORT"; // Output Report File Path
+        final String FILE_REPORT_DEFAULT = "report.txt";
+        final String FILE_FINAL_DOMAINS_VARIABLE_LABEL = "OUT_FILE_DOMAINS_VARIABLE"; // Output Variable Domains File Path
+        final String FILE_FINAL_DOMAINS_VARIABLE_DEFAULT = "domains_variable.txt";
+        final String FILE_FINAL_OLIGOMER_SEQUENCES_LABEL = "OUT_FILE_OLIGOMERS"; // Output Oligomer Sequences File Path
+        final String FILE_FINAL_OLIGOMER_SEQUENCES_DEFAULT = "oligomer_sequences.txt"; //
+        final String FILE_SCORE_TRAJECTORY_LABEL = "OUT_FILE_SCORES"; // Output Score Trajectories File Path
+        final String FILE_SCORE_TRAJECTORY_DEFAULT = "score_trajectories.csv";
+        final String FILE_LOG_SCORE_TRAJECTORY_LABEL = "OUT_FILE_LOG_SCORES"; // Output Score Trajectories File Path
+        final String FILE_LOG_SCORE_TRAJECTORY_DEFAULT = "score_trajectories_log.csv";
+        
+        availableParameters.add(new OutputDirectoryParameter(OUTPUT_DIRECTORY_DEFAULT, "Directory where output files will be created. ", OUTPUT_DIRECTORY_LABEL ));
+        
+        ArrayList<InputFileParameter> inputFileParameters = new ArrayList<>();
+        {
+            inputFileParameters.add( new InputFileParameter( FDFP_DEFAULT, "Text file listing the fixed domains for the network. Each line should contain a single domain formated as DOMAIN-NAME <tab> BASE-SEQUENCE. Acceptable bases are A/T/C/G. ",FDFP_LABEL));
+            inputFileParameters.add( new InputFileParameter( VDFP_DEFAULT, "Text file listing the variable domains for the network. Each line should contain a single domain formated as DOMAIN-NAME <tab> BASE-SEQUENCE. Acceptable bases are A/T/C/G. ",VDFP_LABEL));
+            inputFileParameters.add( new InputFileParameter( ODFP_DEFAULT, "Text file listing the oligomers for the network. Each line should contain a single oligomer formated as an OLIGOMER-NAME, <tab>, then a list of domain-names or domain-name complements. Complements are denoted by prepending c. to a domain name. Convention is to list the 5' most domain first. ",ODFP_LABEL));
+        }
+        
+        availableParameters.addAll(inputFileParameters);
+        
+        ArrayList<OutputFileParameter> outputFileParameters = new ArrayList<>();
+        {
+            outputFileParameters.add(new ReportFileParameter( FILE_REPORT_DEFAULT, "Text file detailing key results and parameters used. Value must be either false or end with .txt", FILE_REPORT_LABEL, usedParameters));
+            outputFileParameters.add(new VariableDomainsFileParameter( FILE_FINAL_DOMAINS_VARIABLE_DEFAULT, "Text file listing the base-sequence of the variable domains following optimization. Value must be either false or end with .txt", FILE_FINAL_DOMAINS_VARIABLE_LABEL));
+            outputFileParameters.add(new FinalOligomersFileParameter( FILE_FINAL_OLIGOMER_SEQUENCES_DEFAULT, "Text file listing the base-sequence of the oligomers following optimization. Value must be either false or end with .txt", FILE_FINAL_OLIGOMER_SEQUENCES_LABEL));
+            outputFileParameters.add(new ScoresFileParameter( FILE_SCORE_TRAJECTORY_DEFAULT, "Text file listing the scores of the networks in each generation. Value must be either false or end with .csv", FILE_SCORE_TRAJECTORY_LABEL));
+            outputFileParameters.add(new LogScoresFileParameter( FILE_LOG_SCORE_TRAJECTORY_DEFAULT, "Text file listing the scores of the networks in logarithmically distributed generations. Value must be either false or end with .csv", FILE_LOG_SCORE_TRAJECTORY_LABEL));
+        }
+        
+        availableParameters.addAll(outputFileParameters);
+        
+        String PFP = PFP_DEFAULT;
+        if (args.length > 0)
+        {
+            if (args[0].equals("-h") || args[0].equals("--help")) // Print explanation of acceptable arguments.
+            {
+                System.out.println("SeqEvo version "+ VERSION);
+                System.out.println("Usage: SeqEvo <Parameter File Path>");
+                System.out.println("If no parameter file path is provided, the default value of "+ PFP_DEFAULT + " will be used.");
+                System.out.println("SeqEvo -h or --help will print this help message.");
+                System.out.println("SeqEvo -ep or --exampleParameters will create an example parameter file.");
+                System.exit(0);
             }
+            
+            if (args[0].equals("-ep") || args[0].equals("--exampleParameters")){
+                try{
+                    PrintStream PS = new PrintStream(EXAMPLE_PARAMETERS_FILE_DEFAULT);
+                    PS.println("// Format: parameter label <tab> default value <tab> parameter description");
+                    for (Parameter p : availableParameters){
+                        PS.println(p.getLabel()+"\t"+p.getDefault()+ "\t// "+p.getDescription());
+                    }
+                    
+                    PS.close();
+                    System.out.println("\""+EXAMPLE_PARAMETERS_FILE_DEFAULT+"\" file containing default parameters created.");
+                }catch (Exception e){
+                    System.err.println("Error creating example parameters file.");
+                    System.err.println(e.getMessage());
+                }
+                System.exit(0);
+            }
+            
+            
+            PFP = args[0]; // accept the next argument as the parameter file
+            System.out.println("Using Parameter File Path: " + PFP); 
+        }
+        
+        // Read parameters file.
+        usedParameters.put(PFP_LABEL, PFP);
+        final Map<String,String> parameters = util.importPairFromTxt(PFP);
+        
+        for (Parameter p : availableParameters){
+            String value = parameters.get(p.getLabel());
+            if (value != null){
+                if (p.isValid(value)){
+                    usedParameters.put(p.getLabel(), value);
+                } else {
+                    System.out.println("Value "+value+" is not valid for parameter "+ p.getLabel());
+                    System.exit(1);
+                }
+            } else {
+                usedParameters.put(p.getLabel(),p.getDefault());
+            }
+        }
+        
+        // Read fixed domains file.
+        final String FDFP = usedParameters.get(FDFP_LABEL);
+        final Map<String,String> fixedDomains = util.importPairFromTxt(FDFP);
+
+        // Read variable domains file.
+        final String VDFP = usedParameters.get(VDFP_LABEL);
+        final Map<String,String> initialVariableDomains = util.importPairFromTxt(VDFP);
+
+        // Read oligomer domains file.
+        final String OFP = usedParameters.get(ODFP_LABEL);
+        final Map<String,String[]> oligomerDomains = util.importListFromTxt(OFP);
+        
+        
+        Request request = new Request(usedParameters, fixedDomains,initialVariableDomains,oligomerDomains,System.out);
+        
+        Report report = s.run(request);
+        
+        // export output files.
+        String outputDirectory = usedParameters.get(OUTPUT_DIRECTORY_LABEL);
+        for (OutputFileParameter p : outputFileParameters){
+            String fp = usedParameters.get(p.getLabel());
+            if (!fp.equalsIgnoreCase("false")){
+                try{
+                    Files.createDirectories(Paths.get(outputDirectory));
+                    PrintStream PS = new PrintStream( outputDirectory + fp);
+                    p.printFile(PS, report);
+                    PS.close();
+                } catch (Exception e){
+                    System.err.println("Error while exporting "+p.getLabel()+" file.");
+                    System.err.println(e.getMessage());
+                }
+            }
+        }
+        
+        System.out.println("Initial "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.initialNetwork.getScore());
+        System.out.println("Fittest "+report.scoreLabel+" ("+report.scoreUnits+"): "+report.finalNetwork.getScore());
+        
+        System.out.println("Optimization time: "+ report.optimizationTime);
+        System.out.println("Total time: " + report.totalTime);
+        
+        System.exit(0);
+    }
+    
+    private static void printReport (PrintStream ps, Report report, Map<String,String> otherUsedParameters){
+        Map<String,String> allUsedParameters = new HashMap<>(otherUsedParameters);
+        allUsedParameters.putAll(report.usedParameters);
+
+        ps.println("Report generated by SeqEvo.");
+        ps.println("Program version: "+report.version);
+        ps.println("Start time: "+report.startTime);
+        ps.println("Optimization time: "+report.optimizationTime);
+        ps.println("Total time: "+report.totalTime);
+
+        ps.println();
+        ps.println("**************");
+        ps.println("Fitness Scores");
+        ps.println("**************");
+        ps.println();
+        ps.println("Initial network "+report.scoreLabel+" ("+report.scoreUnits+"): " +report.initialNetwork.getScore());
+        ps.println("Fittest network "+report.scoreLabel+" ("+report.scoreUnits+"): " +report.finalNetwork.getScore());
+        
+        // print used parameters.
+        ps.println();
+        ps.println("***************");
+        ps.println("Used Parameters");
+        ps.println("***************");
+        ps.println();
+
+        Map<String,String> sortedUsedParameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedUsedParameters.putAll(allUsedParameters);
+        for(Map.Entry<String,String> entry : sortedUsedParameters.entrySet()){
+            ps.println(entry.getKey()+ " " + entry.getValue());
+        }
+
+        // print initial network
+        ps.println();
+        ps.println("***************");
+        ps.println("Initial Network");
+        ps.println("***************");
+        ps.println();
+
+        Map<String,Integer> sortedFixedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedFixedDomains.putAll(report.initialNetwork.getFixedDomainIndices());
+        ps.println("Fixed Domains:");
+        ps.println("--------------");
+        for(Map.Entry<String,Integer> entry : sortedFixedDomains.entrySet()){
+            ps.println(report.initialNetwork.getFixedDomainNames()[entry.getValue()]+ " " + report.initialNetwork.getFixedDomainSequences()[entry.getValue()]);
+        }
+
+        Map<String,Integer> sortedVariableDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedVariableDomains.putAll(report.initialNetwork.getVariableDomainIndices());
+        ps.println();
+        ps.println("Variable Domains:");
+        ps.println("-----------------");
+        for(Map.Entry<String,Integer> entry : sortedVariableDomains.entrySet()){
+            ps.println(report.initialNetwork.getVariableDomainNames()[entry.getValue()]+ " " + report.initialNetwork.getVariableDomainSequences()[entry.getValue()]);
+        }
+
+        Map<String,Integer> sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedOligomers.putAll(report.initialNetwork.getOligomerIndices());
+        ps.println();
+        ps.println("Oligomer Domains:");
+        ps.println("-------------------");
+        for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
+            ps.print(report.initialNetwork.getOligomerNames()[entry.getValue()]);
+            for(String domain : report.initialNetwork.getOligomerDomains()[entry.getValue()]){
+                ps.print(" "+ domain);
+            }
+            ps.println();
+        }
+
+        ps.println();
+        ps.println("Oligomer Sequences:");
+        ps.println("-------------------");
+        for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
+            ps.println(report.initialNetwork.getOligomerNames()[entry.getValue()]+ " " + report.initialNetwork.getOligomerSequences()[entry.getValue()]);
+        }
+
+        ps.println();
+        ps.println("*************");
+        ps.println("Final Network");
+        ps.println("*************");
+        ps.println();
+
+        sortedFixedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedFixedDomains.putAll(report.finalNetwork.getFixedDomainIndices());
+        ps.println("Fixed Domains:");
+        ps.println("--------------");
+        for(Map.Entry<String,Integer> entry : sortedFixedDomains.entrySet()){
+            ps.println(report.finalNetwork.getFixedDomainNames()[entry.getValue()]+ " " + report.finalNetwork.getFixedDomainSequences()[entry.getValue()]);
+        }
+
+        sortedVariableDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedVariableDomains.putAll(report.finalNetwork.getVariableDomainIndices());
+        ps.println();
+        ps.println("Variable Domains:");
+        ps.println("-----------------");
+        for(Map.Entry<String,Integer> entry : sortedVariableDomains.entrySet()){
+            ps.println(report.finalNetwork.getVariableDomainNames()[entry.getValue()]+ " " + report.finalNetwork.getVariableDomainSequences()[entry.getValue()]);
+        }
+
+        sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedOligomers.putAll(report.finalNetwork.getOligomerIndices());
+        ps.println();
+        ps.println("Oligomer Domains:");
+        ps.println("-------------------");
+        for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
+            ps.print(report.finalNetwork.getOligomerNames()[entry.getValue()]);
+            for(String domain : report.finalNetwork.getOligomerDomains()[entry.getValue()]){
+                ps.print(" "+ domain);
+            }
+            ps.println();
+        }
+
+        ps.println();
+        ps.println("Oligomer Sequences:");
+        ps.println("-------------------");
+        for(Map.Entry<String,Integer> entry : sortedOligomers.entrySet()){
+            ps.println(report.finalNetwork.getOligomerNames()[entry.getValue()]+ " " + report.finalNetwork.getOligomerSequences()[entry.getValue()]);
+        }
+        
+    }
+    
+    private static void printFinalVariableDomains (PrintStream ps, Report report){
+        Map<String,Integer> sortedDomains = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedDomains.putAll(report.finalNetwork.getVariableDomainIndices());
+
+        String[] vds = report.finalNetwork.getVariableDomainSequences();
+        for(Map.Entry<String,Integer> entry: sortedDomains.entrySet()){
+            ps.println(entry.getKey()+ " " + vds[entry.getValue()]);
+        }
+    }
+    
+    private static void printFinalOligomers (PrintStream ps, Report report){
+        Map<String,Integer> sortedOligomers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        sortedOligomers.putAll(report.finalNetwork.getOligomerIndices());
+        String[] os = report.finalNetwork.getOligomerSequences();
+        for(Map.Entry<String,Integer> entry: sortedOligomers.entrySet()){
+            ps.println(entry.getKey()+ " " + os[entry.getValue()]);
+        }
+    }
+    
+    private static void printScoreTrajectory (PrintStream ps, Report report){
+        String[][] scores = report.lineageFittestScores;
+        int[] lineageIndexes = IntStream.range(0,scores.length).toArray();
+        ps.print("Generation Number");
+            for (int j : lineageIndexes){
+                ps.print(",Lineage "+j+" ("+report.scoreLabel+" - "+report.scoreUnits+")");
+            }
+            ps.println();
+        for(int i : IntStream.range(0,scores[0].length).toArray()){
+            ps.print(i+1);
+            for (int j : lineageIndexes){
+                ps.print(","+scores[j][i]);
+            }
+            ps.println();
+        }
+    }
+    
+    private static void printLogScoreTrajectory (PrintStream ps, Report report){
+        String[][] scores = report.lineageFittestScores;
+        int[] lineageIndexes = IntStream.range(0,scores.length).toArray();
+        ps.print("Generation Number");
+            for (int j : lineageIndexes){
+                ps.print(",Lineage "+j+" ("+report.scoreLabel+" - "+report.scoreUnits+")");
+            }
+            ps.println();
+        for(int i = 1; i < scores[0].length; i = i*2){
+            ps.print(i);
+            for (int j : lineageIndexes){
+                ps.print(","+scores[j][i-1]);
+            }
+            ps.println();
         }
     }
     
@@ -933,6 +997,312 @@ public static class Request{
                 this.fittest = fittest;
                 this.fittestScores = fittestScores;
             }
+        }
+    }
+    
+    private interface Parameter{
+        public String getDefault();
+        public String getDescription();
+        public String getLabel();
+        boolean isValid(String value);
+    }
+    
+    private static class IntegerParameter implements Parameter{
+        String description;
+        String defaultValue;
+        String label;
+        int minValue;
+        int maxValue;
+        
+        IntegerParameter ( String description, String label, String defaultValue, int minValue, int maxValue){
+            this.label = label;
+            this.description = description;
+            this.defaultValue = defaultValue;
+            this.minValue = minValue;
+            this.maxValue = maxValue;
+        }
+        
+        @Override
+        public String getDefault(){
+            return defaultValue;
+        }
+        
+        @Override
+        public String getDescription(){
+            return description;
+        }
+        
+        @Override
+        public String getLabel(){
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value){
+            int v = Integer.parseInt(value);
+            if (v < minValue) return false;
+            if (v > maxValue) return false;
+            return true;
+        }
+    }
+    
+    private static class InputFileParameter implements Parameter{
+        String defaultFilePath;
+        String description;
+        String label;
+        
+        InputFileParameter(String defaultFilePath, String description, String label){
+            this.defaultFilePath = defaultFilePath;
+            this.description = description;
+            this.label = label;
+        }
+        
+        @Override
+        public String getDefault() {
+            return defaultFilePath;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value) {
+            return value.endsWith(".txt");
+        }
+    }
+    
+    private static class OutputDirectoryParameter implements Parameter{
+        String defaultFilePath;
+        String description;
+        String label;
+        
+        OutputDirectoryParameter(String defaultFilePath, String description, String label){
+            this.defaultFilePath = defaultFilePath;
+            this.description = description;
+            this.label = label;
+        }
+        
+        @Override
+        public String getDefault() {
+            return defaultFilePath;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value) {
+            return true;
+        }
+    }
+    
+    private static interface OutputFileParameter extends Parameter{
+        void printFile(PrintStream PS, Report report);
+    }
+    
+    private static class ReportFileParameter implements OutputFileParameter{
+        String defaultFilePath;
+        String description;
+        String label;
+        Map<String,String> otherUsedParameters;
+        
+        ReportFileParameter(String defaultFilePath, String description, String label, Map<String,String> otherUsedParameters){
+            this.defaultFilePath = defaultFilePath;
+            this.description = description;
+            this.label = label;
+            this.otherUsedParameters = otherUsedParameters;
+        }
+        
+        @Override
+        public String getDefault() {
+            return defaultFilePath;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value) {
+            if (value.equalsIgnoreCase("false")) return true;
+            return value.endsWith(".txt");
+        }
+        
+        @Override
+        public void printFile(PrintStream PS, Report report){
+            printReport (PS, report, otherUsedParameters);
+        }
+    }
+    
+    private static class VariableDomainsFileParameter implements OutputFileParameter{
+        String defaultFilePath;
+        String description;
+        String label;
+        
+        VariableDomainsFileParameter(String defaultFilePath, String description, String label){
+            this.defaultFilePath = defaultFilePath;
+            this.description = description;
+            this.label = label;
+        }
+        
+        @Override
+        public String getDefault() {
+            return defaultFilePath;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value) {
+            if (value.equalsIgnoreCase("false")) return true;
+            return value.endsWith(".txt");
+        }
+        
+        @Override
+        public void printFile(PrintStream PS, Report report){
+            printFinalVariableDomains(PS, report);
+        }
+    }
+    
+    private static class FinalOligomersFileParameter implements OutputFileParameter{
+        String defaultFilePath;
+        String description;
+        String label;
+        
+        FinalOligomersFileParameter(String defaultFilePath, String description, String label){
+            this.defaultFilePath = defaultFilePath;
+            this.description = description;
+            this.label = label;
+        }
+        
+        @Override
+        public String getDefault() {
+            return defaultFilePath;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value) {
+            if (value.equalsIgnoreCase("false")) return true;
+            return value.endsWith(".txt");
+        }
+        
+        @Override
+        public void printFile(PrintStream PS, Report report){
+            printFinalOligomers(PS, report);
+        }
+    }
+    
+    private static class ScoresFileParameter implements OutputFileParameter{
+        String defaultFilePath;
+        String description;
+        String label;
+        
+        ScoresFileParameter(String defaultFilePath, String description, String label){
+            this.defaultFilePath = defaultFilePath;
+            this.description = description;
+            this.label = label;
+        }
+        
+        @Override
+        public String getDefault() {
+            return defaultFilePath;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value) {
+            if (value.equalsIgnoreCase("false")) return true;
+            return value.endsWith(".txt");
+        }
+        
+        @Override
+        public void printFile(PrintStream PS, Report report){
+            printScoreTrajectory(PS, report);
+        }
+    }
+    
+    private static class LogScoresFileParameter implements OutputFileParameter{
+        String defaultFilePath;
+        String description;
+        String label;
+        
+        LogScoresFileParameter(String defaultFilePath, String description, String label){
+            this.defaultFilePath = defaultFilePath;
+            this.description = description;
+            this.label = label;
+        }
+        
+        @Override
+        public String getDefault() {
+            return defaultFilePath;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value) {
+            if (value.equalsIgnoreCase("false")) return true;
+            return value.endsWith(".txt");
+        }
+        
+        @Override
+        public void printFile(PrintStream PS, Report report){
+            printLogScoreTrajectory(PS, report);
         }
     }
     

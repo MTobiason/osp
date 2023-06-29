@@ -65,86 +65,105 @@ public class Analyzer{
     public final static String N_LABEL = "N";
     public final static String O_LABEL = "O";
     public final static String W_LABEL = "W";
-
-    final static String PACA_LABEL = "Profile_All_Complete_Intra"; // Profile all complete intra
-    final static String PACE_LABEL = "Profile_All_Complete_Inter"; // Profile all complete inter
-    final static String PAUA_LABEL = "Profile_All_Unique_Intra"; // Profile all Unique intra
-    final static String PAUE_LABEL = "Profile_All_Unique_Inter"; // Profile all Unique inter
-
-    final static String PBCA_LABEL = "Profile_Baseline_Complete_Intra"; // Profile baseline complete intra
-    final static String PBCE_LABEL = "Profile_Baseline_Complete_Inter"; // Profile baseline complete inter
-    final static String PBUA_LABEL = "Profile_Baseline_Unique_Intra"; // Profile baseline Unique intra
-    final static String PBUE_LABEL = "Profile_Baseline_Unique_Inter"; // Profile baseline Unique inter
-
-    final static String PDCA_LABEL = "Profile_Delta_Complete_Intra"; // Profile baseline complete intra
-    final static String PDCE_LABEL = "Profile_Delta_Complete_Inter"; // Profile baseline complete inter
-    final static String PDUA_LABEL = "Profile_Delta_Unique_Intra"; // Profile baseline Unique intra
-    final static String PDUE_LABEL = "Profile_Delta_Unique_Inter"; // Profile baseline Unique inter
     
-    final static String DAUA_LABEL = "Duplexes_All_Unique_Intra"; // List of all unique intra-oligomer duplexes.
-    final static String DAUE_LABEL = "Duplexes_All_Unique_Inter"; // List of all unique intra-oligomer duplexes.
-    final static String DBUA_LABEL = "Duplexes_Baseline_Unique_Intra"; // List of baseline unique intra-oligomer duplexes.
-    final static String DBUE_LABEL = "Duplexes_Baseline_Unique_Inter"; // List of baseline unique intra-oligomer duplexes.
-    final static String DDUA_LABEL = "Duplexes_Delta_Unique_Intra"; // List of baseline unique intra-oligomer duplexes.
-    final static String DDUE_LABEL = "Duplexes_Delta_Unique_Inter"; // List of baseline unique intra-oligomer duplexes.
+    //  File and property label naming convention is:
+    //  Duplex category 1 (a label can have up to one letter from this set)
+    //      (N) Necessary duplexes only
+    //      (U) Unnecessary duplexes only
+    //  Duplex category 2 (a label needs exactly one letter from this set)
+    //      (A) Intra-Oligomer duplexes only
+    //      (E) Inter-Oligomer duplexes only
+    //  Duplex category 3 (a label can have up to one letter from this set)
+    //      (L) Largest prominent duplexes only
+    //      (P) Prominent duplexes only (i.e., those which are not part of a larger duplex)
+    //  Property type (a label needs exactly one letter from this set)
+    //      (D) Details of duplex location and base-sequence
+    //      (C) Counts of the duplexes of each length
+
+    final static String AC_LABEL = "Intra_Counts";
+    final static String ALD_LABEL = "Intra_Largest_Details"; // List of largest unique intra-oligomer duplexes.
+    final static String APC_LABEL = "Intra_Prominent_Counts";
+    final static String APD_LABEL = "Intra_Prominent_Details"; // List of all unique intra-oligomer duplexes.
+    final static String EC_LABEL = "Inter_Counts";
+    final static String ELD_LABEL = "Inter_Largest_Details"; // List of largest unique intra-oligomer duplexes.
+    final static String EPC_LABEL = "Inter_Prominent_Counts";
+    final static String EPD_LABEL = "Inter_Prominent_Details"; // List of all unique intra-oligomer duplexes.
+    final static String NAC_LABEL = "Necessary_Intra_Counts"; 
+    final static String NALD_LABEL = "Necessary_Intra_Largest_Details"; // List of largest baseline unique intra-oligomer duplexes.
+    final static String NAPC_LABEL = "Necessary_Intra_Prominent_Counts";
+    final static String NAPD_LABEL = "Necessary_Intra_Prominent_Details"; // List of baseline unique intra-oligomer duplexes.
+    final static String NEC_LABEL = "Necessary_Inter_Counts"; 
+    final static String NELD_LABEL = "Necessary_Inter_Largest_Details"; // List of largest baseline unique intra-oligomer duplexes.
+    final static String NEPC_LABEL = "Necessary_Inter_Prominent_Counts"; 
+    final static String NEPD_LABEL = "Necessary_Inter_Prominent_Details"; // List of baseline unique intra-oligomer duplexes.
+    final static String UAC_LABEL = "Unnecessary_Intra_Counts"; // Profile baseline complete intra
+    final static String UALD_LABEL = "Unnecessary_Intra_Largest_Details"; // List of largest baseline unique intra-oligomer duplexes.
+    final static String UAPC_LABEL = "Unnecessary_Intra_Prominent_Counts"; // Profile baseline Unique intra
+    final static String UAPD_LABEL = "Unnecessary_Intra_Prominent_Details"; // List of baseline unique intra-oligomer duplexes.
+    final static String UEC_LABEL = "Unnecessary_Inter_Counts"; // Profile baseline complete inter
+    final static String UELD_LABEL = "Unnecessary_Inter_Largest_Details"; // List of largest baseline unique intra-oligomer duplexes.
+    final static String UEPC_LABEL = "Unnecessary_Inter_Prominent_Counts"; // Profile baseline Unique inter
+    final static String UEPD_LABEL = "Unnecessary_Inter_Prominent_Details"; // List of baseline unique intra-oligomer duplexes.
     
-    final static String LDAUA_LABEL = "Largest_Duplexes_All_Unique_Intra"; // List of largest unique intra-oligomer duplexes.
-    final static String LDAUE_LABEL = "Largest_Duplexes_All_Unique_Inter"; // List of largest unique intra-oligomer duplexes.
-    final static String LDBUA_LABEL = "Largest_Duplexes_Baseline_Unique_Intra"; // List of largest baseline unique intra-oligomer duplexes.
-    final static String LDBUE_LABEL = "Largest_Duplexes_Baseline_Unique_Inter"; // List of largest baseline unique intra-oligomer duplexes.
-    final static String LDDUA_LABEL = "Largest_Duplexes_Delta_Unique_Intra"; // List of largest baseline unique intra-oligomer duplexes.
-    final static String LDDUE_LABEL = "Largest_Duplexes_Delta_Unique_Inter"; // List of largest baseline unique intra-oligomer duplexes.
-    
-    final static Map<String,IntegerParameter> availableParameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER); {
-        availableParameters.put(INTER_SB_LABEL, new IntegerParameter("Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex.", INTER_SB_LABEL,0,Integer.MAX_VALUE));
-        availableParameters.put(INTER_SLC_LABEL, new IntegerParameter("Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores.", INTER_SLC_LABEL,1,Integer.MAX_VALUE));
-        availableParameters.put(INTRA_SB_LABEL, new IntegerParameter("Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex.", INTRA_SB_LABEL,0,Integer.MAX_VALUE));
-        availableParameters.put(INTRA_SLC_LABEL, new IntegerParameter("Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores.", INTRA_SLC_LABEL,1,Integer.MAX_VALUE));
-        availableParameters.put(NUMBER_LARGEST_DUPLEXES_LABEL, new IntegerParameter("Maximum number of duplexes to include when listing largest-duplexes.", NUMBER_LARGEST_DUPLEXES_LABEL,1,Integer.MAX_VALUE));
-        availableParameters.put(SWX_LABEL, new IntegerParameter("W will be calculated as O times this value plus N.", SWX_LABEL,0,Integer.MAX_VALUE));
+    final static ArrayList<Parameter> availableParameters = new ArrayList<>();
+    static {
+        availableParameters.add(new IntegerParameter("Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex.", INTER_SB_LABEL,0,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerParameter("Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores.", INTER_SLC_LABEL,1,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerParameter("Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex.", INTRA_SB_LABEL,0,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerParameter("Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores.", INTRA_SLC_LABEL,1,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerParameter("Maximum number of duplexes to include when listing largest-duplexes.", NUMBER_LARGEST_DUPLEXES_LABEL,1,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerParameter("W will be calculated as O times this value plus N.", SWX_LABEL,0,Integer.MAX_VALUE));
     }
     
-    final static Map<String,Property> availableProperties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);{
-        availableProperties.put(BASELINE_N_LABEL, new Property("Network Fitness Score resulting from necessary duplexes.", BASELINE_N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{BASELINE_N_LABEL,PBUE_LABEL}));
-        availableProperties.put(BASELINE_O_LABEL, new Property("Oligomer Fitness Score resulting from necessary duplexes.", BASELINE_O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{BASELINE_O_LABEL,PBUA_LABEL}));
-        availableProperties.put(BASELINE_W_LABEL, new Property("Weighted Fitness Score resulting from necessary duplexes..", BASELINE_W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{BASELINE_N_LABEL,BASELINE_O_LABEL,BASELINE_W_LABEL,PBUA_LABEL,PBUE_LABEL}));
-        
-        availableProperties.put(DELTA_N_LABEL, new Property("Network Fitness Score resulting from unnecessary duplexes.", DELTA_N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{BASELINE_N_LABEL, DELTA_N_LABEL, N_LABEL}));
-        availableProperties.put(DELTA_O_LABEL, new Property("Oligomer Fitness Score resulting from unnecessary duplexes.", DELTA_O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{BASELINE_O_LABEL,DELTA_O_LABEL, O_LABEL}));
-        availableProperties.put(DELTA_W_LABEL, new Property("Weighted Fitness Score resulting from unnecessary duplexes.", DELTA_W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{BASELINE_N_LABEL,BASELINE_O_LABEL,BASELINE_W_LABEL,DELTA_N_LABEL,DELTA_O_LABEL,DELTA_W_LABEL,N_LABEL,O_LABEL,W_LABEL,PACE_LABEL,PACA_LABEL,PBUA_LABEL,PBUE_LABEL}));
-        
-        availableProperties.put(N_LABEL, new Property("Network Fitness Score.", N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{N_LABEL,PAUE_LABEL}));
-        availableProperties.put(O_LABEL, new Property("Oligomer Fitness Score.", O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{O_LABEL,PAUA_LABEL}));
-        availableProperties.put(W_LABEL, new Property("Weighted Fitness Score.", W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{N_LABEL,O_LABEL,W_LABEL,PACE_LABEL,PACA_LABEL}));
-        
-        availableProperties.put(PACA_LABEL, new Property("Profile of the length-counts for all intra-oligomer duplexes.", PACA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PACA_LABEL,PAUA_LABEL}));
-        availableProperties.put(PACE_LABEL, new Property("Profile of the length-counts for all inter-oligomer duplexes.", PACE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PACE_LABEL,PAUE_LABEL}));
-        availableProperties.put(PAUA_LABEL, new Property("Profile of the length-counts for the most prominent intra-oligomer duplexes.", PAUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PAUA_LABEL}));
-        availableProperties.put(PAUE_LABEL, new Property("Profile of the length-counts for the most prominent inter-oligomer duplexes.", PAUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PAUE_LABEL}));
-        
-        availableProperties.put(PBCA_LABEL, new Property("Profile of the length-counts for baseline intra-oligomer duplexes.", PBCA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PBCA_LABEL,PBUA_LABEL}));
-        availableProperties.put(PBCE_LABEL, new Property("Profile of the length-counts for baseline inter-oligomer duplexes.", PBCE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PBCE_LABEL,PBUE_LABEL}));
-        availableProperties.put(PBUA_LABEL, new Property("Profile of the length-counts for the most prominent baseline intra-oligomer duplexes.", PBUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PBUA_LABEL}));
-        availableProperties.put(PBUE_LABEL, new Property("Profile of the length-counts for the most prominent baseline inter-oligomer duplexes.", PBUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PBUE_LABEL}));
-        
-        availableProperties.put(PDCA_LABEL, new Property("Profile of the length-counts for unnecessary intra-oligomer duplexes.", PDCA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PDCA_LABEL,PDUA_LABEL,PAUA_LABEL,PBUA_LABEL}));
-        availableProperties.put(PDCE_LABEL, new Property("Profile of the length-counts for unnecessary inter-oligomer duplexes.", PDCE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PDCE_LABEL,PDUE_LABEL,PAUE_LABEL,PBUE_LABEL}));
-        availableProperties.put(PDUA_LABEL, new Property("Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes.", PDUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PDUA_LABEL,PAUA_LABEL,PBUA_LABEL}));
-        availableProperties.put(PDUE_LABEL, new Property("Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes.", PDUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PDUE_LABEL,PAUE_LABEL,PBUE_LABEL}));
-        
-        availableProperties.put(DAUA_LABEL, new Property("List of all intra-oligomer duplexes.", DAUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DAUA_LABEL}));
-        availableProperties.put(DAUE_LABEL, new Property("List of all inter-oligomer duplexes.", DAUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DAUE_LABEL}));
-        availableProperties.put(DBUA_LABEL, new Property("List of baseline intra-oligomer duplexes.", DBUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DBUA_LABEL}));
-        availableProperties.put(DBUE_LABEL, new Property("List of baseline inter-oligomer duplexes.", DBUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DBUE_LABEL}));
-        availableProperties.put(DDUA_LABEL, new Property("List of unnecessary intra-oligomer duplexes.", DDUA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DDUA_LABEL}));
-        availableProperties.put(DDUE_LABEL, new Property("List of unnecessary inter-oligomer duplexes.", DDUE_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DDUE_LABEL}));
+    final static Map<String,Parameter> labelToParameterMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER); 
+    static {
+        for (Parameter p : availableParameters){
+            labelToParameterMap.put(p.getLabel(), p);
+        }
+    }
     
-        availableProperties.put(LDAUA_LABEL, new Property("List of the largest intra-oligomer duplexes.", LDAUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDAUA_LABEL}));
-        availableProperties.put(LDAUE_LABEL, new Property("List of the largest inter-oligomer duplexes.", LDAUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDAUE_LABEL}));
-        availableProperties.put(LDBUA_LABEL, new Property("List of the largest baseline intra-oligomer duplexes.", LDBUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDBUA_LABEL}));
-        availableProperties.put(LDBUE_LABEL, new Property("List of the largest baseline inter-oligomer duplexes.", LDBUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDBUE_LABEL}));
-        availableProperties.put(LDDUA_LABEL, new Property("List of the largest unnecessary intra-oligomer duplexes.", LDDUA_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDDUA_LABEL}));
-        availableProperties.put(LDDUE_LABEL, new Property("List of the largest unnecessary inter-oligomer duplexes.", LDDUE_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LDDUE_LABEL}));        
+    final static ArrayList<Property> availableProperties = new ArrayList<>();
+    static {
+        availableProperties.add(new Property("Network Fitness Score resulting from necessary duplexes.", BASELINE_N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{BASELINE_N_LABEL,NEPC_LABEL}));
+        availableProperties.add(new Property("Oligomer Fitness Score resulting from necessary duplexes.", BASELINE_O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{BASELINE_O_LABEL,NAPC_LABEL}));
+        availableProperties.add(new Property("Weighted Fitness Score resulting from necessary duplexes..", BASELINE_W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{BASELINE_N_LABEL,BASELINE_O_LABEL,BASELINE_W_LABEL,NAPC_LABEL,NEPC_LABEL}));
+        availableProperties.add(new Property("Network Fitness Score resulting from unnecessary duplexes.", DELTA_N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{BASELINE_N_LABEL, DELTA_N_LABEL, N_LABEL}));
+        availableProperties.add(new Property("Oligomer Fitness Score resulting from unnecessary duplexes.", DELTA_O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{BASELINE_O_LABEL,DELTA_O_LABEL, O_LABEL}));
+        availableProperties.add(new Property("Weighted Fitness Score resulting from unnecessary duplexes.", DELTA_W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{BASELINE_N_LABEL,BASELINE_O_LABEL,BASELINE_W_LABEL,DELTA_N_LABEL,DELTA_O_LABEL,DELTA_W_LABEL,N_LABEL,O_LABEL,W_LABEL,EC_LABEL,AC_LABEL,NAPC_LABEL,NEPC_LABEL}));
+        availableProperties.add(new Property("Network Fitness Score.", N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{N_LABEL,EPC_LABEL}));
+        availableProperties.add(new Property("Oligomer Fitness Score.", O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{O_LABEL,APC_LABEL}));
+        availableProperties.add(new Property("Weighted Fitness Score.", W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{N_LABEL,O_LABEL,W_LABEL,EC_LABEL,AC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for all intra-oligomer duplexes.", AC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{AC_LABEL,APC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for all inter-oligomer duplexes.", EC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{EC_LABEL,EPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for the most prominent intra-oligomer duplexes.", APC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{APC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for the most prominent inter-oligomer duplexes.", EPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{EPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for necessary intra-oligomer duplexes.", NAC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{NAC_LABEL,NAPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for necessary inter-oligomer duplexes.", NEC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{NEC_LABEL,NEPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for the most prominent necessary intra-oligomer duplexes.", NAPC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{NAPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for the most prominent necessary inter-oligomer duplexes.", NEPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{NEPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for unnecessary intra-oligomer duplexes.", UAC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{UAC_LABEL,UAPC_LABEL,APC_LABEL,NAPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for unnecessary inter-oligomer duplexes.", UEC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{UEC_LABEL,UEPC_LABEL,EPC_LABEL,NEPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes.", UAPC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{UAPC_LABEL,APC_LABEL,NAPC_LABEL}));
+        availableProperties.add(new Property("Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes.", UEPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{UEPC_LABEL,EPC_LABEL,NEPC_LABEL}));
+        availableProperties.add(new Property("List of all intra-oligomer duplexes.", APD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{APD_LABEL}));
+        availableProperties.add(new Property("List of all inter-oligomer duplexes.", EPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{EPD_LABEL}));
+        availableProperties.add(new Property("List of necessary intra-oligomer duplexes.", NAPD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{NAPD_LABEL}));
+        availableProperties.add(new Property("List of necessary inter-oligomer duplexes.", NEPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{NEPD_LABEL}));
+        availableProperties.add(new Property("List of unnecessary intra-oligomer duplexes.", UAPD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{UAPD_LABEL}));
+        availableProperties.add(new Property("List of unnecessary inter-oligomer duplexes.", UEPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{UEPD_LABEL}));
+        availableProperties.add(new Property("List of the largest intra-oligomer duplexes.", ALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{ALD_LABEL}));
+        availableProperties.add(new Property("List of the largest inter-oligomer duplexes.", ELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{ELD_LABEL}));
+        availableProperties.add(new Property("List of the largest necessary intra-oligomer duplexes.", NALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{NALD_LABEL}));
+        availableProperties.add(new Property("List of the largest necessary inter-oligomer duplexes.", NELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{NELD_LABEL}));
+        availableProperties.add(new Property("List of the largest unnecessary intra-oligomer duplexes.", UALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{UALD_LABEL}));
+        availableProperties.add(new Property("List of the largest unnecessary inter-oligomer duplexes.", UELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{UELD_LABEL}));        
+}
+    
+    final static Map<String,Property> labelToPropertyMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    static {
+        for (Property p : availableProperties){
+            labelToPropertyMap.put(p.getLabel(), p);
+        }
     }
 
     final int MAXTHREADS;
@@ -175,7 +194,7 @@ public class Analyzer{
         Collection<String> neededParameters = new HashSet<>();
         
         for (String propertyLabel : r.requestedProperties){
-            Property p = availableProperties.get(propertyLabel);
+            Property p = labelToPropertyMap.get(propertyLabel);
             if (p == null) {
                 System.err.println("Property "+ propertyLabel + " not supported by analyzer.");
                 System.exit(1);
@@ -190,7 +209,7 @@ public class Analyzer{
         
         Map<String,String> usedParameters = new HashMap<>();
         for (String parameterLabel : neededParameters){
-            Parameter p = availableParameters.get(parameterLabel);
+            Parameter p = labelToParameterMap.get(parameterLabel);
             if (p == null) {
                 System.err.println("Parameter "+ parameterLabel + " not supported by analyzer.");
                 System.exit(1);
@@ -228,23 +247,23 @@ public class Analyzer{
         Map<String,String> calculatedPropertyValues = new HashMap<>();
         
         // if baseline intra duplexes is required calculate it.
-        if (neededProperties.contains(PBUA_LABEL)){
+        if (neededProperties.contains(NAPC_LABEL)){
             pbua = as.getBaselineIntraDuplexCount(r.network, Integer.valueOf(usedParameters.get(INTRA_SLC_LABEL)));
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pbua.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PBUA_LABEL, valueString.toString());
+            calculatedPropertyValues.put(NAPC_LABEL, valueString.toString());
         }
         
         // if baseline inter duplexes is required calculate it.
-        if (neededProperties.contains(PBUE_LABEL)){
+        if (neededProperties.contains(NEPC_LABEL)){
             pbue = as.getBaselineInterDuplexCount(r.network, Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pbue.entrySet()){
                 valueString.append(entry.getKey()).append(" ").append(entry.getValue()).append(System.lineSeparator());
             }
-            calculatedPropertyValues.put(PBUE_LABEL, valueString.toString());
+            calculatedPropertyValues.put(NEPC_LABEL, valueString.toString());
         }
         
         // if baselineN is required calculate it.
@@ -266,23 +285,23 @@ public class Analyzer{
         }
         
         // if intraduplexes is required, calculate it.
-        if (neededProperties.contains(PAUA_LABEL)){
+        if (neededProperties.contains(APC_LABEL)){
             paua = as.getIntraDuplexCount(r.network, Integer.valueOf(usedParameters.get(INTRA_SLC_LABEL)));
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : paua.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PAUA_LABEL, valueString.toString());
+            calculatedPropertyValues.put(APC_LABEL, valueString.toString());
         }
         
         // if interduplexes is required, calculate it.
-        if (neededProperties.contains(PAUE_LABEL)){
+        if (neededProperties.contains(EPC_LABEL)){
             paue = as.getInterDuplexCount(r.network, Integer.valueOf(usedParameters.get(INTER_SLC_LABEL)));
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : paue.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PAUE_LABEL, valueString.toString());
+            calculatedPropertyValues.put(EPC_LABEL, valueString.toString());
         }
         
         // if N is required calculate it.
@@ -322,171 +341,171 @@ public class Analyzer{
         }
         
         //PACA
-        if (neededProperties.contains(PACA_LABEL)){
+        if (neededProperties.contains(AC_LABEL)){
             paca = getCompleteProfile(paua,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
             
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : paca.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PACA_LABEL, valueString.toString());
+            calculatedPropertyValues.put(AC_LABEL, valueString.toString());
         }
         
         //PACE
-        if (neededProperties.contains(PACE_LABEL)){
+        if (neededProperties.contains(EC_LABEL)){
             pace = getCompleteProfile(paue,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
             
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pace.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PACE_LABEL, valueString.toString());
+            calculatedPropertyValues.put(EC_LABEL, valueString.toString());
         }
         
         //PBCA
-        if (neededProperties.contains(PBCA_LABEL)){
+        if (neededProperties.contains(NAC_LABEL)){
             pbca = getCompleteProfile(pbua,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
             
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pbca.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PBCA_LABEL, valueString.toString());
+            calculatedPropertyValues.put(NAC_LABEL, valueString.toString());
         }
         
         //PBCE
-        if (neededProperties.contains(PBCE_LABEL)){
+        if (neededProperties.contains(NEC_LABEL)){
             pbce = getCompleteProfile(pbue,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
             
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pbce.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PBCE_LABEL, valueString.toString());
+            calculatedPropertyValues.put(NEC_LABEL, valueString.toString());
         }
         
         //PDUA
-        if (neededProperties.contains(PDUA_LABEL)){
+        if (neededProperties.contains(UAPC_LABEL)){
             pdua = getProfileDifference(paua,pbua,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pdua.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PDUA_LABEL, valueString.toString());
+            calculatedPropertyValues.put(UAPC_LABEL, valueString.toString());
         }
         
         //PDUE
-        if (neededProperties.contains(PDUE_LABEL)){
+        if (neededProperties.contains(UEPC_LABEL)){
             pdue = getProfileDifference(paue,pbue,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
             
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pdue.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PDUE_LABEL, valueString.toString());
+            calculatedPropertyValues.put(UEPC_LABEL, valueString.toString());
         }
         
         //PDCA
-        if (neededProperties.contains(PDCA_LABEL)){
+        if (neededProperties.contains(UAC_LABEL)){
             pdca = getCompleteProfile(pdua,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
             
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pdca.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PDCA_LABEL, valueString.toString());
+            calculatedPropertyValues.put(UAC_LABEL, valueString.toString());
         }
         
         //PDCE
-        if (neededProperties.contains(PDCE_LABEL)){
+        if (neededProperties.contains(UEC_LABEL)){
             pdce = getCompleteProfile(pdue,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
             
             StringBuilder valueString = new StringBuilder();
             for(Map.Entry<Integer,Integer> entry : pdce.entrySet()){
                 valueString.append(entry.getKey()+" "+entry.getValue()+System.lineSeparator());
             }
-            calculatedPropertyValues.put(PDCE_LABEL, valueString.toString());
+            calculatedPropertyValues.put(UEC_LABEL, valueString.toString());
         }
         
         //DAUA
         Duplexes daua = null;
-        if (neededProperties.contains(DAUA_LABEL)){
+        if (neededProperties.contains(APD_LABEL)){
             daua = as.getIntraDuplexes(r.network,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
-            calculatedPropertyValues.put(DAUA_LABEL, daua.toString());
+            calculatedPropertyValues.put(APD_LABEL, daua.toString());
         }
         
         //DAUE
         Duplexes daue = null;
-        if (neededProperties.contains(DAUE_LABEL)){
+        if (neededProperties.contains(EPD_LABEL)){
             daue = as.getInterDuplexes(r.network,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
-            calculatedPropertyValues.put(DAUE_LABEL, daue.toString());
+            calculatedPropertyValues.put(EPD_LABEL, daue.toString());
         }
         
         //DBUA
         Duplexes dbua = null;
-        if (neededProperties.contains(DBUA_LABEL)){
+        if (neededProperties.contains(NAPD_LABEL)){
             dbua = as.getBaselineIntraDuplexes(r.network,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
-            calculatedPropertyValues.put(DBUA_LABEL, dbua.toString());
+            calculatedPropertyValues.put(NAPD_LABEL, dbua.toString());
         }
         
         //DBUE
         Duplexes dbue = null;
-        if (neededProperties.contains(DBUE_LABEL)){
+        if (neededProperties.contains(NEPD_LABEL)){
             dbue = as.getBaselineInterDuplexes(r.network,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
-            calculatedPropertyValues.put(DBUE_LABEL, dbue.toString());
+            calculatedPropertyValues.put(NEPD_LABEL, dbue.toString());
         }
         
         //DDUA
         Duplexes ddua = null;
-        if (neededProperties.contains(DDUA_LABEL)){
+        if (neededProperties.contains(UAPD_LABEL)){
             ddua = as.getDeltaIntraDuplexes(r.network,Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)));
-            calculatedPropertyValues.put(DDUA_LABEL, ddua.toString());
+            calculatedPropertyValues.put(UAPD_LABEL, ddua.toString());
         }
         
         //DDUE
         Duplexes ddue = null;
-        if (neededProperties.contains(DDUE_LABEL)){
+        if (neededProperties.contains(UEPD_LABEL)){
             ddue = as.getDeltaInterDuplexes(r.network,Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)));
-            calculatedPropertyValues.put(DDUE_LABEL, ddue.toString());
+            calculatedPropertyValues.put(UEPD_LABEL, ddue.toString());
         }
         
         //LDAUA
         LargestDuplexes ldaua = null;
-        if (neededProperties.contains(LDAUA_LABEL)){
+        if (neededProperties.contains(ALD_LABEL)){
             ldaua = as.getLargestIntraDuplexes(r.network, Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
-            calculatedPropertyValues.put(LDAUA_LABEL, ldaua.toString());
+            calculatedPropertyValues.put(ALD_LABEL, ldaua.toString());
         }
         //LDAUE
         LargestDuplexes ldaue = null;
-        if (neededProperties.contains(LDAUE_LABEL)){
+        if (neededProperties.contains(ELD_LABEL)){
             ldaue = as.getLargestInterDuplexes(r.network, Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
-            calculatedPropertyValues.put(LDAUE_LABEL, ldaue.toString());
+            calculatedPropertyValues.put(ELD_LABEL, ldaue.toString());
         }
         
         //LDBUA
         LargestDuplexes ldbua = null;
-        if (neededProperties.contains(LDBUA_LABEL)){
+        if (neededProperties.contains(NALD_LABEL)){
             ldbua = as.getLargestBaselineIntraDuplexes(r.network, Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
-            calculatedPropertyValues.put(LDBUA_LABEL, ldbua.toString());
+            calculatedPropertyValues.put(NALD_LABEL, ldbua.toString());
         }
         //LDBUE
         LargestDuplexes ldbue = null;
-        if (neededProperties.contains(LDBUE_LABEL)){
+        if (neededProperties.contains(NELD_LABEL)){
             ldbue = as.getLargestBaselineInterDuplexes(r.network, Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
-            calculatedPropertyValues.put(LDBUE_LABEL, ldbue.toString());
+            calculatedPropertyValues.put(NELD_LABEL, ldbue.toString());
         }
         
         //LDDUA
         LargestDuplexes lddua = null;
-        if (neededProperties.contains(LDDUA_LABEL)){
+        if (neededProperties.contains(UALD_LABEL)){
             lddua = as.getLargestDeltaIntraDuplexes(r.network, Integer.parseInt(usedParameters.get(INTRA_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
-            calculatedPropertyValues.put(LDDUA_LABEL, lddua.toString());
+            calculatedPropertyValues.put(UALD_LABEL, lddua.toString());
         }
         //LDBUE
         LargestDuplexes lddue = null;
-        if (neededProperties.contains(LDDUE_LABEL)){
+        if (neededProperties.contains(UELD_LABEL)){
             lddue = as.getLargestDeltaInterDuplexes(r.network, Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
-            calculatedPropertyValues.put(LDDUE_LABEL, lddue.toString());
+            calculatedPropertyValues.put(UELD_LABEL, lddue.toString());
         }
         
         Map<String,String> requestedPropertyValues = new HashMap<>();
@@ -2344,7 +2363,7 @@ public class Analyzer{
         return ret;
     }
     
-    private class Property{
+    static private class Property{
         String label;
         String description;
         String[] neededParameters;
@@ -2380,13 +2399,13 @@ public class Analyzer{
         }
     }
     
-    private interface Parameter{
+    static private interface Parameter{
         public String getDescription();
         public String getLabel();
         boolean isValid(String value);
     }
     
-    private class IntegerParameter implements Parameter{
+    private static class IntegerParameter implements Parameter{
         String description;
         String label;
         int minValue;
@@ -2418,7 +2437,7 @@ public class Analyzer{
         }
     }
     
-    static private class Duplexes{
+    private static class Duplexes{
         ArrayList<Integer> indexesO1;
         ArrayList<Integer> indexesO1B1;
         ArrayList<Integer> indexesO2;

@@ -47,8 +47,8 @@ public class SeqEvoTest_1x32 {
             oligomerDomains.put("Duplex-1-Bottom", new String[] {"c.Domain-1"});
         }
         
-        SeqEvo s = new SeqEvo(parameters);
-        SeqEvo.Request req = new SeqEvo.Request(fixedDomains, variableDomains, oligomerDomains,System.out);
+        SeqEvo s = new SeqEvo();
+        SeqEvo.Request req = new SeqEvo.Request(parameters, fixedDomains, variableDomains, oligomerDomains,System.out);
         SeqEvo.Report rep = s.run(req);
         System.exit(0);
     }
