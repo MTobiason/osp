@@ -23,6 +23,7 @@
  */
 package edu.boisestate.osp;
 
+import edu.boisestate.osp.networks.IDomainBasedEncodedNetwork;
 import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -171,7 +172,6 @@ public class Analyzer{
     final AnalysisSupervisor as;
     
     public Analyzer(int maxThreads, int maxThreadsPerNetwork){
-        
         MAXTHREADS = maxThreads;
         MAXTHREADSPERNETWORK = maxThreadsPerNetwork;
         as = new AnalysisSupervisor(MAXTHREADS,MAXTHREADSPERNETWORK);

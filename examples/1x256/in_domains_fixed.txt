@@ -1,0 +1,1 @@
+// Fixed domain file for single 256-base-pair duplex example.

@@ -1,0 +1,3 @@
+c	CA
+Sf	TTTTTTTTTTT
+T	TCT

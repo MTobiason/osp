@@ -23,6 +23,10 @@
  */
 package edu.boisestate.osp;
 
+import edu.boisestate.osp.coders.ICoder;
+import edu.boisestate.osp.coders.Coder;
+import edu.boisestate.osp.networks.FactoryDomainBasedEncodedNetwork;
+import edu.boisestate.osp.networks.IDomainBasedEncodedNetwork;
 import java.util.Map;
 import java.util.HashMap;
 import java.io.File;
@@ -275,7 +279,7 @@ public class DevPro {
         availableOutputFiles.add(new DuplexesFile(ALD_FILE_DEFAULT, "List of the largest unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.", ALD_FILE_LABEL, ALD_LABEL));
         availableOutputFiles.add(new ProfileFile(APC_FILE_DEFAULT, "Profile of the length-counts for the most prominent intra-oligomer duplexes.", APC_FILE_LABEL, APC_LABEL));
         availableOutputFiles.add(new DuplexesFile(APD_FILE_DEFAULT, "List of all prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.", APD_FILE_LABEL, APD_LABEL));
-        availableOutputFiles.add(new ProfileFile(EC_FILE_DEFAULT, "Profile of the length-counts for all inter-oligomer duplexes. Must be either a file name ending with .csv or false.", APC_FILE_LABEL, EC_LABEL));
+        availableOutputFiles.add(new ProfileFile(EC_FILE_DEFAULT, "Profile of the length-counts for all inter-oligomer duplexes. Must be either a file name ending with .csv or false.", EC_FILE_LABEL, EC_LABEL));
         availableOutputFiles.add(new DuplexesFile(ELD_FILE_DEFAULT, "List of all unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.", ELD_FILE_LABEL, ELD_LABEL));
         availableOutputFiles.add(new ProfileFile(EPC_FILE_DEFAULT, "Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", EPC_FILE_LABEL, EPC_LABEL));
         availableOutputFiles.add(new DuplexesFile(EPD_FILE_DEFAULT, "List of all prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", EPD_FILE_LABEL, EPD_LABEL));
@@ -291,7 +295,7 @@ public class DevPro {
         availableOutputFiles.add(new DuplexesFile(UALD_FILE_DEFAULT, "List of delta unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.", UALD_FILE_LABEL, UALD_LABEL));
         availableOutputFiles.add(new ProfileFile(UAPC_FILE_DEFAULT, "Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", UAPC_FILE_LABEL, UAPC_LABEL));
         availableOutputFiles.add(new DuplexesFile(UAPD_FILE_DEFAULT, "List of unnecessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.", UAPD_FILE_LABEL, UAPD_LABEL));
-        availableOutputFiles.add(new ProfileFile(UEC_FILE_DEFAULT, "Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UAPC_FILE_LABEL, UEC_LABEL));
+        availableOutputFiles.add(new ProfileFile(UEC_FILE_DEFAULT, "Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UEC_FILE_LABEL, UEC_LABEL));
         availableOutputFiles.add(new DuplexesFile(UELD_FILE_DEFAULT, "List of delta unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UELD_FILE_LABEL, UELD_LABEL));
         availableOutputFiles.add(new ProfileFile(UEPC_FILE_DEFAULT, "Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UEPC_FILE_LABEL, UEPC_LABEL));
         availableOutputFiles.add(new DuplexesFile(UEPD_FILE_DEFAULT, "List of unnecessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UEPD_FILE_LABEL, UEPD_LABEL));
@@ -596,21 +600,6 @@ public class DevPro {
         }
         
         System.exit(0);
-    }
-    
-    private void printProfile(PrintStream ps, String label ,String lengthCounts){
-        ps.print(label);
-        ps.print(" (base-pairs, counts):");
-        String[] splitStrings = lengthCounts.split(System.lineSeparator());
-        Map<Integer,Integer> sortedValues = new TreeMap<>();
-        for(String value: splitStrings){
-            String[] splitValues = value.split(" ");
-            sortedValues.put(Integer.parseInt(splitValues[0]),Integer.parseInt(splitValues[1]));
-        }
-        for(Map.Entry<Integer,Integer> entry :sortedValues.entrySet()){
-            ps.print(" ("+entry.getKey()+", "+entry.getValue()+")");
-        }
-        ps.println();
     }
     
     private static void printProfileCSV(PrintStream ps, String lengthCounts){

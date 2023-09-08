@@ -1,0 +1,5 @@
+Catalyst	z4a x y z7
+Signal	z6 z3 z4a x
+Fuel	x y z2c z3 z4a x
+Backbone	c.y c.x c.z4a c.z3 c.z2c c.y c.x
+Output	z9a x y z2c

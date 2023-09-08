@@ -1,0 +1,45 @@
+AA	c S6 c T c S5 c
+AB	c.c c.T c.c c.S5 c.c c.T c.c
+AC	c S7 c T c S5 c
+AD	c S5 c
+AE	c.c c.S5 c.c c.T c.c c.S2
+AF	c S5 c T c S2 c
+AG	c.c c.T c.c c.S2 c.c c.T c.c
+AH	c S2 c T c S1 c
+AI	c.c c.T c.c c.S1 c.c c.T c.c
+AJ	c S10 c T c S1 c
+AK	c S1 c
+AL	c.c c.S1 c.c c.T c.c c.S4
+AM	c S1 c T c S4 c
+AN	c.c c.T c.c c.S4 c.c c.T c.c
+AO	c S2 c T c S3 c
+AP	c.c c.T c.c c.S3 c.c c.T c.c
+AQ	c S11 c T c S3 c
+AR	c S3 c
+AS	c.c c.S3 c.c c.T c.c c.S12
+AT	c S3 c T c S12 c
+AU	c.c c.T c.c c.S12 c.c c.T c.c
+AW	c.c c.T c.c c.S8 c.c c.T c.c
+AX	c S15 c T c S8 c
+AY	c S8 c
+AZ	c.c c.S8 c.c c.T c.c c.S16
+BA	c S8 c T c S16 c
+BB	c.c c.T c.c c.S16 c.c c.T c.c
+BD	c.c c.T c.c c.S17 c.c c.T c.c
+BE	c S19 c T c S17 c
+BF	c S17 c
+BG	c.c c.S17 c.c c.T c.c c.S20
+BH	c S17 c T c S20 c
+BI	c.c c.T c.c c.S20 c.c c.T c.c
+BJ	c S20 c T c S21 c
+BK	c S20 c T c S22 c
+BL	c S16 c T c S18 c
+BM	c S4 c T c S9 c
+BN	c S12 c T c S13 c
+BO	c S12 c T c S14 c
+BP	c S2 c T c S8 c
+BQ	c S2 c T c S17 c
+BR	c S4 c T c S23 c
+BS	c S16 c T c S24 c
+CA	c S6 c
+CB	c.c c.S6 c.c c.T c.c

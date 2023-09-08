@@ -23,6 +23,15 @@
  */
 package edu.boisestate.osp;
 
+import edu.boisestate.osp.validators.IValidator;
+import edu.boisestate.osp.validators.Validator;
+import edu.boisestate.osp.scorers.IScorer;
+import edu.boisestate.osp.scorers.DeltaWScorer;
+import edu.boisestate.osp.coders.ICoder;
+import edu.boisestate.osp.coders.Coder;
+import edu.boisestate.osp.networks.FactoryDomainBasedEncodedNetwork;
+import edu.boisestate.osp.networks.IDomainBasedEncodedNetwork;
+import edu.boisestate.osp.networks.IDomainBasedEncodedScoredNetwork;
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Files;
@@ -49,9 +58,9 @@ public class SeqEvo {
     final static int NUMBERTHREADS = Runtime.getRuntime().availableProcessors();
     
     //Scoring parameters
-    final String FS = "Wx"; // Fitness Score
-    final static String FS_LABEL = "FS"; // Fitness-Score
     final static String FS_DEFAULT = "Wx";
+    final static String FS_LABEL = "FITNESS_SCORE"; // Fitness-Score
+    final static String[] FS_VALUES = new String[] {"Wx"};
     final static String SWX_LABEL = "scoringWeightX";
     final static String SWX_DEFAULT = "10000";
     final static String INTRA_SLC_LABEL = "intraSLC";
@@ -85,31 +94,33 @@ public class SeqEvo {
     final static String NMPC_LABEL = "NMPC";
     final static String NMPC_DEFAULT = "2";
     
-    final static ArrayList<IntegerParameter> integerParameters = new ArrayList<>();
+    final static ArrayList<Parameter> parameters = new ArrayList<>();
     static {
         // Scoring parameters
-        integerParameters.add(new IntegerParameter( "Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".", INTER_SB_LABEL, INTER_SB_DEFAULT, 0, Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", INTER_SLC_LABEL, INTER_SLC_DEFAULT, 1, Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".", INTRA_SB_LABEL, INTRA_SB_DEFAULT, 0, Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", INTRA_SLC_LABEL, INTRA_SB_DEFAULT, 1, Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", SWX_LABEL, SWX_DEFAULT, 0, Integer.MAX_VALUE));
+        parameters.add(new StringParameter( FS_DEFAULT, "Fitness score to optimize. The only currently accepted value is Wx.",FS_LABEL,FS_VALUES));
+        parameters.add(new IntegerParameter( INTER_SB_DEFAULT, "Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".", INTER_SB_LABEL, 0, Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( INTER_SLC_DEFAULT, "Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", INTER_SLC_LABEL, 1, Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( INTRA_SB_DEFAULT, "Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".", INTRA_SB_LABEL, 0, Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( INTRA_SLC_DEFAULT, "Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", INTRA_SLC_LABEL, 1, Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( SWX_DEFAULT, "W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", SWX_LABEL, 0, Integer.MAX_VALUE));
     
         // Optimization parameters
-        integerParameters.add(new IntegerParameter( "Cycles-Per-Lineage. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", CPL_LABEL, CPL_DEFAULT,1,Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "Generations-Per-Cycle. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", GPC_LABEL, GPC_DEFAULT,1,Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "New-Daughters-Per-Generation. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", NDPG_LABEL, NDPG_DEFAULT,1,Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "New-Mothers-Per-Cycle. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", NMPC_LABEL, NMPC_DEFAULT,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( CPL_DEFAULT, "Cycles-Per-Lineage. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", CPL_LABEL,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( GPC_DEFAULT, "Generations-Per-Cycle. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", GPC_LABEL,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( NDPG_DEFAULT, "New-Daughters-Per-Generation. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", NDPG_LABEL,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( NL_DEFAULT, "Number-of-Lineages. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", NL_LABEL,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( NMPC_DEFAULT, "New-Mothers-Per-Cycle. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", NMPC_LABEL,1,Integer.MAX_VALUE));
         
         // Mutation parameters
-        integerParameters.add(new IntegerParameter( "Maximum number of consecutive adenosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_AA_LABEL, MAX_AA_DEFAULT,1,Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "Maximum number of consecutive cytosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_CC_LABEL, MAX_CC_DEFAULT,1,Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "Maximum number of consecutive guanine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_GG_LABEL, MAX_GG_DEFAULT,1,Integer.MAX_VALUE));
-        integerParameters.add(new IntegerParameter( "Maximum number of consecutive thymine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_TT_LABEL, MAX_TT_DEFAULT,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( MAX_AA_DEFAULT, "Maximum number of consecutive adenosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_AA_LABEL,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( MAX_CC_DEFAULT, "Maximum number of consecutive cytosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_CC_LABEL,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( MAX_GG_DEFAULT, "Maximum number of consecutive guanine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_GG_LABEL,1,Integer.MAX_VALUE));
+        parameters.add(new IntegerParameter( MAX_TT_DEFAULT, "Maximum number of consecutive thymine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", MAX_TT_LABEL,1,Integer.MAX_VALUE));
     }
     
     final static ArrayList<Parameter> availableParameters = new ArrayList<>();
     static {
-        availableParameters.addAll(integerParameters);
+        availableParameters.addAll(parameters);
     }
     
     final static Map<String,Parameter> labelToParameterMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER); 
@@ -293,9 +304,6 @@ public class SeqEvo {
     public static void main(String[] args){
         SeqEvo s = new SeqEvo();
         
-        ArrayList<Parameter> availableParameters = new ArrayList<>(s.availableParameters);
-        Map<String,String> usedParameters = new HashMap<>();
-        
         final String PFP_LABEL = "PFP"; //parameters File Path
         final String PFP_DEFAULT = "se_parameters.txt";
         final String EXAMPLE_PARAMETERS_FILE_DEFAULT = "se_parameters_example.txt";
@@ -322,7 +330,9 @@ public class SeqEvo {
         final String FILE_LOG_SCORE_TRAJECTORY_LABEL = "OUT_FILE_LOG_SCORES"; // Output Score Trajectories File Path
         final String FILE_LOG_SCORE_TRAJECTORY_DEFAULT = "score_trajectories_log.csv";
         
-        availableParameters.add(new OutputDirectoryParameter(OUTPUT_DIRECTORY_DEFAULT, "Directory where output files will be created. ", OUTPUT_DIRECTORY_LABEL ));
+        ArrayList<Parameter> allAvailableParameters = new ArrayList<>(availableParameters);
+        Map<String,String> usedParameters = new HashMap<>();
+        allAvailableParameters.add(new OutputDirectoryParameter(OUTPUT_DIRECTORY_DEFAULT, "Directory where output files will be created. ", OUTPUT_DIRECTORY_LABEL ));
         
         ArrayList<InputFileParameter> inputFileParameters = new ArrayList<>();
         {
@@ -331,7 +341,7 @@ public class SeqEvo {
             inputFileParameters.add( new InputFileParameter( ODFP_DEFAULT, "Text file listing the oligomers for the network. Each line should contain a single oligomer formated as an OLIGOMER-NAME, <tab>, then a list of domain-names or domain-name complements. Complements are denoted by prepending c. to a domain name. Convention is to list the 5' most domain first. ",ODFP_LABEL));
         }
         
-        availableParameters.addAll(inputFileParameters);
+        allAvailableParameters.addAll(inputFileParameters);
         
         ArrayList<OutputFileParameter> outputFileParameters = new ArrayList<>();
         {
@@ -342,7 +352,7 @@ public class SeqEvo {
             outputFileParameters.add(new LogScoresFileParameter( FILE_LOG_SCORE_TRAJECTORY_DEFAULT, "Text file listing the scores of the networks in logarithmically distributed generations. Value must be either false or end with .csv", FILE_LOG_SCORE_TRAJECTORY_LABEL));
         }
         
-        availableParameters.addAll(outputFileParameters);
+        allAvailableParameters.addAll(outputFileParameters);
         
         String PFP = PFP_DEFAULT;
         if (args.length > 0)
@@ -361,7 +371,7 @@ public class SeqEvo {
                 try{
                     PrintStream PS = new PrintStream(EXAMPLE_PARAMETERS_FILE_DEFAULT);
                     PS.println("// Format: parameter label <tab> default value <tab> parameter description");
-                    for (Parameter p : availableParameters){
+                    for (Parameter p : allAvailableParameters){
                         PS.println(p.getLabel()+"\t"+p.getDefault()+ "\t// "+p.getDescription());
                     }
                     
@@ -383,7 +393,7 @@ public class SeqEvo {
         usedParameters.put(PFP_LABEL, PFP);
         final Map<String,String> parameters = util.importPairFromTxt(PFP);
         
-        for (Parameter p : availableParameters){
+        for (Parameter p : allAvailableParameters){
             String value = parameters.get(p.getLabel());
             if (value != null){
                 if (p.isValid(value)){
@@ -652,7 +662,7 @@ public class SeqEvo {
                 try{
                     ret[i] = results[i].get();
                 } catch (Exception e){
-                    System.out.println("Exception during type 3 mutation.");
+                    System.out.println("Exception during type 1 mutation.");
                     System.out.println(e.getMessage());
                     ret[i] = network;
                 }
@@ -699,8 +709,9 @@ public class SeqEvo {
                 try{
                     ret[i] = results[i].get();
                 } catch (Exception e){
-                    System.out.println("Exception during type 3 mutation.");
-                    System.out.println(e.getMessage());
+                    System.out.println("Exception during type 2 mutation.");
+                    System.out.println(e.toString());
+                    e.printStackTrace();
                     ret[i] = network;
                 }
             }
@@ -1014,7 +1025,7 @@ public class SeqEvo {
         int minValue;
         int maxValue;
         
-        IntegerParameter ( String description, String label, String defaultValue, int minValue, int maxValue){
+        IntegerParameter ( String defaultValue, String description, String label, int minValue, int maxValue){
             this.label = label;
             this.description = description;
             this.defaultValue = defaultValue;
@@ -1043,6 +1054,43 @@ public class SeqEvo {
             if (v < minValue) return false;
             if (v > maxValue) return false;
             return true;
+        }
+    }
+    
+    private static class StringParameter implements Parameter{
+        String[] validValues;
+        String defaultValue;
+        String description;
+        String label;
+        
+        StringParameter (String defaultValue, String description, String label, String[] validValues){
+            this.label = label;
+            this.description = description;
+            this.defaultValue = defaultValue;
+            this.validValues = validValues;
+        }
+        
+        @Override
+        public String getDefault(){
+            return defaultValue;
+        }
+        
+        @Override
+        public String getDescription(){
+            return description;
+        }
+        
+        @Override
+        public String getLabel(){
+            return label;
+        }
+        
+        @Override
+        public boolean isValid(String value){
+            for(String s : validValues){
+                if (value.equals(s)) return true;
+            }
+            return false;
         }
     }
     
