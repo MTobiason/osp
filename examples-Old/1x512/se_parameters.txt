@@ -1,3 +1,0 @@
-// Example parameters for generating a single 256 base-pair duplex with no unnecessasry 3-base-pair intra-oligomer duplexes or 8-base-pair inter-oligomer duplexes.
-intraSLC 3
-interSLC 8

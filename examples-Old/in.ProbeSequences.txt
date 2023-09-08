@@ -1,3 +1,0 @@
-//Oligo Name	Oligo Sequence
-PS3 TCCTCCC
-c.PS3 GGGAGGA

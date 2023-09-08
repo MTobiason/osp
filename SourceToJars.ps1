@@ -46,10 +46,10 @@ MT-CheckExitCode("creating class directory")
 New-Item "$LOCATION\MT-temp\jar" -type directory -force | Out-Null
 MT-CheckExitCode("creating jar directory")
 
-if( Test-Path $Location\bin)
+if( Test-Path $Location\jar)
 {
-    New-Item "$LOCATION\bin" -type directory -force | Out-Null
-    MT-CheckExitCode("creating bin directory")
+    New-Item "$LOCATION\jar" -type directory -force | Out-Null
+    MT-CheckExitCode("creating jar directory")
 }
 
 $Targets = 'SeqEvo', 'DevPro'

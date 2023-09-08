@@ -1,4 +1,0 @@
-// Parameters file for 512 8-base-pair duplexes example.
-CPL 10000
-intraSLC 3
-interSLC 8

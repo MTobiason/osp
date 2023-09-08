@@ -1,2 +1,0 @@
-Top-Strand	A B C
-Bottom-Strand	c.C c.B c.A

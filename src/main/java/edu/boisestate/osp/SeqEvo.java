@@ -53,6 +53,7 @@ import java.util.stream.IntStream;
  *
  * @author mtobi
  */
+
 public class SeqEvo {
     final static String VERSION = "2.0";
     final static int NUMBERTHREADS = Runtime.getRuntime().availableProcessors();
@@ -310,25 +311,25 @@ public class SeqEvo {
 
         // input files
         final String FDFP_LABEL = "IN_FILE_DOMAINS_FIXED"; // fixed-domains-file-path
-        final String FDFP_DEFAULT = "in_domains_fixed.txt";
+        final String FDFP_DEFAULT = "se_in_domains_fixed.txt";
         final String VDFP_LABEL = "IN_FILE_DOMAINS_VARIABLE"; // variable-domains-file-path
-        final String VDFP_DEFAULT = "in_domains_variable.txt";
-        final String ODFP_LABEL = "IN_FILE_OLIGOMER_DOMAINS"; // oligomers-file-path
-        final String ODFP_DEFAULT = "in_oligomer_domains.txt";
+        final String VDFP_DEFAULT = "se_in_domains_variable.txt";
+        final String ODFP_LABEL = "IN_FILE_OLIGOMERS"; // oligomers-file-path
+        final String ODFP_DEFAULT = "se_in_oligomers.txt";
 
         // output files
-        final String OUTPUT_DIRECTORY_DEFAULT = "SeqEvo-Out" + File.separator;
+        final String OUTPUT_DIRECTORY_DEFAULT = "Output" + File.separator;
         final String OUTPUT_DIRECTORY_LABEL = "OUT_DIRECTORY";
         final String FILE_REPORT_LABEL = "OUT_FILE_REPORT"; // Output Report File Path
-        final String FILE_REPORT_DEFAULT = "report.txt";
+        final String FILE_REPORT_DEFAULT = "se_out_report.txt";
         final String FILE_FINAL_DOMAINS_VARIABLE_LABEL = "OUT_FILE_DOMAINS_VARIABLE"; // Output Variable Domains File Path
-        final String FILE_FINAL_DOMAINS_VARIABLE_DEFAULT = "domains_variable.txt";
+        final String FILE_FINAL_DOMAINS_VARIABLE_DEFAULT = "se_out_domains_variable.txt";
         final String FILE_FINAL_OLIGOMER_SEQUENCES_LABEL = "OUT_FILE_OLIGOMERS"; // Output Oligomer Sequences File Path
-        final String FILE_FINAL_OLIGOMER_SEQUENCES_DEFAULT = "oligomer_sequences.txt"; //
+        final String FILE_FINAL_OLIGOMER_SEQUENCES_DEFAULT = "se_out_oligomers.txt"; //
         final String FILE_SCORE_TRAJECTORY_LABEL = "OUT_FILE_SCORES"; // Output Score Trajectories File Path
-        final String FILE_SCORE_TRAJECTORY_DEFAULT = "score_trajectories.csv";
+        final String FILE_SCORE_TRAJECTORY_DEFAULT = "se_out_score_trajectories.csv";
         final String FILE_LOG_SCORE_TRAJECTORY_LABEL = "OUT_FILE_LOG_SCORES"; // Output Score Trajectories File Path
-        final String FILE_LOG_SCORE_TRAJECTORY_DEFAULT = "score_trajectories_log.csv";
+        final String FILE_LOG_SCORE_TRAJECTORY_DEFAULT = "se_out_score_trajectories_log.csv";
         
         ArrayList<Parameter> allAvailableParameters = new ArrayList<>(availableParameters);
         Map<String,String> usedParameters = new HashMap<>();

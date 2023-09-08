@@ -1,0 +1,25 @@
+// Format: parameter label <tab> default value <tab> parameter description
+FITNESS_SCORE	Wx	// Fitness score to optimize. The only currently accepted value is Wx.
+interSB	10	// Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than 2147483647.
+interSLC	1	// Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than 2147483647.
+intraSB	10	// Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than 2147483647.
+intraSLC	1	// Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than 2147483647.
+scoringWeightX	10000	// W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than 2147483647.
+CPL	100000	// Cycles-Per-Lineage. Must be an integer greater than or equal to 1 and less than 2147483647.
+GPC	1	// Generations-Per-Cycle. Must be an integer greater than or equal to 1 and less than 2147483647.
+NDPG	1	// New-Daughters-Per-Generation. Must be an integer greater than or equal to 1 and less than 2147483647.
+NL	8	// Number-of-Lineages. Must be an integer greater than or equal to 1 and less than 2147483647.
+NMPC	2	// New-Mothers-Per-Cycle. Must be an integer greater than or equal to 1 and less than 2147483647.
+maxAA	6	// Maximum number of consecutive adenosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than 2147483647.
+maxCC	3	// Maximum number of consecutive cytosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than 2147483647.
+maxGG	3	// Maximum number of consecutive guanine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than 2147483647.
+maxTT	6	// Maximum number of consecutive thymine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than 2147483647.
+OUT_DIRECTORY	Output\	// Directory where output files will be created. 
+IN_FILE_DOMAINS_FIXED	se_in_domains_fixed.txt	// Text file listing the fixed domains for the network. Each line should contain a single domain formated as DOMAIN-NAME <tab> BASE-SEQUENCE. Acceptable bases are A/T/C/G. 
+IN_FILE_DOMAINS_VARIABLE	se_in_domains_variable.txt	// Text file listing the variable domains for the network. Each line should contain a single domain formated as DOMAIN-NAME <tab> BASE-SEQUENCE. Acceptable bases are A/T/C/G. 
+IN_FILE_OLIGOMERS	se_in_oligomers.txt	// Text file listing the oligomers for the network. Each line should contain a single oligomer formated as an OLIGOMER-NAME, <tab>, then a list of domain-names or domain-name complements. Complements are denoted by prepending c. to a domain name. Convention is to list the 5' most domain first. 
+OUT_FILE_REPORT	se_out_report.txt	// Text file detailing key results and parameters used. Value must be either false or end with .txt
+OUT_FILE_DOMAINS_VARIABLE	se_out_domains_variable.txt	// Text file listing the base-sequence of the variable domains following optimization. Value must be either false or end with .txt
+OUT_FILE_OLIGOMERS	se_out_oligomers.txt	// Text file listing the base-sequence of the oligomers following optimization. Value must be either false or end with .txt
+OUT_FILE_SCORES	se_out_score_trajectories.csv	// Text file listing the scores of the networks in each generation. Value must be either false or end with .csv
+OUT_FILE_LOG_SCORES	se_out_score_trajectories_log.csv	// Text file listing the scores of the networks in logarithmically distributed generations. Value must be either false or end with .csv

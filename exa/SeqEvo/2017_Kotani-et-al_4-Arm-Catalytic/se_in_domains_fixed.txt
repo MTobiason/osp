@@ -1,0 +1,4 @@
+T2	TT
+CA	CA
+TC	TC
+CT	CT

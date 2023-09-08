@@ -1,0 +1,10 @@
+A1x	c.SK2	c.a	c.c2 	c.c1	c.SK1	c.CA	
+fA2au	c2	b	a	SK2	TC	
+fA3au	o	c.b	T2	a	
+fA4au	c1	c2	c.o	d2	SK3					
+B1x	CA	SK1	c1	c2	a		
+fB2au	c.TC	c.SK2	c.a	c.b	c.c2	
+fB3au	CA	SK1	c1	c1	b	c.o	
+fB4au	d1s	T2	o	c.c2	c.c1	c.SK1					
+dye	CT	d1s	d2				
+quencher	c.SK3	c.d2	c.d1s	c.CT			

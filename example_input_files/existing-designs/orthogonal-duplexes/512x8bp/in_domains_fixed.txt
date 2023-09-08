@@ -1,1 +1,0 @@
-// Fixed domain file for 512 8-base-pair duplexes example.

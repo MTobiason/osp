@@ -55,14 +55,14 @@ public class DevPro {
     
     // input files
     final static String FDFP_LABEL = "fixed_domains_file"; // fixed-domains-file-path
-    final static String FDFP_DEFAULT = "in_domains_fixed.txt";
+    final static String FDFP_DEFAULT = "dp_in_domains_fixed.txt";
     final static String VDFP_LABEL = "variable_domains_file"; // variable-domains-file-path
-    final static String VDFP_DEFAULT = "in_domains_variable.txt";
+    final static String VDFP_DEFAULT = "dp_in_domains_variable.txt";
     final static String ODFP_LABEL = "oligomer_domains_file"; // oligomers-file-path
-    final static String ODFP_DEFAULT = "in_oligomer_domains.txt";
+    final static String ODFP_DEFAULT = "dp_in_oligomers.txt";
     
     // output files
-    final static String OUTPUT_DIRECTORY_DEFAULT = "DevPro-Out" + File.separator;
+    final static String OUTPUT_DIRECTORY_DEFAULT = "Output" + File.separator;
     final static String OUTPUT_DIRECTORY_LABEL = "outputDirectory";
     
     final static String REPORT_FILE_DEFAULT = "dp_out_report.txt";
@@ -117,7 +117,7 @@ public class DevPro {
     final static String EPD_FILE_LABEL = "File_Inter_Prominent_Details"; 
     final static String EPD_LABEL = "Inter_Prominent_Details";
     
-    final static String NAC_FILE_DEFAULT = "Necessary_Intra_Counts.csv";
+    final static String NAC_FILE_DEFAULT = "dp_out_Necessary_Intra_Counts.csv";
     final static String NAC_FILE_LABEL = "File_Necessary_Intra_Counts";
     final static String NAC_LABEL = "Necessary_Intra_Counts";
     
@@ -125,15 +125,15 @@ public class DevPro {
     final static String NALD_FILE_LABEL = "File_Necessary_Intra_Largest_Details";
     final static String NALD_LABEL = "Necessary_Intra_Largest_Details";
     
-    final static String NAPC_FILE_DEFAULT = "Necessary_Intra_Prominent_Counts.csv";
+    final static String NAPC_FILE_DEFAULT = "dp_out_Necessary_Intra_Prominent_Counts.csv";
     final static String NAPC_FILE_LABEL = "File_Necessary_Intra_Prominent_Counts";
     final static String NAPC_LABEL = "Necessary_Intra_Prominent_Counts";
     
-    final static String NAPD_FILE_DEFAULT = "Necessary_Intra_Prominent_Details.csv";
+    final static String NAPD_FILE_DEFAULT = "dp_out_Necessary_Intra_Prominent_Details.csv";
     final static String NAPD_FILE_LABEL = "File_Necessary_Intra_Prominent_Details";  
     final static String NAPD_LABEL = "Necessary_Intra_Prominent_Details";
     
-    final static String NEC_FILE_DEFAULT = "Necessary_Inter_Counts.csv";
+    final static String NEC_FILE_DEFAULT = "dp_out_Necessary_Inter_Counts.csv";
     final static String NEC_FILE_LABEL = "File_Necessary_Inter_Counts";
     final static String NEC_LABEL = "Necessary_Inter_Counts";
     
@@ -141,23 +141,23 @@ public class DevPro {
     final static String NELD_FILE_LABEL = "File_Necessary_Inter_Largest_Details"; 
     final static String NELD_LABEL = "Necessary_Inter_Largest_Details"; 
     
-    final static String NEPC_FILE_DEFAULT = "Necessary_Inter_Prominent_Counts.csv";
+    final static String NEPC_FILE_DEFAULT = "dp_out_Necessary_Inter_Prominent_Counts.csv";
     final static String NEPC_FILE_LABEL = "File_Necessary_Inter_Prominent_Counts";
     final static String NEPC_LABEL = "Necessary_Inter_Prominent_Counts";
     
-    final static String NEPD_FILE_DEFAULT = "Necessary_Inter_Prominent_Details.csv";
+    final static String NEPD_FILE_DEFAULT = "dp_out_Necessary_Inter_Prominent_Details.csv";
     final static String NEPD_FILE_LABEL = "File_Necessary_Inter_Prominent_Details"; 
     final static String NEPD_LABEL = "Necessary_Inter_Prominent_Details";
     
-    final static String UAC_FILE_DEFAULT = "Unnecessary_Intra_Counts.csv";
+    final static String UAC_FILE_DEFAULT = "dp_out_Unnecessary_Intra_Counts.csv";
     final static String UAC_FILE_LABEL = "File_Unnecessary_Intra_Counts"; // Profile all complete intra
     final static String UAC_LABEL = "Unnecessary_Intra_Counts"; // Profile baseline complete intra
         
-    final static String UALD_FILE_DEFAULT = "Unnecessary_Intra_Largest_Details.csv"; 
+    final static String UALD_FILE_DEFAULT = "dp_out_Unnecessary_Intra_Largest_Details.csv"; 
     final static String UALD_FILE_LABEL = "File_Unnecessary_Intra_Largest_Details"; 
     final static String UALD_LABEL = "Unnecessary_Intra_Largest_Details";
     
-    final static String UAPC_FILE_DEFAULT = "Unnecessary_Intra_Prominent_Counts.csv";
+    final static String UAPC_FILE_DEFAULT = "dp_out_Unnecessary_Intra_Prominent_Counts.csv";
     final static String UAPC_FILE_LABEL = "File_Unnecessary_Intra_Prominent_Counts"; // Profile all Unique intra
     final static String UAPC_LABEL = "Unnecessary_Intra_Prominent_Counts"; // Profile baseline Unique intra
     
@@ -165,15 +165,15 @@ public class DevPro {
     final static String UAPD_FILE_LABEL = "File_Unnecessary_Intra_Prominent_Details"; 
     final static String UAPD_LABEL = "Unnecessary_Intra_Prominent_Details";
     
-    final static String UEC_FILE_DEFAULT = "Unnecessary_Inter_Counts.csv";
+    final static String UEC_FILE_DEFAULT = "dp_out_Unnecessary_Inter_Counts.csv";
     final static String UEC_FILE_LABEL = "File_Unnecessary_Inter_Counts"; // Profile all complete inter
     final static String UEC_LABEL = "Unnecessary_Inter_Counts"; // Profile baseline complete inter
     
-    final static String UELD_FILE_DEFAULT = "Unnecessary_Inter_Largest_Details.csv"; 
+    final static String UELD_FILE_DEFAULT = "dp_out_Unnecessary_Inter_Largest_Details.csv"; 
     final static String UELD_FILE_LABEL = "File_Unnecessary_Inter_Largest_Details"; 
     final static String UELD_LABEL = "Unnecessary_Inter_Largest_Details";
     
-    final static String UEPC_FILE_DEFAULT = "Unnecessary_Inter_Prominent_Counts.csv";
+    final static String UEPC_FILE_DEFAULT = "dp_out_Unnecessary_Inter_Prominent_Counts.csv";
     final static String UEPC_FILE_LABEL = "File_Unnecessary_Inter_Prominent_Counts"; // Profile all Unique inter
     final static String UEPC_LABEL = "Unnecessary_Inter_Prominent_Counts"; // Profile baseline Unique inter
     

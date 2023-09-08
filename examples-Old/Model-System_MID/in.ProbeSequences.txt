@@ -1,3 +1,0 @@
-//Oligo Name	Oligo Sequence
-MID ATACATCTA
-c.MID TAGATGTAT
