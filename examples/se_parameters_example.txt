@@ -1,0 +1,86 @@
+// Format: parameter label <tab> default value
+
+// ****************
+// Input Parameters
+// ****************
+
+//	IN_FIXED_DOMAINS - Text file listing the fixed domains for the network. Each line should contain a single domain formated as DOMAIN-NAME <tab> BASE-SEQUENCE. Acceptable bases are A/T/C/G. 
+IN_FIXED_DOMAINS	se_in_domains_fixed.txt
+
+//	IN_VARIABLE_DOMAINS - Text file listing the variable domains for the network. Each line should contain a single domain formated as DOMAIN-NAME <tab> BASE-SEQUENCE. Acceptable bases are A/T/C/G. 
+IN_VARIABLE_DOMAINS	se_in_domains_variable.txt
+
+//	IN_OLIGOMERS - Text file listing the oligomers for the network. Each line should contain a single oligomer formated as an OLIGOMER-NAME, <tab>, then a list of domain-names or domain-name complements. Complements are denoted by prepending c. to a domain name. Convention is to list the 5' most domain first. 
+IN_OLIGOMERS	se_in_oligomers.txt
+
+// ********************
+// Heuristic Parameters
+// ********************
+
+//	CPL - Cycles-Per-Lineage. Must be an integer greater than or equal to 1 and less than 2147483647.
+CPL	100000
+
+//	GPC - Generations-Per-Cycle. Must be an integer greater than or equal to 1 and less than 2147483647.
+GPC	1
+
+//	NDPG - New-Daughters-Per-Generation. Must be an integer greater than or equal to 1 and less than 2147483647.
+NDPG	1
+
+//	NL - Number-of-Lineages. Must be an integer greater than or equal to 1 and less than 2147483647.
+NL	8
+
+//	NMPC - New-Mothers-Per-Cycle. Must be an integer greater than or equal to 1 and less than 2147483647.
+NMPC	2
+
+// ******************
+// Scoring Parameters
+// ******************
+
+//	FITNESS_SCORE - Fitness score to optimize. The only currently accepted value is Wx.
+FITNESS_SCORE	Wx
+
+//	interSB - Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than 2147483647.
+interSB	10
+
+//	interSLC - Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than 2147483647.
+interSLC	1
+
+//	intraSB - Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than 2147483647.
+intraSB	10
+
+//	intraSLC - Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than 2147483647.
+intraSLC	1
+
+//	scoringWeightX - W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than 2147483647.
+scoringWeightX	10000
+
+//	maxAA - Maximum number of consecutive adenosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than 2147483647.
+maxAA	6
+
+//	maxCC - Maximum number of consecutive cytosine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than 2147483647.
+maxCC	3
+
+//	maxGG - Maximum number of consecutive guanine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than 2147483647.
+maxGG	3
+
+//	maxTT - Maximum number of consecutive thymine bases. Any stretch of bases greater than this number will make a network invalid. Must be an integer greater than or equal to 1 and less than 2147483647.
+maxTT	6
+
+// *****************
+// Output Parameters
+// *****************
+
+//	OUT_FILE_REPORT - Text file detailing key results and parameters used. Value must be either false or end with .txt
+OUT_FILE_REPORT	se_out_report.txt
+
+//	OUT_FILE_DOMAINS_VARIABLE - Text file listing the base-sequence of the variable domains following optimization. Value must be either false or end with .txt
+OUT_FILE_DOMAINS_VARIABLE	se_out_domains_variable.txt
+
+//	OUT_FILE_OLIGOMERS - Text file listing the base-sequence of the oligomers following optimization. Value must be either false or end with .txt
+OUT_FILE_OLIGOMERS	se_out_oligomers.txt
+
+//	OUT_FILE_SCORES - Text file listing the scores of the networks in each generation. Value must be either false or end with .csv
+OUT_FILE_SCORES	se_out_score_trajectories.csv
+
+//	OUT_FILE_LOG_SCORES - Text file listing the scores of the networks in logarithmically distributed generations. Value must be either false or end with .csv
+OUT_FILE_LOG_SCORES	se_out_score_trajectories_log.csv

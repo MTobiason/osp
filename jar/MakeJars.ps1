@@ -40,30 +40,25 @@ function MT-Clean{
     #MT-CheckExitCode('Failed to remove MT-temp directory')
 }
 
+New-Item "$LOCATION\MT-temp" -type directory -force | Out-Null
+MT-CheckExitCode("creating temp directory")
+
 New-Item "$LOCATION\MT-temp\class" -type directory -force | Out-Null
 MT-CheckExitCode("creating class directory")
 
 New-Item "$LOCATION\MT-temp\jar" -type directory -force | Out-Null
 MT-CheckExitCode("creating jar directory")
 
-if( Test-Path $Location\jar)
-{
-    New-Item "$LOCATION\jar" -type directory -force | Out-Null
-    MT-CheckExitCode("creating jar directory")
-}
-
 $Targets = 'SeqEvo', 'DevPro'
 ForEach ($Target in $Targets)
 {
-    cd src
-
     echo ''
     echo '******************************'
     echo "Compiling $Target"
     echo '******************************'
     echo ''
 
-    &javac -target 1.8 -source 1.8 $LOCATION\src\main\java\edu\boisestate\osp\$Target.java -cp $LOCATION\src\main\java -d $Location\MT-temp\classes
+    &javac -target 1.8 -source 1.8 $LOCATION\..\src\main\java\edu\boisestate\osp\$Target.java -cp $LOCATION\..\src\main\java -d $Location\MT-temp\classes
 
     MT-CheckExitCode("Compiling $Target")
 
@@ -84,8 +79,7 @@ ForEach ($Target in $Targets)
     echo '*************************************'
     echo ''
 
-	New-Item -ItemType Directory -Force -Path $LOCATION\jar | Out-Null
-    Copy-Item $LOCATION\MT-temp\jar\$Target.jar -Destination $LOCATION\jar\ -Force
+    Copy-Item $LOCATION\MT-temp\jar\$Target.jar -Destination $LOCATION\ -Force
 
     MT-CheckExitCode("copying $Target.jar to \jar folder")
 
@@ -98,7 +92,7 @@ echo 'Removing temp directories'
 echo '*************************'
 echo ''
  
-Remove-Item .\MT-temp -Recurse -Force
+Remove-Item $LOCATION\MT-temp -Recurse -Force
 
 MT-CheckExitCode("removing temp directory")
 

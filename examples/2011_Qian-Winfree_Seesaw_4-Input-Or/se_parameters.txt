@@ -1,0 +1,5 @@
+IN_FIXED_DOMAINS in_domains_fixed.txt
+IN_VARIABLE_DOMAINS in_domains_variable.txt
+IN_OLIGOMERS in_oligomers.txt
+cpl 1000000
+nl 8

@@ -1,26 +1,25 @@
 /*
- * The MIT License
- *
- * Copyright 2021 mtobi.
- *
+ * Copyright (c) 2019 Boise State University
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
+
 package edu.boisestate.osp;
 
 import edu.boisestate.osp.coders.ICoder;
@@ -38,11 +37,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
-/**
- *
- * @author mtobi
- */
 public class DevPro {
     final static String VERSION = "2.0";
     final int MAX_THREADS;
@@ -53,144 +49,163 @@ public class DevPro {
     final static String PFP_DEFAULT = "dp_parameters.txt";
     final static String EXAMPLE_PARAMETERS_FILE_DEFAULT = "dp_parameters_example.txt";
     
-    // input files
-    final static String FDFP_LABEL = "fixed_domains_file"; // fixed-domains-file-path
-    final static String FDFP_DEFAULT = "dp_in_domains_fixed.txt";
-    final static String VDFP_LABEL = "variable_domains_file"; // variable-domains-file-path
-    final static String VDFP_DEFAULT = "dp_in_domains_variable.txt";
-    final static String ODFP_LABEL = "oligomer_domains_file"; // oligomers-file-path
-    final static String ODFP_DEFAULT = "dp_in_oligomers.txt";
+    final static String NAMING_CONVENTION_DETAILS = ""+
+        "// Output files and properties are assigned 3-character labels based on the following rules." +
+        "\n// \t\tThe term necessary refers to duplexes which are implied by either the domain-level-design or by fixed base-sequences." +
+        "\n// \t\tThe term unnecessary describes all other duplexes." +
+        "\n// \t\tThe term prominent refers to duplexes which are not part of a larger duplex." +
+        "\n// \t\tThe term largest refers to the duplexes with the most base-pairs." +
+        "\n// \tCharacter 1:" +
+        "\n// \t\t(C) Counts of each length" +
+        "\n// \t\t(D) Details of duplex location and base-sequence" +
+        "\n// \t\t(L) Details of duplex location and base-sequence for the largest prominent duplexes" +
+        "\n// \t\t(P) Counts of each length for prominent duplexes" +
+        "\n// \t\t(S) Size of the largest duplex in base-pairs" +
+        "\n// \tCharacter 2:" +
+        "\n// \t\t(N) Necessary duplexes only" +
+        "\n// \t\t(U) Unnecessary duplexes only" +
+        "\n// \t\t(X) Both necessary and unnecessary" +
+        "\n// \tCharacter 3:" +
+        "\n// \t\t(A) Intra-Oligomer duplexes only" +
+        "\n// \t\t(E) Inter-Oligomer duplexes only" +
+        "\n// For example, the counts of unnecessary intra-oligomer duplexes are reported in the PROP_CUA property and OUT_CUA file.";
     
-    // output files
-    final static String OUTPUT_DIRECTORY_DEFAULT = "Output" + File.separator;
-    final static String OUTPUT_DIRECTORY_LABEL = "outputDirectory";
+    final static String CXA_FILE_DEFAULT = "false";
+    final static String CXA_FILE_LABEL = "OUT_CXA";
+    final static String CXA_PROP_LABEL = "PROP_CXA";
+    final static String CXA_PROP_DESCRIPTION = "Profile of the length-counts for all intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String REPORT_FILE_DEFAULT = "dp_out_report.txt";
-    final static String REPORT_FILE_LABEL = "ORFP";
+    final static String LXA_FILE_DEFAULT = "false";
+    final static String LXA_FILE_LABEL = "OUT_LXA";
+    final static String LXA_PROP_LABEL = "PROP_LXA";
+    final static String LXA_PROP_DESCRIPTION  = "List of the largest intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String OLIGOMERS_FILE_DEFAULT = "dp_out_oligomers.txt"; //
-    final static String OLIGOMERS_FILE_LABEL = "OOFP";
+    final static String PXA_FILE_DEFAULT = "false";
+    final static String PXA_FILE_LABEL = "OUT_PXA";
+    final static String PXA_PROP_LABEL = "PROP_PXA";
+    final static String PXA_PROP_DESCRIPTION  = "Profile of the length-counts for the most prominent intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    //  File and property label naming convention is:
-    //  Duplex category 1 (a label can have up to one letter from this set)
-    //      (N) Necessary duplexes only
-    //      (U) Unnecessary duplexes only
-    //  Duplex category 2 (a label needs exactly one letter from this set)
-    //      (A) Intra-Oligomer duplexes only
-    //      (E) Inter-Oligomer duplexes only
-    //  Duplex category 3 (a label can have up to one letter from this set)
-    //      (L) Largest prominent duplexes only
-    //      (P) Prominent duplexes only (i.e., those which are not part of a larger duplex)
-    //  Property type (a label needs exactly one letter from this set)
-    //      (D) Details of duplex location and base-sequence
-    //      (C) Counts of the duplexes of each length
+    final static String DXA_FILE_DEFAULT = "false";
+    final static String DXA_FILE_LABEL = "OUT_DXA";
+    final static String DXA_PROP_LABEL = "PROP_DXA";
+    final static String DXA_PROP_DESCRIPTION  = "List of all intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String AC_FILE_DEFAULT = "false";
-    final static String AC_FILE_LABEL = "File_Intra_Counts";
-    final static String AC_LABEL = "Intra_Counts";
+    final static String CXE_FILE_DEFAULT = "false";
+    final static String CXE_FILE_LABEL = "OUT_CXE";
+    final static String CXE_PROP_LABEL = "PROP_CXE";
+    final static String CXE_PROP_DESCRIPTION  = "Profile of the length-counts for all inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String ALD_FILE_DEFAULT = "false";
-    final static String ALD_FILE_LABEL = "File_Intra_Largest_Details";
-    final static String ALD_LABEL = "Intra_Largest_Details";
+    final static String LXE_FILE_DEFAULT = "false";
+    final static String LXE_FILE_LABEL = "OUT_LXE"; 
+    final static String LXE_PROP_LABEL = "PROP_LXE";
+    final static String LXE_PROP_DESCRIPTION = "List of the largest inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String APC_FILE_DEFAULT = "false";
-    final static String APC_FILE_LABEL = "File_Intra_Prominent_Counts";
-    final static String APC_LABEL = "Intra_Prominent_Counts";
+    final static String PXE_FILE_DEFAULT = "false";
+    final static String PXE_FILE_LABEL = "OUT_PXE";
+    final static String PXE_PROP_LABEL = "PROP_PXE";
+    final static String PXE_PROP_DESCRIPTION = "Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String APD_FILE_DEFAULT = "false";
-    final static String APD_FILE_LABEL = "File_Intra_Prominent_Details";
-    final static String APD_LABEL = "Intra_Prominent_Details";
+    final static String DXE_FILE_DEFAULT = "false";
+    final static String DXE_FILE_LABEL = "OUT_DXE"; 
+    final static String DXE_PROP_LABEL = "PROP_DXE";
+    final static String DXE_PROP_DESCRIPTION = "List of all inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String EC_FILE_DEFAULT = "false";
-    final static String EC_FILE_LABEL = "File_Inter_Counts";
-    final static String EC_LABEL = "Inter_Counts";
+    final static String CNA_FILE_DEFAULT = "dp_out_Counts_Necessary_Intra.csv";
+    final static String CNA_FILE_LABEL = "OUT_CNA";
+    final static String CNA_PROP_LABEL = "PROP_CNA";
+    final static String CNA_PROP_DESCRIPTION = "Profile of the length-counts for baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String ELD_FILE_DEFAULT = "false";
-    final static String ELD_FILE_LABEL = "File_Inter_Largest_Details"; 
-    final static String ELD_LABEL = "Inter_Largest_Details";
+    final static String LNA_FILE_DEFAULT = "dp_out_Details_Necessary_Intra_Largest.csv";
+    final static String LNA_FILE_LABEL = "OUT_LNA";
+    final static String LNA_PROP_LABEL = "PROP_LNA";
+    final static String LNA_PROP_DESCRIPTION = "List of the largest baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String EPC_FILE_DEFAULT = "false";
-    final static String EPC_FILE_LABEL = "File_Inter_Prominent_Counts";
-    final static String EPC_LABEL = "Inter_Prominent_Counts";
+    final static String PNA_FILE_DEFAULT = "false";
+    final static String PNA_FILE_LABEL = "OUT_PNA";
+    final static String PNA_PROP_LABEL = "PROP_PNA";
+    final static String PNA_PROP_DESCRIPTION = "Profile of the length-counts for the most prominent baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String EPD_FILE_DEFAULT = "false";
-    final static String EPD_FILE_LABEL = "File_Inter_Prominent_Details"; 
-    final static String EPD_LABEL = "Inter_Prominent_Details";
+    final static String DNA_FILE_DEFAULT = "false";
+    final static String DNA_FILE_LABEL = "OUT_DNA";  
+    final static String DNA_PROP_LABEL = "PROP_DNA";
+    final static String DNA_PROP_DESCRIPTION = "List of baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String NAC_FILE_DEFAULT = "dp_out_Necessary_Intra_Counts.csv";
-    final static String NAC_FILE_LABEL = "File_Necessary_Intra_Counts";
-    final static String NAC_LABEL = "Necessary_Intra_Counts";
+    final static String CNE_FILE_DEFAULT = "dp_out_Counts_Necessary_Inter.csv";
+    final static String CNE_FILE_LABEL = "OUT_CNE";
+    final static String CNE_PROP_LABEL = "PROP_CNE";
+    final static String CNE_PROP_DESCRIPTION = "Profile of the length-counts for baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String NALD_FILE_DEFAULT = "false";
-    final static String NALD_FILE_LABEL = "File_Necessary_Intra_Largest_Details";
-    final static String NALD_LABEL = "Necessary_Intra_Largest_Details";
+    final static String LNE_FILE_DEFAULT = "dp_out_Details_Necessary_Inter_Largest.csv";
+    final static String LNE_FILE_LABEL = "OUT_LNE"; 
+    final static String LNE_PROP_LABEL = "PROP_LNE"; 
+    final static String LNE_PROP_DESCRIPTION = "List of the largest baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String NAPC_FILE_DEFAULT = "dp_out_Necessary_Intra_Prominent_Counts.csv";
-    final static String NAPC_FILE_LABEL = "File_Necessary_Intra_Prominent_Counts";
-    final static String NAPC_LABEL = "Necessary_Intra_Prominent_Counts";
+    final static String PNE_FILE_DEFAULT = "false";
+    final static String PNE_FILE_LABEL = "OUT_PNE";
+    final static String PNE_PROP_LABEL = "PROP_PNE";
+    final static String PNE_PROP_DESCRIPTION = "Profile of the length-counts for the most prominent baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String NAPD_FILE_DEFAULT = "dp_out_Necessary_Intra_Prominent_Details.csv";
-    final static String NAPD_FILE_LABEL = "File_Necessary_Intra_Prominent_Details";  
-    final static String NAPD_LABEL = "Necessary_Intra_Prominent_Details";
+    final static String DNE_FILE_DEFAULT = "false";
+    final static String DNE_FILE_LABEL = "OUT_DNE"; 
+    final static String DNE_PROP_LABEL = "PROP_DNE";
+    final static String DNE_PROP_DESCRIPTION = "List of baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String NEC_FILE_DEFAULT = "dp_out_Necessary_Inter_Counts.csv";
-    final static String NEC_FILE_LABEL = "File_Necessary_Inter_Counts";
-    final static String NEC_LABEL = "Necessary_Inter_Counts";
-    
-    final static String NELD_FILE_DEFAULT = "false";
-    final static String NELD_FILE_LABEL = "File_Necessary_Inter_Largest_Details"; 
-    final static String NELD_LABEL = "Necessary_Inter_Largest_Details"; 
-    
-    final static String NEPC_FILE_DEFAULT = "dp_out_Necessary_Inter_Prominent_Counts.csv";
-    final static String NEPC_FILE_LABEL = "File_Necessary_Inter_Prominent_Counts";
-    final static String NEPC_LABEL = "Necessary_Inter_Prominent_Counts";
-    
-    final static String NEPD_FILE_DEFAULT = "dp_out_Necessary_Inter_Prominent_Details.csv";
-    final static String NEPD_FILE_LABEL = "File_Necessary_Inter_Prominent_Details"; 
-    final static String NEPD_LABEL = "Necessary_Inter_Prominent_Details";
-    
-    final static String UAC_FILE_DEFAULT = "dp_out_Unnecessary_Intra_Counts.csv";
-    final static String UAC_FILE_LABEL = "File_Unnecessary_Intra_Counts"; // Profile all complete intra
-    final static String UAC_LABEL = "Unnecessary_Intra_Counts"; // Profile baseline complete intra
+    final static String CUA_FILE_DEFAULT = "dp_out_Counts_Unnecessary_Intra.csv";
+    final static String CUA_FILE_LABEL = "OUT_CUA";
+    final static String CUA_PROP_LABEL = "PROP_CUA";
+    final static String CUA_PROP_DESCRIPTION = "Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
         
-    final static String UALD_FILE_DEFAULT = "dp_out_Unnecessary_Intra_Largest_Details.csv"; 
-    final static String UALD_FILE_LABEL = "File_Unnecessary_Intra_Largest_Details"; 
-    final static String UALD_LABEL = "Unnecessary_Intra_Largest_Details";
+    final static String LUA_FILE_DEFAULT = "dp_out_Details_Unnecessary_Intra_Largest.csv"; 
+    final static String LUA_FILE_LABEL = "OUT_LUA"; 
+    final static String LUA_PROP_LABEL = "PROP_LUA";
+    final static String LUA_PROP_DESCRIPTION = "List of the largest unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String UAPC_FILE_DEFAULT = "dp_out_Unnecessary_Intra_Prominent_Counts.csv";
-    final static String UAPC_FILE_LABEL = "File_Unnecessary_Intra_Prominent_Counts"; // Profile all Unique intra
-    final static String UAPC_LABEL = "Unnecessary_Intra_Prominent_Counts"; // Profile baseline Unique intra
+    final static String PUA_FILE_DEFAULT = "false";
+    final static String PUA_FILE_LABEL = "OUT_PUA";
+    final static String PUA_PROP_LABEL = "PROP_PUA";
+    final static String PUA_PROP_DESCRIPTION = "Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String UAPD_FILE_DEFAULT = "false";
-    final static String UAPD_FILE_LABEL = "File_Unnecessary_Intra_Prominent_Details"; 
-    final static String UAPD_LABEL = "Unnecessary_Intra_Prominent_Details";
+    final static String DUA_FILE_DEFAULT = "false";
+    final static String DUA_FILE_LABEL = "OUT_DUA"; 
+    final static String DUA_PROP_LABEL = "PROP_DUA";
+    final static String DUA_PROP_DESCRIPTION = "List of unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String UEC_FILE_DEFAULT = "dp_out_Unnecessary_Inter_Counts.csv";
-    final static String UEC_FILE_LABEL = "File_Unnecessary_Inter_Counts"; // Profile all complete inter
-    final static String UEC_LABEL = "Unnecessary_Inter_Counts"; // Profile baseline complete inter
+    final static String CUE_FILE_DEFAULT = "dp_out_Counts_Unnecessary_Inter.csv";
+    final static String CUE_FILE_LABEL = "OUT_CUE";
+    final static String CUE_PROP_LABEL = "PROP_CUE";
+    final static String CUE_PROP_DESCRIPTION = "Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String UELD_FILE_DEFAULT = "dp_out_Unnecessary_Inter_Largest_Details.csv"; 
-    final static String UELD_FILE_LABEL = "File_Unnecessary_Inter_Largest_Details"; 
-    final static String UELD_LABEL = "Unnecessary_Inter_Largest_Details";
+    final static String LUE_FILE_DEFAULT = "dp_out_Details_Unnecessary_Inter_Largest.csv"; 
+    final static String LUE_FILE_LABEL = "OUT_LUE"; 
+    final static String LUE_PROP_LABEL = "PROP_LUE";
+    final static String LUE_PROP_DESCRIPTION = "List of the largest unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String UEPC_FILE_DEFAULT = "dp_out_Unnecessary_Inter_Prominent_Counts.csv";
-    final static String UEPC_FILE_LABEL = "File_Unnecessary_Inter_Prominent_Counts"; // Profile all Unique inter
-    final static String UEPC_LABEL = "Unnecessary_Inter_Prominent_Counts"; // Profile baseline Unique inter
+    final static String PUE_FILE_DEFAULT = "false";
+    final static String PUE_FILE_LABEL = "OUT_PUE";
+    final static String PUE_PROP_LABEL = "PROP_PUE";
+    final static String PUE_PROP_DESCRIPTION = "Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String UEPD_FILE_DEFAULT = "false";
-    final static String UEPD_FILE_LABEL = "File_Unnecessary_Inter_Prominent_Details"; 
-    final static String UEPD_LABEL = "Unnecessary_Intra_Prominent_Details";
+    final static String DUE_FILE_DEFAULT = "false";
+    final static String DUE_FILE_LABEL = "OUT_DUE"; 
+    final static String DUE_PROP_LABEL = "PROP_DUE";
+    final static String DUE_PROP_DESCRIPTION = "List of unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
+    
+    final static String SUA_PROP_LABEL = "PROP_SUA";
+    final static String SUA_PROP_DESCRIPTION = "Size of the largest unnecessary intra-oligomer duplex. Must be true or false. A value of true will request this property.";
+    
+    final static String SUE_PROP_LABEL = "PROP_SUE";
+    final static String SUE_PROP_DESCRIPTION = "Size of the largest unnecessary inter-oligomer duplex. Must be true or false. A value of true will request this property.";
     
     // Score labels
-    final static String BASELINE_N_LABEL = "baselineN";
-    final static String BASELINE_O_LABEL = "baselineO";
-    final static String BASELINE_W_LABEL = "baselineW";
-    final static String DELTA_N_LABEL = "deltaN";
-    final static String DELTA_O_LABEL = "deltaO";
-    final static String DELTA_W_LABEL = "deltaW";
-    final static String N_LABEL = "N";
-    final static String O_LABEL = "O";    
-    final static String W_LABEL = "W";
+    final static String BASELINE_N_LABEL = "PROP_baselineN";
+    final static String BASELINE_O_LABEL = "PROP_baselineO";
+    final static String BASELINE_W_LABEL = "PROP_baselineW";
+    final static String DELTA_N_LABEL = "PROP_deltaN";
+    final static String DELTA_O_LABEL = "PROP_deltaO";
+    final static String DELTA_W_LABEL = "PROP_deltaW";
+    final static String N_LABEL = "PROP_N";
+    final static String O_LABEL = "PROP_O";    
+    final static String W_LABEL = "PROP_W";
 
     // parameter labels
     final static String INTER_SB_LABEL = "interSB";
@@ -202,108 +217,110 @@ public class DevPro {
     
     final Analyzer analyzer;
     
-    final static ArrayList<Parameter> availableParameters = new ArrayList<>();
+    final static ArrayList<AnalyzerParameter> availableParameters = new ArrayList<>();
     static {
-        availableParameters.add(new IntegerParameter(Analyzer.INTER_SB_LABEL, "Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".", INTER_SB_LABEL,"10",0,Integer.MAX_VALUE));
-        availableParameters.add(new IntegerParameter(Analyzer.INTER_SLC_LABEL, "Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", INTER_SLC_LABEL,"1",1,Integer.MAX_VALUE));
-        availableParameters.add(new IntegerParameter(Analyzer.INTRA_SB_LABEL, "Intra-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".", INTRA_SB_LABEL,"10",0,Integer.MAX_VALUE));
-        availableParameters.add(new IntegerParameter(Analyzer.INTRA_SLC_LABEL, "Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", INTRA_SLC_LABEL,"1",1,Integer.MAX_VALUE));
-        availableParameters.add(new IntegerParameter(Analyzer.NUMBER_LARGEST_DUPLEXES_LABEL, "Maximum number of duplexes to include when listing largest-duplexes. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", NUMBER_LARGEST_DUPLEXES_LABEL,"1000",1,Integer.MAX_VALUE));
-        availableParameters.add(new IntegerParameter(Analyzer.SWX_LABEL, "W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".", SWX_LABEL,"10000",0,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerAnalyzerParameter(INTER_SB_LABEL, "Inter-oligomer duplexes will contribute points to N equal to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".","10", Analyzer.INTER_SB_LABEL,0,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerAnalyzerParameter(INTER_SLC_LABEL, "Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".","1", Analyzer.INTER_SLC_LABEL,1,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerAnalyzerParameter(INTRA_SB_LABEL, "Intra-oligomer duplexes will contribute points to N equal to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than "+Integer.MAX_VALUE+".","10", Analyzer.INTRA_SB_LABEL,0,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerAnalyzerParameter(INTRA_SLC_LABEL, "Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".","1", Analyzer.INTRA_SLC_LABEL,1,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerAnalyzerParameter(NUMBER_LARGEST_DUPLEXES_LABEL, "Maximum number of duplexes to include when listing largest-duplexes. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".","1000", Analyzer.NUMBER_LARGEST_DUPLEXES_LABEL,1,Integer.MAX_VALUE));
+        availableParameters.add(new IntegerAnalyzerParameter(SWX_LABEL, "W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than "+Integer.MAX_VALUE+".","10000", Analyzer.SWX_LABEL,0,Integer.MAX_VALUE));
     }
     
-    final static Map<String,Parameter> labelToParameterMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER); 
+    final static Map<String,AnalyzerParameter> labelToParameterMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER); 
     static {
-        for (Parameter p : availableParameters){
+        for (AnalyzerParameter p : availableParameters){
             labelToParameterMap.put(p.getLabel(), p);
         }
     }
     
     final static ArrayList<Property> availableProperties = new ArrayList<>();
     static {
-        availableProperties.add(new Property( Analyzer.BASELINE_N_LABEL, "Network Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.", "true", BASELINE_N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{BASELINE_N_LABEL}));
-        availableProperties.add(new Property( Analyzer.BASELINE_O_LABEL, "Oligomer Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.", "true", BASELINE_O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{BASELINE_O_LABEL}));
-        availableProperties.add(new Property( Analyzer.BASELINE_W_LABEL, "Weighted Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.", "true", BASELINE_W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{BASELINE_N_LABEL,BASELINE_O_LABEL,BASELINE_W_LABEL}));
+        availableProperties.add(new Property( BASELINE_N_LABEL, "(fitness points)",  "Network Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.", "false", Analyzer.BASELINE_N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{BASELINE_N_LABEL}));
+        availableProperties.add(new Property( BASELINE_O_LABEL, "(fitness points)", "Oligomer Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.", "false", Analyzer.BASELINE_O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{BASELINE_O_LABEL}));
+        availableProperties.add(new Property( BASELINE_W_LABEL, "(fitness points)", "Weighted Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.", "false", Analyzer.BASELINE_W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{BASELINE_N_LABEL,BASELINE_O_LABEL,BASELINE_W_LABEL}));
         
-        availableProperties.add(new Property( Analyzer.DELTA_N_LABEL, "Network Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.", "true", DELTA_N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{BASELINE_N_LABEL, DELTA_N_LABEL, N_LABEL}));
-        availableProperties.add(new Property( Analyzer.DELTA_O_LABEL, "Oligomer Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.", "true", DELTA_O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{BASELINE_O_LABEL,DELTA_O_LABEL, O_LABEL}));
-        availableProperties.add(new Property( Analyzer.DELTA_W_LABEL, "Weighted Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.", "true", DELTA_W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{BASELINE_N_LABEL,BASELINE_O_LABEL,BASELINE_W_LABEL,DELTA_N_LABEL,DELTA_O_LABEL,DELTA_W_LABEL,N_LABEL,O_LABEL,W_LABEL}));
+        availableProperties.add(new Property( DELTA_N_LABEL, "(fitness points)", "Network Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.", "true", Analyzer.DELTA_N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{BASELINE_N_LABEL, DELTA_N_LABEL, N_LABEL}));
+        availableProperties.add(new Property( DELTA_O_LABEL, "(fitness points)", "Oligomer Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.", "true", Analyzer.DELTA_O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{BASELINE_O_LABEL,DELTA_O_LABEL, O_LABEL}));
+        availableProperties.add(new Property( DELTA_W_LABEL, "(fitness points)", "Weighted Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.", "true", Analyzer.DELTA_W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{BASELINE_N_LABEL,BASELINE_O_LABEL,BASELINE_W_LABEL,DELTA_N_LABEL,DELTA_O_LABEL,DELTA_W_LABEL,N_LABEL,O_LABEL,W_LABEL}));
         
-        availableProperties.add(new Property( Analyzer.N_LABEL, "Network Fitness Score. Must be true or false. A value of true will request this property.", "true", N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{N_LABEL}));
-        availableProperties.add(new Property( Analyzer.O_LABEL, "Oligomer Fitness Score. Must be true or false. A value of true will request this property.", "true", O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{O_LABEL}));
-        availableProperties.add(new Property( Analyzer.W_LABEL, "Weighted Fitness Score. Must be true or false. A value of true will request this property.", "true", W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{N_LABEL,O_LABEL,W_LABEL}));
+        availableProperties.add(new Property( N_LABEL, "(fitness points)", "Network Fitness Score. Must be true or false. A value of true will request this property.", "false", Analyzer.N_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL}, new String[]{N_LABEL}));
+        availableProperties.add(new Property( O_LABEL, "(fitness points)", "Oligomer Fitness Score. Must be true or false. A value of true will request this property.", "false", Analyzer.O_LABEL, new String[] {INTRA_SB_LABEL,INTRA_SLC_LABEL}, new String[]{O_LABEL}));
+        availableProperties.add(new Property( W_LABEL, "(fitness points)", "Weighted Fitness Score. Must be true or false. A value of true will request this property.", "false", Analyzer.W_LABEL, new String[] {INTER_SB_LABEL,INTER_SLC_LABEL,INTRA_SB_LABEL,INTRA_SLC_LABEL,SWX_LABEL}, new String[]{N_LABEL,O_LABEL,W_LABEL}));
         
-        availableProperties.add(new ProfileProperty( Analyzer.AC_LABEL, "Profile of the length-counts for all intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", AC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{AC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.ALD_LABEL,"List of the largest intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", ALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{ALD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.APC_LABEL, "Profile of the length-counts for the most prominent intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", APC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{APC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.APD_LABEL,"List of all intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", APD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{APD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.EC_LABEL, "Profile of the length-counts for all inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", EC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{EC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.ELD_LABEL,"List of the largest inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", ELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{ELD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.EPC_LABEL, "Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", EPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{EPC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.EPD_LABEL,"List of all inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", EPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{EPD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.NAC_LABEL, "Profile of the length-counts for baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", NAC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{NAC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.NALD_LABEL,"List of the largest baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", NALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{NALD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.NAPC_LABEL, "Profile of the length-counts for the most prominent baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", NAPC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{NAPC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.NAPD_LABEL,"List of baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", NAPD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{NAPD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.NEC_LABEL, "Profile of the length-counts for baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", NEC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{NEC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.NELD_LABEL,"List of the largest baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", NELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{NELD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.NEPC_LABEL, "Profile of the length-counts for the most prominent baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", NEPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{NEPC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.NEPD_LABEL,"List of baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", NEPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{NEPD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.UAC_LABEL, "Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", UAC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{UAC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.UALD_LABEL,"List of the largest delta intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", UALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{UALD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.UAPC_LABEL, "Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", UAPC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{UAPC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.UAPD_LABEL,"List of delta intra-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", UAPD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{UAPD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.UEC_LABEL, "Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", UEC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{UEC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.UELD_LABEL,"List of the largest delta inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", UELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{UELD_LABEL}));
-        availableProperties.add(new ProfileProperty( Analyzer.UEPC_LABEL, "Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", UEPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{UEPC_LABEL}));
-        availableProperties.add(new DuplexProperty(Analyzer.UEPD_LABEL,"List of delta inter-oligomer duplexes. Must be true or false. A value of true will request this property.", "false", UEPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{UEPD_LABEL}));
+        availableProperties.add(new ProfileProperty( CXA_PROP_LABEL, "(base-pairs, counts)", CXA_PROP_DESCRIPTION, "false", Analyzer.AC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{CXA_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( LXA_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , LXA_PROP_DESCRIPTION, "false", Analyzer.ALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LXA_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( PXA_PROP_LABEL, "(base-pairs, counts)", PXA_PROP_DESCRIPTION, "false", Analyzer.APC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PXA_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( DXA_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , DXA_PROP_DESCRIPTION, "false", Analyzer.APD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DXA_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( CXE_PROP_LABEL, "(base-pairs, counts)", CXE_PROP_DESCRIPTION, "false", Analyzer.EC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{CXE_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( LXE_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , LXE_PROP_DESCRIPTION, "false", Analyzer.ELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LXE_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( PXE_PROP_LABEL, "(base-pairs, counts)", PXE_PROP_DESCRIPTION, "false", Analyzer.EPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PXE_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( DXE_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , DXE_PROP_DESCRIPTION, "false", Analyzer.EPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DXE_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( CNA_PROP_LABEL, "(base-pairs, counts)", CNA_PROP_DESCRIPTION, "false", Analyzer.NAC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{CNA_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( LNA_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , LNA_PROP_DESCRIPTION, "false", Analyzer.NALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LNA_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( PNA_PROP_LABEL, "(base-pairs, counts)", PNA_PROP_DESCRIPTION, "false", Analyzer.NAPC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PNA_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( DNA_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , DNA_PROP_DESCRIPTION, "false", Analyzer.NAPD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DNA_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( CNE_PROP_LABEL, "(base-pairs, counts)", CNE_PROP_DESCRIPTION, "false", Analyzer.NEC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{CNE_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( LNE_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , LNE_PROP_DESCRIPTION, "false", Analyzer.NELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LNE_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( PNE_PROP_LABEL, "(base-pairs, counts)", PNE_PROP_DESCRIPTION, "false", Analyzer.NEPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PNE_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( DNE_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , DNE_PROP_DESCRIPTION, "false", Analyzer.NEPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DNE_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( CUA_PROP_LABEL, "(base-pairs, counts)", CUA_PROP_DESCRIPTION, "false", Analyzer.UAC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{CUA_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( LUA_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , LUA_PROP_DESCRIPTION, "false", Analyzer.UALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LUA_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( PUA_PROP_LABEL, "(base-pairs, counts)", PUA_PROP_DESCRIPTION, "false", Analyzer.UAPC_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{PUA_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( DUA_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , DUA_PROP_DESCRIPTION, "false", Analyzer.UAPD_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{DUA_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( CUE_PROP_LABEL, "(base-pairs, counts)", CUE_PROP_DESCRIPTION, "false", Analyzer.UEC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{CUE_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( LUE_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , LUE_PROP_DESCRIPTION, "false", Analyzer.UELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{LUE_PROP_LABEL}));
+        availableProperties.add(new ProfileProperty( PUE_PROP_LABEL, "(base-pairs, counts)", PUE_PROP_DESCRIPTION, "false", Analyzer.UEPC_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{PUE_PROP_LABEL}));
+        availableProperties.add(new DuplexProperty( DUE_PROP_LABEL,"(base-pairs indexO1 indexO1B1 indexO2 indexO2B1)" , DUE_PROP_DESCRIPTION, "false", Analyzer.UEPD_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{DUE_PROP_LABEL}));
+        availableProperties.add(new Property(SUA_PROP_LABEL, "(base-pairs)", SUA_PROP_DESCRIPTION, "true",Analyzer.LARGEST_UNNECESSARY_INTRA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[] {SUA_PROP_LABEL,PUA_PROP_LABEL}));
+        availableProperties.add(new Property(SUE_PROP_LABEL, "(base-pairs)", SUE_PROP_DESCRIPTION, "true",Analyzer.LARGEST_UNNECESSARY_INTER_LABEL, new String[] {INTER_SLC_LABEL}, new String[] {SUE_PROP_LABEL,PUE_PROP_LABEL}));
     }
     
-    final static Map<String,Property> labelToPropertyMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    final static Map<String,Property> labelToAvailablePropertyMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     static {
         for (Property p : availableProperties){
-            labelToPropertyMap.put(p.getLabel(), p);
+            labelToAvailablePropertyMap.put(p.getLabel(), p);
         }
     }
     
     final static Map<String,Property> analyzerLabelToPropertyMap= new HashMap<>();
     static {
-        for(Map.Entry<String,Property> entry : labelToPropertyMap.entrySet()){
+        for(Map.Entry<String,Property> entry : labelToAvailablePropertyMap.entrySet()){
             analyzerLabelToPropertyMap.put(entry.getValue().analyzerLabel,entry.getValue());
         }
     }
     
-    final static ArrayList<OutputFile> availableOutputFiles = new ArrayList<>();
+    final static ArrayList<OutputFilePath> availableOutputFiles = new ArrayList<>();
     static {
-        availableOutputFiles.add(new ProfileFile(AC_FILE_DEFAULT, "Profile of the length-counts for all intra-oligomer duplexes. Must be either a file name ending with .csv or false.", AC_FILE_LABEL, AC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(ALD_FILE_DEFAULT, "List of the largest unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.", ALD_FILE_LABEL, ALD_LABEL));
-        availableOutputFiles.add(new ProfileFile(APC_FILE_DEFAULT, "Profile of the length-counts for the most prominent intra-oligomer duplexes.", APC_FILE_LABEL, APC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(APD_FILE_DEFAULT, "List of all prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.", APD_FILE_LABEL, APD_LABEL));
-        availableOutputFiles.add(new ProfileFile(EC_FILE_DEFAULT, "Profile of the length-counts for all inter-oligomer duplexes. Must be either a file name ending with .csv or false.", EC_FILE_LABEL, EC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(ELD_FILE_DEFAULT, "List of all unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.", ELD_FILE_LABEL, ELD_LABEL));
-        availableOutputFiles.add(new ProfileFile(EPC_FILE_DEFAULT, "Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", EPC_FILE_LABEL, EPC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(EPD_FILE_DEFAULT, "List of all prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", EPD_FILE_LABEL, EPD_LABEL));
-        availableOutputFiles.add(new ProfileFile(NAC_FILE_DEFAULT, "Profile of the length-counts for necessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", NAC_FILE_LABEL, NAC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(NALD_FILE_DEFAULT, "List of baseline unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.", NALD_FILE_LABEL, NALD_LABEL));
-        availableOutputFiles.add(new ProfileFile(NAPC_FILE_DEFAULT, "Profile of the length-counts for the most prominent necessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", NAPC_FILE_LABEL, NAPC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(NAPD_FILE_DEFAULT, "List of necessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.", NAPD_FILE_LABEL, NAPD_LABEL));
-        availableOutputFiles.add(new ProfileFile(NEC_FILE_DEFAULT, "Profile of the length-counts for necessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", NEC_FILE_LABEL, NEC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(NELD_FILE_DEFAULT, "List of baseline unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.", NELD_FILE_LABEL, NELD_LABEL));
-        availableOutputFiles.add(new ProfileFile(NEPC_FILE_DEFAULT, "Profile of the length-counts for the most prominent necessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", NEPC_FILE_LABEL, NEPC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(NEPD_FILE_DEFAULT, "List of necessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", NEPD_FILE_LABEL, NEPD_LABEL));
-        availableOutputFiles.add(new ProfileFile(UAC_FILE_DEFAULT, "Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", UAC_FILE_LABEL, UAC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(UALD_FILE_DEFAULT, "List of delta unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.", UALD_FILE_LABEL, UALD_LABEL));
-        availableOutputFiles.add(new ProfileFile(UAPC_FILE_DEFAULT, "Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", UAPC_FILE_LABEL, UAPC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(UAPD_FILE_DEFAULT, "List of unnecessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.", UAPD_FILE_LABEL, UAPD_LABEL));
-        availableOutputFiles.add(new ProfileFile(UEC_FILE_DEFAULT, "Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UEC_FILE_LABEL, UEC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(UELD_FILE_DEFAULT, "List of delta unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UELD_FILE_LABEL, UELD_LABEL));
-        availableOutputFiles.add(new ProfileFile(UEPC_FILE_DEFAULT, "Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UEPC_FILE_LABEL, UEPC_LABEL));
-        availableOutputFiles.add(new DuplexesFile(UEPD_FILE_DEFAULT, "List of unnecessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", UEPD_FILE_LABEL, UEPD_LABEL));
+        availableOutputFiles.add(new ProfileFile(CXA_FILE_DEFAULT, "Profile of the length-counts for all intra-oligomer duplexes. Must be either a file name ending with .csv or false.", CXA_FILE_LABEL, CXA_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(LXA_FILE_DEFAULT, "List of the largest unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.", LXA_FILE_LABEL, LXA_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(PXA_FILE_DEFAULT, "Profile of the length-counts for the most prominent intra-oligomer duplexes.", PXA_FILE_LABEL, PXA_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(DXA_FILE_DEFAULT, "List of all prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.", DXA_FILE_LABEL, DXA_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(CXE_FILE_DEFAULT, "Profile of the length-counts for all inter-oligomer duplexes. Must be either a file name ending with .csv or false.", CXE_FILE_LABEL, CXE_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(LXE_FILE_DEFAULT, "List of all unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.", LXE_FILE_LABEL, LXE_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(PXE_FILE_DEFAULT, "Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", PXE_FILE_LABEL, PXE_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(DXE_FILE_DEFAULT, "List of all prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", DXE_FILE_LABEL, DXE_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(CNA_FILE_DEFAULT, "Profile of the length-counts for necessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", CNA_FILE_LABEL, CNA_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(LNA_FILE_DEFAULT, "List of baseline unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.", LNA_FILE_LABEL, LNA_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(PNA_FILE_DEFAULT, "Profile of the length-counts for the most prominent necessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", PNA_FILE_LABEL, PNA_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(DNA_FILE_DEFAULT, "List of necessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.", DNA_FILE_LABEL, DNA_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(CNE_FILE_DEFAULT, "Profile of the length-counts for necessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", CNE_FILE_LABEL, CNE_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(LNE_FILE_DEFAULT, "List of baseline unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.", LNE_FILE_LABEL, LNE_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(PNE_FILE_DEFAULT, "Profile of the length-counts for the most prominent necessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", PNE_FILE_LABEL, PNE_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(DNE_FILE_DEFAULT, "List of necessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", DNE_FILE_LABEL, DNE_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(CUA_FILE_DEFAULT, "Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", CUA_FILE_LABEL, CUA_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(LUA_FILE_DEFAULT, "List of delta unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.", LUA_FILE_LABEL, LUA_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(PUA_FILE_DEFAULT, "Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.", PUA_FILE_LABEL, PUA_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(DUA_FILE_DEFAULT, "List of unnecessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.", DUA_FILE_LABEL, DUA_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(CUE_FILE_DEFAULT, "Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", CUE_FILE_LABEL, CUE_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(LUE_FILE_DEFAULT, "List of delta unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.", LUE_FILE_LABEL, LUE_PROP_LABEL));
+        availableOutputFiles.add(new ProfileFile(PUE_FILE_DEFAULT, "Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.", PUE_FILE_LABEL, PUE_PROP_LABEL));
+        availableOutputFiles.add(new DuplexesFile(DUE_FILE_DEFAULT, "List of unnecessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.", DUE_FILE_LABEL, DUE_PROP_LABEL));
     }
     
-    final static Map<String,OutputFile> labelToOutputFileMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    final static Map<String,OutputFilePath> labelToOutputFileMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     static {
-        for (OutputFile o : availableOutputFiles){
+        for (OutputFilePath o : availableOutputFiles){
             labelToOutputFileMap.put(o.getLabel(), o);
         }
     }
@@ -337,14 +354,14 @@ public class DevPro {
         
         // for each requested property, add the property and parameters.
         for(String propertyLabel : r.requestedProperties){
-            Property p = labelToPropertyMap.get(propertyLabel);
+            Property p = labelToAvailablePropertyMap.get(propertyLabel);
             if (p == null){
                 System.err.println("Property "+propertyLabel+" not supported by DevPro.");
                 System.exit(1);
             }
             propertiesToRequest.add(p.getAnalyzerLabel());
             for (String paramLabel : p.getNeededParameters()){
-                Parameter param = labelToParameterMap.get(paramLabel);
+                AnalyzerParameter param = labelToParameterMap.get(paramLabel);
                 if (param == null){
                     System.err.println("Parameter "+paramLabel+" not supported by DevPro.");
                     System.exit(1);
@@ -410,10 +427,35 @@ public class DevPro {
     }
     
     public static void main(String[] args){
+        // input files
+        String FDFP_LABEL = "IN_FIXED_DOMAINS"; // fixed-domains-file-path
+        String FDFP_DEFAULT = "dp_in_domains_fixed.txt";
+        String FDFP_DESCRIPTION = "File listing the fixed domains.";
+
+        String VDFP_LABEL = "IN_VARIABLE_DOMAINS"; // variable-domains-file-path
+        String VDFP_DEFAULT = "dp_in_domains_variable.txt";
+        String VDFP_DESCRIPTION = "File listing the variable domains.";
+
+        String ODFP_LABEL = "IN_OLIGOMERS"; // oligomers-file-path
+        String ODFP_DEFAULT = "dp_in_oligomers.txt";
+        String ODFP_DESCRIPTION = "File listing the domains on each oligomer.";
+
+        // output files
+        String OUTPUT_DIRECTORY_DEFAULT = "output" + File.separator;
+        String OUTPUT_DIRECTORY_LABEL = "outputDirectory";
+        String OUTPUT_DIRECTORY_DESCRIPTION = "Directory where all output files will be placed.";
+
+        String REPORT_FILE_DEFAULT = "dp_out_report.txt";
+        String REPORT_FILE_LABEL = "OUT_REPORT";
+        String REPORT_FILE_DESCRIPTION = "File containing the results and runtime parameters.";
+
+        String OLIGOMERS_FILE_DEFAULT = "false"; //
+        String OLIGOMERS_FILE_LABEL = "OUT_OLIGOMERS";
+    
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         DevPro dp = new DevPro(availableProcessors,availableProcessors);
         
-        Map<String,String> usedParameters = new HashMap<>();
+        Map<String,String> usedParameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         String PFP = PFP_DEFAULT;
         if (args.length > 0)
         {
@@ -429,22 +471,68 @@ public class DevPro {
             if (args[0].equals("-ep") || args[0].equals("--exampleParameters")){
                 try{
                     PrintStream PS = new PrintStream(EXAMPLE_PARAMETERS_FILE_DEFAULT);
-                    PS.println("// Format: parameter label <tab> default value <tab> parameter description");
+                    PS.println("// Format: parameter label <tab> value ");
+                    PS.println("// Lines starting with '//' are ignored by the program." );
+                    PS.println("// For any parameter without a value specified, a defalut value will be used.");
                     PS.println();
-                    PS.println("// Numerical parameters");
-                    for (Parameter p : availableParameters){
-                        PS.println(p.getLabel()+"\t"+p.getDefault()+ "\t// "+p.getDescription());
-                    }
+                    
+                    PS.println(NAMING_CONVENTION_DETAILS);
                     PS.println();
-                    PS.println("// Requestable properties");
-                    for (Property p : availableProperties){
-                        PS.println(p.getLabel()+"\t"+p.isDefault()+ "\t// "+p.getDescription());
+                    
+                    PS.println("// *********************");
+                    PS.println("// Input File Parameters");
+                    PS.println("// *********************");
+                    PS.println();
+                    
+                    PS.println("// " + FDFP_LABEL + " - " + FDFP_DESCRIPTION);
+                    PS.println(FDFP_LABEL+"\t"+FDFP_DEFAULT);
+                    PS.println();
+                    PS.println("// " + VDFP_LABEL + " - " + VDFP_DESCRIPTION);
+                    PS.println(VDFP_LABEL+"\t"+VDFP_DEFAULT);
+                    PS.println();
+                    PS.println("// " + ODFP_LABEL + " - " + ODFP_DESCRIPTION);
+                    PS.println(ODFP_LABEL+"\t"+ODFP_DEFAULT);
+                    PS.println();
+                    
+                    PS.println("// *******************");
+                    PS.println("// Analysis Parameters");
+                    PS.println("// *******************");
+                    PS.println();
+                    
+                    for (AnalyzerParameter p : availableParameters){
+                        PS.println("// " + p.getLabel() + " - " + p.getDescription());
+                        PS.println(p.getLabel()+"\t"+p.getDefault());
+                        PS.println();
                     }
                     
+                    PS.println("// **********************");
+                    PS.println("// Requestable properties");
+                    PS.println("// **********************");
                     PS.println();
-                    PS.println("// Requestable output files");
-                    for (OutputFile o : availableOutputFiles){
-                        PS.println(o.getLabel()+"\t"+o.getDefaultFilePath()+ "\t// "+o.getDescription());
+                    
+                    for (Property p : availableProperties){
+                        PS.println("// " + p.getLabel() + " - " + p.getDescription());
+                        PS.println(p.getLabel()+"\t"+p.isDefault());
+                        PS.println();
+                    }
+                    
+                    PS.println("// **********************");
+                    PS.println("// Output File Parameters");
+                    PS.println("// **********************");
+                    PS.println();
+                    
+                    PS.println("// " + OUTPUT_DIRECTORY_LABEL + " - " + OUTPUT_DIRECTORY_DESCRIPTION);
+                    PS.println(OUTPUT_DIRECTORY_LABEL+"\t"+OUTPUT_DIRECTORY_DEFAULT);
+                    PS.println();
+                    
+                    PS.println("// " + REPORT_FILE_LABEL + " - " + REPORT_FILE_DESCRIPTION);
+                    PS.println(REPORT_FILE_LABEL+"\t"+REPORT_FILE_DEFAULT);
+                    PS.println();
+                    
+                    for (OutputFilePath o : availableOutputFiles){
+                        PS.println("// " + o.getLabel() + " - " + o.getDescription());
+                        PS.println(o.getLabel()+"\t"+o.getDefault());
+                        PS.println();
                     }
                     
                     PS.close();
@@ -456,87 +544,27 @@ public class DevPro {
                 System.exit(0);
             }
             
-            
             PFP = args[0]; // accept the next argument as the parameter file
             System.out.println("Using Parameter File Path: " + PFP); 
         }
         
         // Read parameters file.
         usedParameters.put(PFP_LABEL, PFP);
-        final Map<String,String> parameters = util.importPairFromTxt(PFP);
-        
-        Collection<String> propertiesToRequest = new HashSet<>();
-        Map<String,String> parametersToProvide = new HashMap<>();
-        
-        // for each available output file. If requested, request needed properties.
-        for(Map.Entry<String,OutputFile> entry : labelToOutputFileMap.entrySet()){
-            String fileLabel = entry.getKey();
-            OutputFile of = entry.getValue();
-            String fp = parameters.get(fileLabel);
-            if (fp == null){
-                fp = of.getDefaultFilePath();
-            }
-            usedParameters.put(fileLabel, fp);
-            if(!fp.equalsIgnoreCase("false")){
-                if (!of.isValid(fp)){
-                    System.err.println("File path "+ fp + " invalid for file "+ fileLabel);
-                    System.exit(1);
-                }
-                String[] props = of.getNeededProperties();
-                for( String prop: props){
-                    Property p = labelToPropertyMap.get(prop);
-                    if (p == null){
-                        System.err.println("Property "+ prop + " is not supported by DevPro");
-                        System.exit(1);
-                    }
-                    propertiesToRequest.add(prop);
-                    for(String paramLabel : p.neededParameters){
-                        Parameter param = labelToParameterMap.get(paramLabel);
-                        String paramValue = parameters.getOrDefault(paramLabel,param.getDefault());
-                        if (!param.isValid(paramValue)){
-                            System.err.println("Value "+paramValue+" is not valid for parameter "+ paramLabel);
-                            System.exit(1);
-                        }
-                        usedParameters.put(paramLabel,paramValue);
-                        parametersToProvide.put(paramLabel,paramValue);
-                    }
-                }
-            }
-        }
-        
-        // for each of the available properties. Is it requested?
-        for(Map.Entry<String,Property> entry: labelToPropertyMap.entrySet()){
-            String propLabel = entry.getKey();
-            Property p = entry.getValue();
-            boolean active = Boolean.parseBoolean(parameters.getOrDefault(propLabel,p.isDefault()));
-            usedParameters.put(propLabel,String.valueOf(active));
-            if (active) {
-                propertiesToRequest.add(propLabel);
-                for(String paramLabel : p.neededParameters){
-                    Parameter param = labelToParameterMap.get(paramLabel);
-                    String paramValue = parameters.getOrDefault(paramLabel,param.getDefault());
-                    if (!param.isValid(paramValue)){
-                        System.err.println("Value "+paramValue+" is not valid for parameter "+ paramLabel);
-                        System.exit(1);
-                    }
-                    usedParameters.put(paramLabel,paramValue);
-                    parametersToProvide.put(paramLabel,paramValue);
-                }
-            }
-        }
+        final Map<String,String> providedParameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        providedParameters.putAll(util.importPairFromTxt(PFP));
         
         // Read fixed domains file.
-        final String FDFP = parameters.getOrDefault(FDFP_LABEL,FDFP_DEFAULT);
+        final String FDFP = providedParameters.getOrDefault(FDFP_LABEL,FDFP_DEFAULT);
         usedParameters.put(FDFP_LABEL,FDFP);
         final Map<String,String> fixedDomains = util.importPairFromTxt(FDFP);
 
         // Read variable domains file.
-        final String VDFP = parameters.getOrDefault(VDFP_LABEL,VDFP_DEFAULT);
+        final String VDFP = providedParameters.getOrDefault(VDFP_LABEL,VDFP_DEFAULT);
         usedParameters.put(VDFP_LABEL, VDFP);
         final Map<String,String> variableDomains = util.importPairFromTxt(VDFP);
 
         // Read oligomer domains file.
-        final String OFP = parameters.getOrDefault(ODFP_LABEL,ODFP_DEFAULT);
+        final String OFP = providedParameters.getOrDefault(ODFP_LABEL,ODFP_DEFAULT);
         usedParameters.put(ODFP_LABEL, OFP);
         final Map<String,String[]> oligomerDomains = util.importListFromTxt(OFP);
         
@@ -545,24 +573,106 @@ public class DevPro {
         final FactoryDomainBasedEncodedNetwork factory = new FactoryDomainBasedEncodedNetwork(coder, fixedDomains, oligomerDomains, variableDomains);
         final IDomainBasedEncodedNetwork network = factory.getNewNetwork(variableDomains);
         
+        Collection<String> requestedProperties = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        Collection<String> necessaryProperties = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        Collection<String> necessaryParameters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        
+        // for each available property. Was it requested? Add to necessary and requested.
+        for(Map.Entry<String,Property> entry: labelToAvailablePropertyMap.entrySet()){
+            String propLabel = entry.getKey();
+            Property p = entry.getValue();
+            String val = providedParameters.getOrDefault(propLabel,p.isDefault());
+            if (!val.equalsIgnoreCase("TRUE") && !val.equalsIgnoreCase("FALSE") ){
+                System.err.println("Value "+val+" is not valid for parameter "+ propLabel);
+                System.exit(1);
+            }
+            boolean requested = Boolean.parseBoolean(val);
+            usedParameters.put(propLabel,String.valueOf(requested));
+            if (requested) {
+                necessaryProperties.add(propLabel);
+                requestedProperties.add(propLabel);
+                // for each parameter required by this property
+                for(String paramLabel : p.neededParameters){
+                    necessaryParameters.add(paramLabel);
+                }
+                for(String subProp : p.getNeededProperties()){
+                    necessaryProperties.add(subProp);
+                }
+            }
+        }
+        
+        // for each available output file. Was it requested? Request necessary properties and parameters
+        for(Map.Entry<String,OutputFilePath> entry : labelToOutputFileMap.entrySet()){
+            String fileLabel = entry.getKey();
+            OutputFilePath of = entry.getValue();
+            String val = providedParameters.getOrDefault(fileLabel,of.getDefault());
+            usedParameters.put(fileLabel, val);
+            if(!val.equalsIgnoreCase("false")){
+                if (!of.isValid(val)){
+                    System.err.println("File path "+ val + " invalid for file "+ fileLabel);
+                    System.exit(1);
+                }
+                // for all properties needed by for this file
+                for( String prop: of.getNeededProperties()){
+                    Property p = labelToAvailablePropertyMap.get(prop);
+                    if (p == null){
+                        System.err.println("Property "+ prop + " is not supported by DevPro");
+                        System.exit(1);
+                    }
+                    necessaryProperties.add(prop);
+                    for(String paramLabel : p.neededParameters){
+                        AnalyzerParameter param = labelToParameterMap.get(paramLabel);
+                        String paramValue = providedParameters.getOrDefault(paramLabel,param.getDefault());
+                        if (!param.isValid(paramValue)){
+                            System.err.println("Value "+paramValue+" is not valid for parameter "+ paramLabel);
+                            System.exit(1);
+                        }
+                        necessaryParameters.add(paramLabel);
+                    }
+                }
+            }
+        }
+        
+        Map<String,String> parametersToProvide = new HashMap<>();
+        
+        // for each necessary parameter
+        for(String param: necessaryParameters){
+            // read from parameter file.
+            AnalyzerParameter par = labelToParameterMap.get(param);
+            String val = providedParameters.getOrDefault(param,par.getDefault());
+            if (!par.isValid(val)){
+                System.err.println("Parameter value "+ val + " invalid for "+ param);
+                System.exit(1);
+            }
+            // record used value
+            usedParameters.put(param, val);
+            parametersToProvide.put(par.getAnalyzerLabel(),val);
+        }
+        
+        Collection<String> propertiesToRequest = new HashSet<>();
+        
         // add properties to request.
+        for (String prop : necessaryProperties){
+            Property p = labelToAvailablePropertyMap.get(prop);
+            propertiesToRequest.add(prop);
+        }
         
         //output stuff
-        final String outputDirectory = parameters.getOrDefault(OUTPUT_DIRECTORY_LABEL, OUTPUT_DIRECTORY_DEFAULT);
+        final String outputDirectory = providedParameters.getOrDefault(OUTPUT_DIRECTORY_LABEL, OUTPUT_DIRECTORY_DEFAULT);
         usedParameters.put(OUTPUT_DIRECTORY_LABEL,outputDirectory);
-        final String ORFP = parameters.getOrDefault(REPORT_FILE_LABEL, REPORT_FILE_DEFAULT);
+        final String ORFP = providedParameters.getOrDefault(REPORT_FILE_LABEL, REPORT_FILE_DEFAULT);
         usedParameters.put(REPORT_FILE_LABEL,ORFP);
-        final String OOSFP = parameters.getOrDefault(OLIGOMERS_FILE_LABEL, OLIGOMERS_FILE_DEFAULT);
+        final String OOSFP = providedParameters.getOrDefault(OLIGOMERS_FILE_LABEL, OLIGOMERS_FILE_DEFAULT);
         usedParameters.put(OLIGOMERS_FILE_LABEL,OOSFP);
         
-        Request request = new Request(network, propertiesToRequest, parametersToProvide);
+        Request request = new Request(network, necessaryProperties, parametersToProvide);
         Report report = dp.analyze(request);
         
         // print report file.
         try{
             Files.createDirectories(Paths.get(outputDirectory));
             PrintStream PS = new PrintStream( outputDirectory+usedParameters.get(REPORT_FILE_LABEL));
-            printReport(PS, report, usedParameters);
+            printReport(PS, report, necessaryProperties, requestedProperties, usedParameters);
             PS.close();
         }catch (Exception e){
             System.err.println("Error while exporting report file.");
@@ -583,9 +693,9 @@ public class DevPro {
         
         // output other files.
         // for each available output file. Print if active.
-        for(Map.Entry<String,OutputFile> entry :  labelToOutputFileMap.entrySet()){
+        for(Map.Entry<String,OutputFilePath> entry :  labelToOutputFileMap.entrySet()){
             String fileLabel = entry.getKey();
-            OutputFile of = entry.getValue();
+            OutputFilePath of = entry.getValue();
             String fp = usedParameters.get(fileLabel);
             if(!fp.equalsIgnoreCase("false")){
                 try {
@@ -603,7 +713,7 @@ public class DevPro {
     }
     
     private static void printProfileCSV(PrintStream ps, String lengthCounts){
-        ps.print("Size(base-pairs),Count");
+        ps.print("Size (base-pairs),Count");
         String[] splitStrings = lengthCounts.split(System.lineSeparator());
         Map<Integer,Integer> sortedValues = new TreeMap<>();
         for(String value: splitStrings){
@@ -623,15 +733,17 @@ public class DevPro {
         String label;
         String[] neededParameters;
         String[] neededProperties;
+        String units;
         
         // defaultRequested = is requested by default.
-        Property (String analyzerLabel, String description, String isDefault, String label, String[] neededParameters, String[] neededProperties){
+        Property (String label, String units, String description, String isDefault, String analyzerLabel, String[] neededParameters, String[] neededProperties){
             this.label = label;
             this.analyzerLabel = analyzerLabel;
             this.description = description;
             this.isDefault = isDefault;
             this.neededParameters = neededParameters;
             this.neededProperties = neededProperties;
+            this.units = units;
         }
         
         public String getAnalyzerLabel(){
@@ -660,19 +772,23 @@ public class DevPro {
         
         public void printLine(PrintStream PS, String value){
             PS.println();
-            PS.print(label+" "+value);
+            PS.print(label+" "+units+": "+value);
+        }
+        
+        public String getUnits(){
+            return units;
         }
     }
     
     private static class ProfileProperty extends Property{
         
-        public ProfileProperty(String analyzerLabel, String description, String isDefault, String label, String[] neededParameters, String[] neededProperties) {
-            super(analyzerLabel, description, isDefault, label, neededParameters, neededProperties);
+        public ProfileProperty(String label, String units, String description, String isDefault, String analyzerLabel, String[] neededParameters, String[] neededProperties) {
+            super(label, units, description, isDefault, analyzerLabel, neededParameters, neededProperties);
         }
         
         public void printLine(PrintStream PS, String value){
             PS.println();
-            PS.print(label+" (base-pairs, counts):");
+            PS.print(label+" "+units+": ");
             String[] splitStrings = value.split(System.lineSeparator());
             Map<Integer,Integer> sortedValues = new TreeMap<>();
             for(String v2: splitStrings){
@@ -687,14 +803,14 @@ public class DevPro {
     
     private static class DuplexProperty extends Property{
         
-        public DuplexProperty(String analyzerLabel, String description, String isDefault, String label, String[] neededParameters, String[] neededProperties) {
-            super(analyzerLabel, description, isDefault, label, neededParameters, neededProperties);
+        public DuplexProperty(String label, String units, String description, String isDefault, String analyzerLabel, String[] neededParameters, String[] neededProperties) {
+            super(label, units, description, isDefault, analyzerLabel, neededParameters, neededProperties);
         }
         
         @Override
         public void printLine(PrintStream PS, String value){
             PS.println();
-            PS.print(label+" (base-pairs indexO1 indexO1B1 indexO2 indexO2B1):");
+            PS.print(label+" "+units+": ");
             String[] splitStrings = value.split(System.lineSeparator());
             Map<Integer,Integer> sortedValues = new TreeMap<>();
             for(String v2: splitStrings){
@@ -706,14 +822,17 @@ public class DevPro {
     }
     
     private interface Parameter{
-        public String getAnalyzerLabel();
         public String getDefault();
         public String getDescription();
         public String getLabel();
         boolean isValid(String value);
     }
     
-    private static class IntegerParameter implements Parameter{
+    private interface AnalyzerParameter extends Parameter{
+        public String getAnalyzerLabel();
+    }
+    
+    private static class IntegerAnalyzerParameter implements AnalyzerParameter{
         String analyzerLabel;
         String description;
         String defaultValue;
@@ -721,7 +840,7 @@ public class DevPro {
         int minValue;
         int maxValue;
         
-        IntegerParameter (String analyzerLabel, String description, String label, String defaultValue, int minValue, int maxValue){
+        IntegerAnalyzerParameter (String label, String description, String defaultValue, String analyzerLabel, int minValue, int maxValue){
             this.label = label;
             this.analyzerLabel = analyzerLabel;
             this.description = description;
@@ -758,16 +877,12 @@ public class DevPro {
         }
     }
     
-    private static interface OutputFile{
-        public String getDefaultFilePath();
-        public String getDescription();
-        public String getLabel();
+    private static interface OutputFilePath extends Parameter{
         public String[] getNeededProperties();
-        boolean isValid(String value);
         void printFile(PrintStream PS, Report report);
     }
     
-    private static class ProfileFile implements OutputFile{
+    private static class ProfileFile implements OutputFilePath{
         String defaultFilePath;
         String description;
         String label;
@@ -780,7 +895,7 @@ public class DevPro {
             this.neededProperty = neededProperty;
         }
         
-        public String getDefaultFilePath() {
+        public String getDefault() {
             return defaultFilePath;
         }
 
@@ -805,7 +920,7 @@ public class DevPro {
         }
     }
     
-    private static class DuplexesFile implements OutputFile{
+    private static class DuplexesFile implements OutputFilePath{
         String defaultFilePath;
         String description;
         String label;
@@ -819,7 +934,7 @@ public class DevPro {
         }
         
         @Override
-        public String getDefaultFilePath() {
+        public String getDefault() {
             return defaultFilePath;
         }
 
@@ -848,7 +963,7 @@ public class DevPro {
             String[] oligomerNames = report.network.getOligomerNames();
             String[] oligomerSequences = report.network.getOligomerSequences();
             //PS.print("indexO1,indexO1B1,indexO2,indexO2B1,base-pairs");
-            PS.print("Duplex size(base-pairs),Oligomer 1 name,Oligomer 1 sequence,Index of oligomer 1 first base,Oligomer 2 name,Oligomer 2 sequence,Index of oligomer 2 first base");
+            PS.print("Duplex size (base-pairs),Oligomer 1 name,Oligomer 1 sequence,Index of oligomer 1 first base,Oligomer 2 name,Oligomer 2 sequence,Index of oligomer 2 first base");
             String[] splitLines = report.requestedProperties.get(neededProperty).split(System.lineSeparator());
             for(String line: splitLines){
                 if (!line.equals("base-pairs indexO1 indexO1B1 indexO2 indexO2B1")){
@@ -872,7 +987,7 @@ public class DevPro {
         }
     }
     
-    private static void printReport(PrintStream PS, Report report, Map<String,String> usedParameters) {
+    private static void printReport(PrintStream PS, Report report, Collection<String> necessaryProperties, Collection<String> requestedProperties, Map<String,String> usedParameters) {
         Map<String,String> allUsedParameters = new HashMap<>(usedParameters);
         allUsedParameters.putAll(report.usedParameters);
         IDomainBasedEncodedNetwork network = report.network;
@@ -895,11 +1010,10 @@ public class DevPro {
         PS.println("********************");
         
         // for each known property. If it was requested, print it.
-        for(Map.Entry<String,Property> entry : labelToPropertyMap.entrySet()){
-            String propLabel = entry.getKey();
-            Property p = entry.getValue();
-            String value = report.requestedProperties.get(p.label);
-            if (value != null) p.printLine(PS,value);
+        for(String entry : requestedProperties){
+            Property p = labelToAvailablePropertyMap.get(entry);
+            String value = report.requestedProperties.get(entry);
+            p.printLine(PS,value);
         }
         
         PS.println();
@@ -908,12 +1022,12 @@ public class DevPro {
         PS.println("Other Needed Properties");
         PS.println("***********************");
         
-        // for each known property. If it was necessary, print it.
-        for(Map.Entry<String,Property> entry : labelToPropertyMap.entrySet()){
-            String propLabel = entry.getKey();
-            Property p = entry.getValue();
-            String value = report.necessaryProperties.get(p.label);
-            if (value != null) p.printLine(PS,value);
+        for(String entry : necessaryProperties){
+            Property p = labelToAvailablePropertyMap.get(entry);
+            if(!requestedProperties.contains(entry)){
+                String value = report.requestedProperties.get(entry);
+                p.printLine(PS,value);
+            }
         }
 
         // print network information

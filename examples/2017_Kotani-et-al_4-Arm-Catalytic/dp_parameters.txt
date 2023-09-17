@@ -1,0 +1,29 @@
+// Format: parameter label <tab> value 
+// Lines starting with '//' are ignored by the program.
+// For any parameter without a value specified, a defalut value will be used.
+
+IN_FIXED_DOMAINS	in_domains_fixed.txt
+
+IN_VARIABLE_DOMAINS	in_domains_variable.txt
+
+IN_OLIGOMERS	in_oligomers.txt
+
+scoringWeightX 100
+
+OUT_REPORT pre_dp_out_report.txt
+
+OUT_CNA	pre_dp_out_Counts_Necessary_Intra.csv
+
+OUT_LNA	pre_dp_out_Details_Necessary_Intra_Largest.csv
+
+OUT_CNE	pre_dp_out_Counts_Necessary_Inter.csv
+
+OUT_LNE	pre_dp_out_Details_Necessary_Inter_Largest.csv
+
+OUT_CUA	pre_dp_out_Counts_Unnecessary_Intra.csv
+
+OUT_LUA	pre_dp_out_Details_Unnecessary_Intra_Largest.csv
+
+OUT_CUE	pre_dp_out_Counts_Unnecessary_Inter.csv
+
+OUT_LUE	pre_dp_out_Details_Unnecessary_Inter_Largest.csv

@@ -1,0 +1,5 @@
+// Example SeqEvo parameter file (2007 Zhang et al. - Autocatalytic Network) - MT 2023-09-12
+IN_FIXED_DOMAINS in_domains_fixed.txt
+IN_VARIABLE_DOMAINS in_domains_variable.txt
+IN_OLIGOMERS in_oligomers.txt
+scoringWeightX 100

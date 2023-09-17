@@ -1,0 +1,1 @@
+To compile the .jar files on a windows operating system, run the MakeJars.ps1 powershell script.

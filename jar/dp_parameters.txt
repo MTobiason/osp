@@ -1,6 +1,0 @@
-fixed_domains_file in_domains_fixed.txt
-variable_domains_file SeqEvo-Out\domains_variable.txt
-oligomer_domains_file in_oligomer_domains.txt
-//intraSLC 3
-//interSLC 8
-numberLargestDuplexes 1000

@@ -21,4 +21,11 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
 /target/
+/examples/2007_Zhang-et-al_Autocatalytic/output/
+/examples/2011_Qian-Winfree_Seesaw_4-Input-Or/output/
+/examples/2012_Ke-et-al_Brick_10x10x10/output/
+/examples/2017_Kotani-et-al_4-Arm-Catalytic/output/
+nb-configuration.xml
+pom.xml

@@ -1,5 +1,0 @@
-CPL 100000
-NL 280
-intraSLC 3
-interSLC 8
-scoringWeightX 1000000

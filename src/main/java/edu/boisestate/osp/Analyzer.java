@@ -1,26 +1,25 @@
 /*
- * The MIT License
- *
- * Copyright 2023 mtobi.
- *
+ * Copyright (c) 2019 Boise State University
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
+
 package edu.boisestate.osp;
 
 import edu.boisestate.osp.networks.IDomainBasedEncodedNetwork;
@@ -106,6 +105,9 @@ public class Analyzer{
     final static String UEPC_LABEL = "Unnecessary_Inter_Prominent_Counts"; // Profile baseline Unique inter
     final static String UEPD_LABEL = "Unnecessary_Inter_Prominent_Details"; // List of baseline unique intra-oligomer duplexes.
     
+    final static String LARGEST_UNNECESSARY_INTRA_LABEL = "Largest_Unnecessary_Intra";
+    final static String LARGEST_UNNECESSARY_INTER_LABEL = "Largest_Unnecessary_Inter";
+    
     final static ArrayList<Parameter> availableParameters = new ArrayList<>();
     static {
         availableParameters.add(new IntegerParameter("Inter-oligomer duplexes will contribute points to N equalt to this value raised to the length of the duplex.", INTER_SB_LABEL,0,Integer.MAX_VALUE));
@@ -157,7 +159,9 @@ public class Analyzer{
         availableProperties.add(new Property("List of the largest necessary intra-oligomer duplexes.", NALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{NALD_LABEL}));
         availableProperties.add(new Property("List of the largest necessary inter-oligomer duplexes.", NELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{NELD_LABEL}));
         availableProperties.add(new Property("List of the largest unnecessary intra-oligomer duplexes.", UALD_LABEL, new String[] {INTRA_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{UALD_LABEL}));
-        availableProperties.add(new Property("List of the largest unnecessary inter-oligomer duplexes.", UELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{UELD_LABEL}));        
+        availableProperties.add(new Property("List of the largest unnecessary inter-oligomer duplexes.", UELD_LABEL, new String[] {INTER_SLC_LABEL,NUMBER_LARGEST_DUPLEXES_LABEL}, new String[]{UELD_LABEL}));
+        availableProperties.add(new Property("The size (in base-pairs) of the largest unnecessary intra-oligomer duplex.", LARGEST_UNNECESSARY_INTRA_LABEL, new String[] {INTRA_SLC_LABEL}, new String[]{LARGEST_UNNECESSARY_INTRA_LABEL, UAPC_LABEL}));        
+        availableProperties.add(new Property("The size (in base-pairs) of the largest unnecessary inter-oligomer duplex.", LARGEST_UNNECESSARY_INTER_LABEL, new String[] {INTER_SLC_LABEL}, new String[]{LARGEST_UNNECESSARY_INTER_LABEL, UEPC_LABEL}));        
 }
     
     final static Map<String,Property> labelToPropertyMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -243,7 +247,10 @@ public class Analyzer{
         Map<Integer,Integer> pdce = null;
         Map<Integer,Integer> pdua = null;
         Map<Integer,Integer> pdue = null;
-                
+        
+        Integer LARGEST_UNNECESSARY_INTRA = null;
+        Integer LARGEST_UNNECESSARY_INTER = null;
+        
         Map<String,String> calculatedPropertyValues = new HashMap<>();
         
         // if baseline intra duplexes is required calculate it.
@@ -506,6 +513,26 @@ public class Analyzer{
         if (neededProperties.contains(UELD_LABEL)){
             lddue = as.getLargestDeltaInterDuplexes(r.network, Integer.parseInt(usedParameters.get(INTER_SLC_LABEL)), Integer.parseInt(usedParameters.get(NUMBER_LARGEST_DUPLEXES_LABEL)));
             calculatedPropertyValues.put(UELD_LABEL, lddue.toString());
+        }
+        
+        if (neededProperties.contains(LARGEST_UNNECESSARY_INTRA_LABEL)){
+            LARGEST_UNNECESSARY_INTRA = 0;
+            for (Map.Entry<Integer,Integer> entry : pdua.entrySet()){
+                if (entry.getKey().compareTo(LARGEST_UNNECESSARY_INTRA) > 0){
+                    LARGEST_UNNECESSARY_INTRA = entry.getKey();
+                }
+            }
+            calculatedPropertyValues.put(LARGEST_UNNECESSARY_INTRA_LABEL, LARGEST_UNNECESSARY_INTRA.toString());
+        }
+        
+        if (neededProperties.contains(LARGEST_UNNECESSARY_INTER_LABEL)){
+            LARGEST_UNNECESSARY_INTER = 0;
+            for (Map.Entry<Integer,Integer> entry : pdue.entrySet()){
+                if (entry.getKey().compareTo(LARGEST_UNNECESSARY_INTER) > 0){
+                    LARGEST_UNNECESSARY_INTER = entry.getKey();
+                }
+            }
+            calculatedPropertyValues.put(LARGEST_UNNECESSARY_INTER_LABEL, LARGEST_UNNECESSARY_INTER.toString());
         }
         
         Map<String,String> requestedPropertyValues = new HashMap<>();

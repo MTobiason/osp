@@ -1,0 +1,10 @@
+IN_FIXED_DOMAINS in_domains_fixed.txt
+IN_VARIABLE_DOMAINS in_domains_variable.txt
+IN_OLIGOMERS in_oligomers.txt
+scoringWeightX 100000000
+maxAA 6
+maxTT 6
+maxCC 6
+maxGG 6
+intraSLC 3
+interSLC 8
