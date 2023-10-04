@@ -12,18 +12,18 @@ scoringWeightX 100
 
 OUT_REPORT pre_dp_out_report.txt
 
-OUT_CNA	pre_dp_out_Counts_Necessary_Intra.csv
+OUT_CNA	pre_dp_out_counts_necessary_intra.csv
 
-OUT_LNA	pre_dp_out_Details_Necessary_Intra_Largest.csv
+OUT_LNA	pre_dp_out_details_necessary_intra_largest.csv
 
-OUT_CNE	pre_dp_out_Counts_Necessary_Inter.csv
+OUT_CNE	pre_dp_out_counts_necessary_inter.csv
 
-OUT_LNE	pre_dp_out_Details_Necessary_Inter_Largest.csv
+OUT_LNE	pre_dp_out_details_necessary_inter_largest.csv
 
-OUT_CUA	pre_dp_out_Counts_Unnecessary_Intra.csv
+OUT_CUA	pre_dp_out_counts_unnecessary_intra.csv
 
-OUT_LUA	pre_dp_out_Details_Unnecessary_Intra_Largest.csv
+OUT_LUA	pre_dp_out_details_unnecessary_intra_largest.csv
 
-OUT_CUE	pre_dp_out_Counts_Unnecessary_Inter.csv
+OUT_CUE	pre_dp_out_counts_unnecessary_inter.csv
 
-OUT_LUE	pre_dp_out_Details_Unnecessary_Inter_Largest.csv
+OUT_LUE	pre_dp_out_details_unnecessary_inter_largest.csv

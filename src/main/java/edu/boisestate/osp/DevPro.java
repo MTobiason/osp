@@ -110,12 +110,12 @@ public class DevPro {
     final static String DXE_PROP_LABEL = "PROP_DXE";
     final static String DXE_PROP_DESCRIPTION = "List of all inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String CNA_FILE_DEFAULT = "dp_out_Counts_Necessary_Intra.csv";
+    final static String CNA_FILE_DEFAULT = "dp_out_counts_necessary_intra.csv";
     final static String CNA_FILE_LABEL = "OUT_CNA";
     final static String CNA_PROP_LABEL = "PROP_CNA";
     final static String CNA_PROP_DESCRIPTION = "Profile of the length-counts for baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String LNA_FILE_DEFAULT = "dp_out_Details_Necessary_Intra_Largest.csv";
+    final static String LNA_FILE_DEFAULT = "dp_out_details_necessary_intra_largest.csv";
     final static String LNA_FILE_LABEL = "OUT_LNA";
     final static String LNA_PROP_LABEL = "PROP_LNA";
     final static String LNA_PROP_DESCRIPTION = "List of the largest baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
@@ -130,12 +130,12 @@ public class DevPro {
     final static String DNA_PROP_LABEL = "PROP_DNA";
     final static String DNA_PROP_DESCRIPTION = "List of baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String CNE_FILE_DEFAULT = "dp_out_Counts_Necessary_Inter.csv";
+    final static String CNE_FILE_DEFAULT = "dp_out_counts_necessary_inter.csv";
     final static String CNE_FILE_LABEL = "OUT_CNE";
     final static String CNE_PROP_LABEL = "PROP_CNE";
     final static String CNE_PROP_DESCRIPTION = "Profile of the length-counts for baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String LNE_FILE_DEFAULT = "dp_out_Details_Necessary_Inter_Largest.csv";
+    final static String LNE_FILE_DEFAULT = "dp_out_details_necessary_inter_largest.csv";
     final static String LNE_FILE_LABEL = "OUT_LNE"; 
     final static String LNE_PROP_LABEL = "PROP_LNE"; 
     final static String LNE_PROP_DESCRIPTION = "List of the largest baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
@@ -150,12 +150,12 @@ public class DevPro {
     final static String DNE_PROP_LABEL = "PROP_DNE";
     final static String DNE_PROP_DESCRIPTION = "List of baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String CUA_FILE_DEFAULT = "dp_out_Counts_Unnecessary_Intra.csv";
+    final static String CUA_FILE_DEFAULT = "dp_out_counts_unnecessary_intra.csv";
     final static String CUA_FILE_LABEL = "OUT_CUA";
     final static String CUA_PROP_LABEL = "PROP_CUA";
     final static String CUA_PROP_DESCRIPTION = "Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
         
-    final static String LUA_FILE_DEFAULT = "dp_out_Details_Unnecessary_Intra_Largest.csv"; 
+    final static String LUA_FILE_DEFAULT = "dp_out_details_unnecessary_intra_largest.csv"; 
     final static String LUA_FILE_LABEL = "OUT_LUA"; 
     final static String LUA_PROP_LABEL = "PROP_LUA";
     final static String LUA_PROP_DESCRIPTION = "List of the largest unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
@@ -170,12 +170,12 @@ public class DevPro {
     final static String DUA_PROP_LABEL = "PROP_DUA";
     final static String DUA_PROP_DESCRIPTION = "List of unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String CUE_FILE_DEFAULT = "dp_out_Counts_Unnecessary_Inter.csv";
+    final static String CUE_FILE_DEFAULT = "dp_out_counts_unnecessary_inter.csv";
     final static String CUE_FILE_LABEL = "OUT_CUE";
     final static String CUE_PROP_LABEL = "PROP_CUE";
     final static String CUE_PROP_DESCRIPTION = "Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.";
     
-    final static String LUE_FILE_DEFAULT = "dp_out_Details_Unnecessary_Inter_Largest.csv"; 
+    final static String LUE_FILE_DEFAULT = "dp_out_details_unnecessary_inter_largest.csv"; 
     final static String LUE_FILE_LABEL = "OUT_LUE"; 
     final static String LUE_PROP_LABEL = "PROP_LUE";
     final static String LUE_PROP_DESCRIPTION = "List of the largest unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.";

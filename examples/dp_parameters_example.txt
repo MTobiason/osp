@@ -1,0 +1,250 @@
+// Format: parameter label <tab> value 
+// Lines starting with '//' are ignored by the program.
+// For any parameter without a value specified, a defalut value will be used.
+
+// Output files and properties are assigned 3-character labels based on the following rules.
+// 		The term necessary refers to duplexes which are implied by either the domain-level-design or by fixed base-sequences.
+// 		The term unnecessary describes all other duplexes.
+// 		The term prominent refers to duplexes which are not part of a larger duplex.
+// 		The term largest refers to the duplexes with the most base-pairs.
+// 	Character 1:
+// 		(C) Counts of each length
+// 		(D) Details of duplex location and base-sequence
+// 		(L) Details of duplex location and base-sequence for the largest prominent duplexes
+// 		(P) Counts of each length for prominent duplexes
+// 		(S) Size of the largest duplex in base-pairs
+// 	Character 2:
+// 		(N) Necessary duplexes only
+// 		(U) Unnecessary duplexes only
+// 		(X) Both necessary and unnecessary
+// 	Character 3:
+// 		(A) Intra-Oligomer duplexes only
+// 		(E) Inter-Oligomer duplexes only
+// For example, the counts of unnecessary intra-oligomer duplexes are reported in the PROP_CUA property and OUT_CUA file.
+
+// *********************
+// Input File Parameters
+// *********************
+
+// IN_FIXED_DOMAINS - File listing the fixed domains.
+IN_FIXED_DOMAINS	dp_in_domains_fixed.txt
+
+// IN_VARIABLE_DOMAINS - File listing the variable domains.
+IN_VARIABLE_DOMAINS	dp_in_domains_variable.txt
+
+// IN_OLIGOMERS - File listing the domains on each oligomer.
+IN_OLIGOMERS	dp_in_oligomers.txt
+
+// *******************
+// Analysis Parameters
+// *******************
+
+// interSB - Inter-oligomer duplexes will contribute points to N equal to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than 2147483647.
+interSB	10
+
+// interSLC - Inter-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than 2147483647.
+interSLC	1
+
+// intraSB - Intra-oligomer duplexes will contribute points to N equal to this value raised to the length of the duplex. Must be an integer greater than or equal to 0 and less than 2147483647.
+intraSB	10
+
+// intraSLC - Intra-oligomer duplexes with base-pairs less than this value do not contribute to profiles or scores. Must be an integer greater than or equal to 1 and less than 2147483647.
+intraSLC	1
+
+// numberLargestDuplexes - Maximum number of duplexes to include when listing largest-duplexes. Must be an integer greater than or equal to 1 and less than 2147483647.
+numberLargestDuplexes	1000
+
+// scoringWeightX - W will be calculated as O times this value plus N. Must be an integer greater than or equal to 1 and less than 2147483647.
+scoringWeightX	10000
+
+// **********************
+// Requestable properties
+// **********************
+
+// PROP_baselineN - Network Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.
+PROP_baselineN	false
+
+// PROP_baselineO - Oligomer Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.
+PROP_baselineO	false
+
+// PROP_baselineW - Weighted Fitness Score resulting from necessary duplexes. Must be true or false. A value of true will request this property.
+PROP_baselineW	false
+
+// PROP_deltaN - Network Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.
+PROP_deltaN	true
+
+// PROP_deltaO - Oligomer Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.
+PROP_deltaO	true
+
+// PROP_deltaW - Weighted Fitness Score resulting from unnecessary duplexes. Must be true or false. A value of true will request this property.
+PROP_deltaW	true
+
+// PROP_N - Network Fitness Score. Must be true or false. A value of true will request this property.
+PROP_N	false
+
+// PROP_O - Oligomer Fitness Score. Must be true or false. A value of true will request this property.
+PROP_O	false
+
+// PROP_W - Weighted Fitness Score. Must be true or false. A value of true will request this property.
+PROP_W	false
+
+// PROP_CXA - Profile of the length-counts for all intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_CXA	false
+
+// PROP_LXA - List of the largest intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_LXA	false
+
+// PROP_PXA - Profile of the length-counts for the most prominent intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_PXA	false
+
+// PROP_DXA - List of all intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_DXA	false
+
+// PROP_CXE - Profile of the length-counts for all inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_CXE	false
+
+// PROP_LXE - List of the largest inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_LXE	false
+
+// PROP_PXE - Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_PXE	false
+
+// PROP_DXE - List of all inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_DXE	false
+
+// PROP_CNA - Profile of the length-counts for baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_CNA	false
+
+// PROP_LNA - List of the largest baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_LNA	false
+
+// PROP_PNA - Profile of the length-counts for the most prominent baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_PNA	false
+
+// PROP_DNA - List of baseline intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_DNA	false
+
+// PROP_CNE - Profile of the length-counts for baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_CNE	false
+
+// PROP_LNE - List of the largest baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_LNE	false
+
+// PROP_PNE - Profile of the length-counts for the most prominent baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_PNE	false
+
+// PROP_DNE - List of baseline inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_DNE	false
+
+// PROP_CUA - Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_CUA	false
+
+// PROP_LUA - List of the largest unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_LUA	false
+
+// PROP_PUA - Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_PUA	false
+
+// PROP_DUA - List of unnecessary intra-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_DUA	false
+
+// PROP_CUE - Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_CUE	false
+
+// PROP_LUE - List of the largest unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_LUE	false
+
+// PROP_PUE - Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_PUE	false
+
+// PROP_DUE - List of unnecessary inter-oligomer duplexes. Must be true or false. A value of true will request this property.
+PROP_DUE	false
+
+// PROP_SUA - Size of the largest unnecessary intra-oligomer duplex. Must be true or false. A value of true will request this property.
+PROP_SUA	true
+
+// PROP_SUE - Size of the largest unnecessary inter-oligomer duplex. Must be true or false. A value of true will request this property.
+PROP_SUE	true
+
+// **********************
+// Output File Parameters
+// **********************
+
+// outputDirectory - Directory where all output files will be placed.
+outputDirectory	output\
+
+// OUT_REPORT - File containing the results and runtime parameters.
+OUT_REPORT	dp_out_report.txt
+
+// OUT_CXA - Profile of the length-counts for all intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_CXA	false
+
+// OUT_LXA - List of the largest unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_LXA	false
+
+// OUT_PXA - Profile of the length-counts for the most prominent intra-oligomer duplexes.
+OUT_PXA	false
+
+// OUT_DXA - List of all prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_DXA	false
+
+// OUT_CXE - Profile of the length-counts for all inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_CXE	false
+
+// OUT_LXE - List of all unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_LXE	false
+
+// OUT_PXE - Profile of the length-counts for the most prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_PXE	false
+
+// OUT_DXE - List of all prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_DXE	false
+
+// OUT_CNA - Profile of the length-counts for necessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_CNA	dp_out_counts_necessary_intra.csv
+
+// OUT_LNA - List of baseline unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_LNA	dp_out_details_necessary_intra_largest.csv
+
+// OUT_PNA - Profile of the length-counts for the most prominent necessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_PNA	false
+
+// OUT_DNA - List of necessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_DNA	false
+
+// OUT_CNE - Profile of the length-counts for necessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_CNE	dp_out_counts_necessary_inter.csv
+
+// OUT_LNE - List of baseline unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_LNE	dp_out_details_necessary_inter_largest.csv
+
+// OUT_PNE - Profile of the length-counts for the most prominent necessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_PNE	false
+
+// OUT_DNE - List of necessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_DNE	false
+
+// OUT_CUA - Profile of the length-counts for unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_CUA	dp_out_counts_unnecessary_intra.csv
+
+// OUT_LUA - List of delta unique intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_LUA	dp_out_details_unnecessary_intra_largest.csv
+
+// OUT_PUA - Profile of the length-counts for the most prominent unnecessary intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_PUA	false
+
+// OUT_DUA - List of unnecessary prominent intra-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_DUA	false
+
+// OUT_CUE - Profile of the length-counts for unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_CUE	dp_out_counts_unnecessary_inter.csv
+
+// OUT_LUE - List of delta unique inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_LUE	dp_out_details_unnecessary_inter_largest.csv
+
+// OUT_PUE - Profile of the length-counts for the most prominent unnecessary inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_PUE	false
+
+// OUT_DUE - List of unnecessary prominent inter-oligomer duplexes. Must be either a file name ending with .csv or false.
+OUT_DUE	false
+
