@@ -987,7 +987,7 @@ public class SeqEvo {
                     
                     if (out != null && finishedCycles%cyclesPerUpdate==0){
                         double elapsedTime = System.currentTimeMillis()-startTime;
-                        double fractionComplete = (((double)finishedCycles)/totalCycles);
+                        double fractionComplete = (((double)finishedCycles)/((double)totalCycles));
                         int percentComplete = (int) (fractionComplete*100);
                         double remainingTime = ((elapsedTime/fractionComplete)*(1-fractionComplete));
                         int h = (int)((remainingTime/1000)/(60*60));
