@@ -228,7 +228,7 @@ public class SeqEvo {
         
         IDomainBasedEncodedNetwork gen0 = factory.getNewNetwork(request.initialVariableDomains);
         if (!validator.isValidNetwork(gen0)) {
-            System.out.println("Initial network invalid. Replacing with random sequences.");
+            request.streamForUpdates.println("Initial network invalid. Replacing with random sequences.");
             gen0 = factory.getType1Mutation(gen0,validator);
         }
         if (!validator.isValidNetwork(gen0)){
@@ -437,6 +437,7 @@ public class SeqEvo {
         // Read parameters file.
         usedParameters.put(PFP_LABEL, PFP);
         final Map<String,String> parameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        System.out.println("Importing parameters file: "+ PFP);
         parameters.putAll(util.importPairFromTxt(PFP));
         
         for (Parameter p : allAvailableParameters){
@@ -455,18 +456,21 @@ public class SeqEvo {
         
         // Read fixed domains file.
         final String FDFP = usedParameters.get(FDFP_LABEL);
+        System.out.println("Importing fixed domains file: "+ FDFP);
         final Map<String,String> fixedDomains = util.importPairFromTxt(FDFP);
 
         // Read variable domains file.
         final String VDFP = usedParameters.get(VDFP_LABEL);
+        System.out.println("Importing variable domains file: "+ VDFP);
         final Map<String,String> initialVariableDomains = util.importPairFromTxt(VDFP);
 
         // Read oligomer domains file.
         final String OFP = usedParameters.get(ODFP_LABEL);
+        System.out.println("Importing oligomers file: "+ OFP);
         final Map<String,String[]> oligomerDomains = util.importListFromTxt(OFP);
         
         Request request = new Request(usedParameters, fixedDomains, initialVariableDomains, oligomerDomains, System.out);
-        
+        System.out.println("Beginning search.");
         Report report = s.run(request);
         
         // export output files.
