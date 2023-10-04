@@ -26,5 +26,6 @@ hs_err_pid*
 /examples/2011_Qian-Winfree_Seesaw_4-Input-Or/output/
 /examples/2012_Ke-et-al_Brick_10x10x10/output/
 /examples/2017_Kotani-et-al_4-Arm-Catalytic/output/
+Manifest.txt
 nb-configuration.xml
 pom.xml
