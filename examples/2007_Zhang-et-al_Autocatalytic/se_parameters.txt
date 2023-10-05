@@ -3,3 +3,4 @@ IN_FIXED_DOMAINS in_domains_fixed.txt
 IN_VARIABLE_DOMAINS in_domains_variable.txt
 IN_OLIGOMERS in_oligomers.txt
 scoringWeightX 100
+cpl 2000
