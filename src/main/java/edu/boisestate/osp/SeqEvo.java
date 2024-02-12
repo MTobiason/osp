@@ -1356,6 +1356,7 @@ public class SeqEvo {
         @Override
         public boolean isValid(String value) {
             if (value.equalsIgnoreCase("false")) return true;
+			if (value.endsWith(".csv")) return true;
             return value.endsWith(".txt");
         }
         
@@ -1394,6 +1395,7 @@ public class SeqEvo {
         @Override
         public boolean isValid(String value) {
             if (value.equalsIgnoreCase("false")) return true;
+			if (value.endsWith(".csv")) return true;
             return value.endsWith(".txt");
         }
         
