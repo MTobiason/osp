@@ -12,7 +12,7 @@ Programs in this repository include:
 System Requirements
 *******************
 
-These programs require a Java Development Kit (such as the one at https://openjdk.org/) to be installed. The current code has been verified to run with openJDK 21 (https://jdk.java.net/21/). Instructions for installing openJDK can be found here (https://stackoverflow.com/questions/52511778/how-to-install-openjdk-11-on-windows).
+A recent version of Java is required (https://java.com/download/). If errors are encounterd, a Java Development Kit (such as the one at https://openjdk.org/) can be tried instead. The current code has been verified to run with openJDK 21 (https://jdk.java.net/21/). Instructions for installing openJDK can be found here (https://stackoverflow.com/questions/52511778/how-to-install-openjdk-11-on-windows).
 
 
 ******************
